@@ -259,14 +259,14 @@ Table: grades
 
 > **Why now:** Students are the core data — grades and attendance depend on them.
 
-* [ ] Step 4.1: Create `Student.java` model class
-* [ ] Step 4.2: Create `StudentDao.java` with CRUD methods (add, getAll, update, delete, search)
-* [ ] Step 4.3: Create `StudentForm.java` with input fields and JTable
-* [ ] Step 4.4: Wire Add button — insert student into DB and refresh table
-* [ ] Step 4.5: Wire Edit button — select row, populate fields, update DB
-* [ ] Step 4.6: Wire Delete button — confirm and delete from DB
-* [ ] Step 4.7: Wire Search — filter JTable by name or ID
-* [ ] Milestone Complete: Full student CRUD works end-to-end with database persistence
+* [x] Step 4.1: Create `Student.java` model class
+* [x] Step 4.2: Create `StudentDao.java` with CRUD methods (add, getAll, update, delete, search)
+* [x] Step 4.3: Create `StudentForm.java` with input fields and JTable
+* [x] Step 4.4: Wire Add button — insert student into DB and refresh table
+* [x] Step 4.5: Wire Edit button — select row, populate fields, update DB
+* [x] Step 4.6: Wire Delete button — confirm and delete from DB
+* [x] Step 4.7: Wire Search — filter JTable by name or ID
+* [x] Milestone Complete: Full student CRUD works end-to-end with database persistence
 
 ## Milestone 5 — Subject Management
 
@@ -378,7 +378,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 1 complete — database connected
 * [x] Milestone 2 complete — login works
 * [x] Milestone 3 complete — dashboard shell
-* [ ] Milestone 4 complete — student CRUD
+* [x] Milestone 4 complete — student CRUD
 * [ ] Milestone 5 complete — subject CRUD
 * [ ] Milestone 6 complete — grade auto-compute
 * [ ] Milestone 7 complete — dashboard stats

@@ -73,13 +73,19 @@ public class DashboardForm extends JFrame {
         JButton subjectsButton = new JButton("Subjects");
         JButton gradesButton = new JButton("Grades");
 
-        // TODO: Wire buttons to open respective forms in later milestones
+        studentsButton.addActionListener(e -> openStudentForm());
+        // TODO: Wire Subjects and Grades buttons in later milestones
 
         panel.add(studentsButton);
         panel.add(subjectsButton);
         panel.add(gradesButton);
 
         return panel;
+    }
+
+    private void openStudentForm() {
+        new StudentForm(currentUser).setVisible(true);
+        dispose();
     }
 
     private void handleLogout() {
