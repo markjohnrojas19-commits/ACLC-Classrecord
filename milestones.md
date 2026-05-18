@@ -272,11 +272,11 @@ Table: grades
 
 > **Why now:** Grades need both a student and a subject. Subjects come before grades.
 
-* [ ] Step 5.1: Create `Subject.java` model class
-* [ ] Step 5.2: Create `SubjectDao.java` with CRUD methods
-* [ ] Step 5.3: Create `SubjectForm.java` with input fields and JTable
-* [ ] Step 5.4: Wire all CRUD buttons
-* [ ] Milestone Complete: Full subject CRUD works end-to-end
+* [x] Step 5.1: Create `Subject.java` model class
+* [x] Step 5.2: Create `SubjectDao.java` with CRUD methods
+* [x] Step 5.3: Create `SubjectForm.java` with input fields and JTable
+* [x] Step 5.4: Wire all CRUD buttons
+* [x] Milestone Complete: Full subject CRUD works end-to-end
 
 ## Milestone 6 — Grade Management (Main Feature)
 
@@ -379,7 +379,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 2 complete — login works
 * [x] Milestone 3 complete — dashboard shell
 * [x] Milestone 4 complete — student CRUD
-* [ ] Milestone 5 complete — subject CRUD
+* [x] Milestone 5 complete — subject CRUD
 * [ ] Milestone 6 complete — grade auto-compute
 * [ ] Milestone 7 complete — dashboard stats
 * [ ] Milestone 8 complete — polished for submission

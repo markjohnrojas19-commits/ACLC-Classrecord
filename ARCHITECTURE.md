@@ -40,6 +40,22 @@
 
 ---
 
+## What happens when a subject is added?
+
+1. User navigates from `DashboardForm` to `SubjectForm`.
+2. User fills in Subject Code and Subject Name, then clicks "Add."
+3. `SubjectForm` creates a `Subject` object with `id = 0` (placeholder — the database auto-generates the real ID).
+4. `SubjectForm` calls `SubjectDao.add(subject)`.
+5. `SubjectDao` opens a JDBC connection, runs an `INSERT` with only `subject_code` and `subject_name` (omits `subject_id` — it's `AUTO_INCREMENT`).
+6. On success, `SubjectForm` refreshes the JTable by calling `SubjectDao.getAll()` and rebuilding the table model.
+7. Input fields are cleared, ready for the next entry.
+
+**The same pattern applies to Edit and Delete** — the form calls the appropriate DAO method, then refreshes the table. Edit reads the `subject_id` from the selected table row to preserve identity. Delete confirms via dialog before removing.
+
+**Key difference from Student:** Subject has no separate input panel. StudentForm extracted `StudentInputPanel` because 7 input fields would have pushed the form past the class field limit. SubjectForm has only 2 input fields, keeping it at 5 total fields — well within the atom limit.
+
+---
+
 ## What happens when grades are computed?
 
 This is the core workflow of the system.
