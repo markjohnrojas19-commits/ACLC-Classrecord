@@ -229,8 +229,8 @@ Table: grades
 
 * [x] Step 1.1: Create NetBeans Java Application project
 * [x] Step 1.2: Write `schema.sql` to create database and all tables
-* [ ] Step 1.3: Run SQL script in phpMyAdmin (XAMPP) to create database
-* [ ] Step 1.4: Add MySQL JDBC driver (Connector/J) to project libraries
+* [x] Step 1.3: Run SQL script in phpMyAdmin (XAMPP) to create database
+* [x] Step 1.4: Add MySQL JDBC driver (Connector/J) to project libraries
 * [ ] Step 1.5: Create `DatabaseConnection.java` — test that Java can connect to MySQL
 * [ ] Milestone Complete: Running the app prints "Connected to database successfully!" to console
 

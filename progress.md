@@ -30,3 +30,7 @@
 - **Action:** Step 1.1 — NetBeans Java Application project created at `ACLC-Classrecord/` subfolder (contains `build.xml`, `nbproject/`, empty `src/`).
 - **Action:** Step 1.2 — Wrote `sql/schema.sql` with CREATE DATABASE, all four tables (users, students, subjects, grades), foreign keys, and a default admin user (admin / admin123).
 - **Plan:** Next is Step 1.3 — run `schema.sql` in phpMyAdmin to create the database.
+- **Verified:** Step 1.3 — user confirmed database and tables created in phpMyAdmin.
+- **Verified:** Step 1.4 — user added MySQL Connector/J JAR to NetBeans project libraries.
+- **Action:** Step 1.5 — Created `dao/DatabaseConnection.java` (connection utility with URL, user, password for localhost MySQL). Created `Main.java` entry point that calls `DatabaseConnection.getConnection()` and prints success/failure to console.
+- **Plan:** User needs to run the app in NetBeans to verify "Connected to database successfully!" prints to console. If it does, Milestone 1 is complete.
