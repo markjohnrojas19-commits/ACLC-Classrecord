@@ -231,29 +231,29 @@ Table: grades
 * [x] Step 1.2: Write `schema.sql` to create database and all tables
 * [x] Step 1.3: Run SQL script in phpMyAdmin (XAMPP) to create database
 * [x] Step 1.4: Add MySQL JDBC driver (Connector/J) to project libraries
-* [ ] Step 1.5: Create `DatabaseConnection.java` — test that Java can connect to MySQL
-* [ ] Milestone Complete: Running the app prints "Connected to database successfully!" to console
+* [x] Step 1.5: Create `DatabaseConnection.java` — test that Java can connect to MySQL
+* [x] Milestone Complete: Running the app prints "Connected to database successfully!" to console
 
 ## Milestone 2 — Login System
 
 > **Why now:** Every other feature requires a logged-in user. This is the entry point.
 
-* [ ] Step 2.1: Create `User.java` model class
-* [ ] Step 2.2: Create `UserDao.java` with `authenticate(username, password)` method
-* [ ] Step 2.3: Insert a test admin user into the database
-* [ ] Step 2.4: Create `LoginForm.java` — username field, password field, login button
-* [ ] Step 2.5: Wire login button to `UserDao.authenticate()` — show success/failure message
-* [ ] Step 2.6: On successful login, open `DashboardForm` and close `LoginForm`
-* [ ] Milestone Complete: User can log in with valid credentials and sees the dashboard
+* [x] Step 2.1: Create `User.java` model class (+ `Role.java` enum)
+* [x] Step 2.2: Create `UserDao.java` with `authenticate(username, password)` method
+* [x] Step 2.3: Insert a test admin user into the database (already done in `schema.sql`)
+* [x] Step 2.4: Create `LoginForm.java` — username field, password field, login button
+* [x] Step 2.5: Wire login button to `UserDao.authenticate()` — show success/failure message
+* [x] Step 2.6: On successful login, open `DashboardForm` and close `LoginForm`
+* [x] Milestone Complete: User can log in with valid credentials and sees the dashboard
 
 ## Milestone 3 — Dashboard Shell
 
 > **Why now:** The dashboard is the hub — all other forms launch from here.
 
-* [ ] Step 3.1: Create `DashboardForm.java` with navigation buttons (Students, Subjects, Grades)
-* [ ] Step 3.2: Add placeholder panels/labels for summary stats
-* [ ] Step 3.3: Add logout button that returns to `LoginForm`
-* [ ] Milestone Complete: Dashboard opens after login, logout works, navigation buttons exist (even if they don't open forms yet)
+* [x] Step 3.1: Create `DashboardForm.java` with navigation buttons (Students, Subjects, Grades)
+* [x] Step 3.2: Add placeholder panels/labels for summary stats
+* [x] Step 3.3: Add logout button that returns to `LoginForm`
+* [x] Milestone Complete: Dashboard opens after login, logout works, navigation buttons exist (even if they don't open forms yet)
 
 ## Milestone 4 — Student Management
 
@@ -375,9 +375,9 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 # Progress Log
 
 * [x] Project initialized
-* [ ] Milestone 1 complete — database connected
-* [ ] Milestone 2 complete — login works
-* [ ] Milestone 3 complete — dashboard shell
+* [x] Milestone 1 complete — database connected
+* [x] Milestone 2 complete — login works
+* [x] Milestone 3 complete — dashboard shell
 * [ ] Milestone 4 complete — student CRUD
 * [ ] Milestone 5 complete — subject CRUD
 * [ ] Milestone 6 complete — grade auto-compute

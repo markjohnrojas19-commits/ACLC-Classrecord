@@ -33,4 +33,20 @@
 - **Verified:** Step 1.3 — user confirmed database and tables created in phpMyAdmin.
 - **Verified:** Step 1.4 — user added MySQL Connector/J JAR to NetBeans project libraries.
 - **Action:** Step 1.5 — Created `dao/DatabaseConnection.java` (connection utility with URL, user, password for localhost MySQL). Created `Main.java` entry point that calls `DatabaseConnection.getConnection()` and prints success/failure to console.
-- **Plan:** User needs to run the app in NetBeans to verify "Connected to database successfully!" prints to console. If it does, Milestone 1 is complete.
+- **Verified:** Step 1.5 — user confirmed "Connected to database successfully!" prints to console. Database connection works.
+- **Milestone 1 complete.** Project setup and database connection verified.
+- **Action:** Step 2.1 — Created `model/Role.java` (enum: ADMIN, INSTRUCTOR) and `model/User.java` (4 fields: userId, username, password, role). User is immutable (getters only, no setters) since login returns a read-only snapshot.
+- **Decision:** Role is a separate enum rather than a String field — gives compile-time safety and readable role checks.
+- **Action:** Step 2.2 — Created `dao/UserDao.java` with `authenticate(username, password)` method. Uses PreparedStatement to query `users` table. Returns `User` object on match, `null` on failure. Extracts role string from DB and converts to `Role` enum via `Role.valueOf()`.
+- **Action:** Step 2.3 — Already done. The `schema.sql` from Step 1.2 already inserts a default admin user (admin / admin123).
+- **Action:** Updated `Main.java` to test authentication — runs both a valid and invalid login attempt and prints results to console.
+- **Verified:** Steps 2.2 & 2.3 — authentication test printed expected output.
+- **Action:** Steps 2.4 & 2.5 — Created `ui/LoginForm.java`. Uses nested BorderLayout + GridLayout for readable layout. Fields panel (GridLayout 2x2) holds username/password labels and fields. Button panel (FlowLayout) holds Login button. Login button calls `UserDao.authenticate()`, shows error dialog on failure, welcome dialog on success.
+- **Decision:** Layout approach is nested simple layouts (BorderLayout + GridLayout + FlowLayout) — readable for instructor, handles resizing, no overengineering.
+- **Action:** Updated `Main.java` to launch `LoginForm` via `SwingUtilities.invokeLater()` instead of the console test.
+- **Verified:** Steps 2.4 & 2.5 — login form works. Valid credentials show welcome, invalid credentials show error, empty fields show warning.
+- **Action:** Step 2.6 — Created `ui/DashboardForm.java` as a minimal shell (800x600 JFrame with welcome label). Updated `LoginForm.onLoginSuccess()` to open DashboardForm and dispose LoginForm. Removed the temporary welcome dialog.
+- **Verified:** Step 2.6 — login opens dashboard, login window closes. Milestone 2 complete.
+- **Action:** Steps 3.1, 3.2, 3.3 — Rewrote `ui/DashboardForm.java` with full layout. Header panel: welcome label (bold, 20pt) + logout button. Center: 2x2 grid of placeholder stat labels (Total Students, Total Subjects, Passed, Failed — all showing "0" for now). Bottom: navigation buttons (Students, Subjects, Grades) — not yet wired to forms. Logout creates a new LoginForm and disposes the dashboard.
+- **Decision:** All three steps done together since they're all layout changes to the same file and individually trivial.
+- **Plan:** User verifies dashboard layout + logout flow, then Milestone 3 is complete. Next: Milestone 4 — Student Management.
