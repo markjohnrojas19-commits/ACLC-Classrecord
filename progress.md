@@ -27,3 +27,6 @@
 - **Decision:** 8 core milestones defined, from project setup through polish. 2 additional nice-to-have milestones (attendance, print).
 - **Action:** Updated all md files (`CLAUDE.md`, `milestones.md`, `progress.md`, `ARCHITECTURE.md`) to reflect project-specific content.
 - **Plan:** Next step is Milestone 1 — create NetBeans project and set up the MySQL database.
+- **Action:** Step 1.1 — NetBeans Java Application project created at `ACLC-Classrecord/` subfolder (contains `build.xml`, `nbproject/`, empty `src/`).
+- **Action:** Step 1.2 — Wrote `sql/schema.sql` with CREATE DATABASE, all four tables (users, students, subjects, grades), foreign keys, and a default admin user (admin / admin123).
+- **Plan:** Next is Step 1.3 — run `schema.sql` in phpMyAdmin to create the database.
