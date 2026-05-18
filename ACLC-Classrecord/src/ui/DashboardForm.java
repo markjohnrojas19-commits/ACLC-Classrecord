@@ -75,7 +75,7 @@ public class DashboardForm extends JFrame {
 
         studentsButton.addActionListener(e -> openStudentForm());
         subjectsButton.addActionListener(e -> openSubjectForm());
-        // TODO: Wire Grades button in later milestone
+        gradesButton.addActionListener(e -> openGradeForm());
 
         panel.add(studentsButton);
         panel.add(subjectsButton);
@@ -86,6 +86,11 @@ public class DashboardForm extends JFrame {
 
     private void openSubjectForm() {
         new SubjectForm(currentUser).setVisible(true);
+        dispose();
+    }
+
+    private void openGradeForm() {
+        new GradeForm(currentUser).setVisible(true);
         dispose();
     }
 

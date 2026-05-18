@@ -282,14 +282,14 @@ Table: grades
 
 > **Why now:** This is the core deliverable — auto-computed grades.
 
-* [ ] Step 6.1: Create `GradeConstants.java` with configurable weights (QUIZ_WEIGHT, ASSIGNMENT_WEIGHT, EXAM_WEIGHT, PASSING_GRADE)
-* [ ] Step 6.2: Create `Grade.java` model class
-* [ ] Step 6.3: Create `GradeComputer.java` — computes final grade from components using constants
-* [ ] Step 6.4: Create `GradeDao.java` with CRUD methods
-* [ ] Step 6.5: Create `GradeForm.java` — dropdowns for student/subject, input fields for scores
-* [ ] Step 6.6: Wire auto-compute — when scores are entered, final grade and remarks update automatically
-* [ ] Step 6.7: Display all grades in JTable with student name, subject, scores, final grade, remarks
-* [ ] Milestone Complete: Grades auto-compute correctly, persist to database, display in table
+* [x] Step 6.1: Create `GradeConstants.java` with configurable weights (QUIZ_WEIGHT, ASSIGNMENT_WEIGHT, EXAM_WEIGHT, PASSING_GRADE)
+* [x] Step 6.2: Create `Grade.java` model class (+ `ScoreResult.java`)
+* [x] Step 6.3: Create `GradeComputer.java` — computes final grade from components using constants
+* [x] Step 6.4: Create `GradeDao.java` with CRUD methods (+ `GradeRecord.java`)
+* [x] Step 6.5: Create `GradeForm.java` — dropdowns for student/subject, input fields for scores (+ `GradeInputPanel.java`)
+* [x] Step 6.6: Wire auto-compute — when scores are entered, final grade and remarks update automatically. Wire all CRUD buttons (Add, Edit, Delete, Search)
+* [x] Step 6.7: Display all grades in JTable with student name, subject, scores, final grade, remarks
+* [x] Milestone Complete: Grades auto-compute correctly, persist to database, display in table
 
 ## Milestone 7 — Dashboard Statistics
 
@@ -380,7 +380,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 3 complete — dashboard shell
 * [x] Milestone 4 complete — student CRUD
 * [x] Milestone 5 complete — subject CRUD
-* [ ] Milestone 6 complete — grade auto-compute
+* [x] Milestone 6 complete — grade auto-compute
 * [ ] Milestone 7 complete — dashboard stats
 * [ ] Milestone 8 complete — polished for submission
 
