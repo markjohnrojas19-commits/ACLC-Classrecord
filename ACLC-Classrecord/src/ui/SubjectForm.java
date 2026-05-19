@@ -2,11 +2,9 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -21,6 +19,7 @@ import javax.swing.table.DefaultTableModel;
 import dao.SubjectDao;
 import model.Subject;
 import model.User;
+import util.StyleConstants;
 
 public class SubjectForm extends JFrame {
 
@@ -47,10 +46,10 @@ public class SubjectForm extends JFrame {
 
     private JPanel createHeaderPanel(User currentUser) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 5, 20));
+        panel.setBorder(StyleConstants.HEADER_BORDER);
 
         JLabel titleLabel = new JLabel("Subject Management");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        titleLabel.setFont(StyleConstants.TITLE_FONT);
 
         JButton backButton = new JButton("Back to Dashboard");
         backButton.addActionListener(e -> handleBack(currentUser));
@@ -71,8 +70,8 @@ public class SubjectForm extends JFrame {
     }
 
     private JPanel createInputPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 4, 10, 8));
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+        JPanel panel = new JPanel(new GridLayout(1, 4, StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
+        panel.setBorder(StyleConstants.INPUT_BORDER);
 
         subjectCodeField = new JTextField();
         subjectNameField = new JTextField();
@@ -88,7 +87,7 @@ public class SubjectForm extends JFrame {
     private JScrollPane createTableScrollPane() {
         subjectTable = createSubjectTable();
         JScrollPane scrollPane = new JScrollPane(subjectTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
+        scrollPane.setBorder(StyleConstants.TABLE_BORDER);
         return scrollPane;
     }
 
@@ -109,8 +108,8 @@ public class SubjectForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 20, 15, 20));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");

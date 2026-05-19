@@ -100,6 +100,7 @@ ACLC-Classrecord/
       SubjectDao.java       — subject CRUD queries
       GradeDao.java         — grade CRUD queries
       UserDao.java          — user authentication queries
+      DashboardDao.java     — dashboard summary count queries
     service/              — Business logic
       GradeComputer.java    — grade computation with configurable weights
       AuthService.java      — login validation
@@ -109,8 +110,12 @@ ACLC-Classrecord/
       StudentForm.java      — student management (CRUD + JTable)
       SubjectForm.java      — subject management (CRUD + JTable)
       GradeForm.java        — grade input and auto-computation
+      DashboardStatsPanel.java — dashboard summary statistics display
+      StudentInputPanel.java   — student input fields (extracted atom)
+      GradeInputPanel.java     — grade input fields + dropdowns (extracted atom)
     util/                 — Shared utilities
       GradeConstants.java   — configurable grade weights (QUIZ_WEIGHT, etc.)
+      StyleConstants.java   — shared UI styling (fonts, borders, gaps)
   sql/
     schema.sql            — database creation script
   README.md
@@ -295,20 +300,20 @@ Table: grades
 
 > **Why now:** All data exists — now the dashboard can show real numbers.
 
-* [ ] Step 7.1: Add DAO queries for counts (total students, total subjects, passed count, failed count)
-* [ ] Step 7.2: Wire dashboard labels to display live counts from database
-* [ ] Step 7.3: Auto-refresh stats when dashboard opens
-* [ ] Milestone Complete: Dashboard shows accurate, live summary statistics
+* [x] Step 7.1: Create `DashboardDao.java` with count queries (total students, total subjects, passed count, failed count)
+* [x] Step 7.2: Wire dashboard labels to display live counts from database (via `DashboardStatsPanel`)
+* [x] Step 7.3: Auto-refresh stats when dashboard opens (`statsPanel.refresh()` in constructor)
+* [x] Milestone Complete: Dashboard shows accurate, live summary statistics
 
 ## Milestone 8 — Polish & Final Touches
 
 > **Why now:** Core features are done. Time to clean up for submission.
 
-* [ ] Step 8.1: Consistent UI styling across all forms (colors, fonts, button sizes)
-* [ ] Step 8.2: Input validation on all forms (no empty fields, numeric checks)
-* [ ] Step 8.3: Confirmation dialogs for delete operations
-* [ ] Step 8.4: Error handling for database failures (user-friendly messages)
-* [ ] Milestone Complete: App feels polished and handles edge cases gracefully
+* [x] Step 8.1: Consistent UI styling via `StyleConstants` (fonts, borders, gaps standardized across all forms)
+* [x] Step 8.2: Input validation on all forms (no empty fields, numeric checks — year level 1-4, scores 0-100)
+* [x] Step 8.3: Confirmation dialogs for delete operations (already implemented in Milestones 4-6)
+* [x] Step 8.4: Error handling for database failures (DashboardDao returns -1, panel shows "Error")
+* [x] Milestone Complete: App feels polished and handles edge cases gracefully
 
 ---
 
@@ -381,8 +386,8 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 4 complete — student CRUD
 * [x] Milestone 5 complete — subject CRUD
 * [x] Milestone 6 complete — grade auto-compute
-* [ ] Milestone 7 complete — dashboard stats
-* [ ] Milestone 8 complete — polished for submission
+* [x] Milestone 7 complete — dashboard stats
+* [x] Milestone 8 complete — polished for submission
 
 ---
 

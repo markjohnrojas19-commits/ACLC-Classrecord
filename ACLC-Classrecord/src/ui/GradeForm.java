@@ -2,13 +2,11 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -30,6 +28,7 @@ import model.Student;
 import model.Subject;
 import model.User;
 import service.GradeComputer;
+import util.StyleConstants;
 
 public class GradeForm extends JFrame {
 
@@ -61,10 +60,10 @@ public class GradeForm extends JFrame {
 
     private JPanel createHeaderPanel(User currentUser) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 5, 20));
+        panel.setBorder(StyleConstants.HEADER_BORDER);
 
         JLabel titleLabel = new JLabel("Grade Management");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        titleLabel.setFont(StyleConstants.TITLE_FONT);
 
         JButton backButton = new JButton("Back to Dashboard");
         backButton.addActionListener(e -> handleBack(currentUser));
@@ -82,7 +81,7 @@ public class GradeForm extends JFrame {
 
         gradeTable = createGradeTable();
         JScrollPane scrollPane = new JScrollPane(gradeTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
+        scrollPane.setBorder(StyleConstants.TABLE_BORDER);
 
         panel.add(inputPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -108,8 +107,8 @@ public class GradeForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 20, 15, 20));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
@@ -159,6 +158,11 @@ public class GradeForm extends JFrame {
             return;
         }
 
+        if (inputPanel.hasInvalidScores()) {
+            showError("Scores must be numbers between 0 and 100.");
+            return;
+        }
+
         Grade grade = buildGradeFromInput(0);
         ScoreResult result = computeResult();
 
@@ -178,6 +182,11 @@ public class GradeForm extends JFrame {
 
         if (inputPanel.hasEmptyScores()) {
             showError("Please fill in all score fields.");
+            return;
+        }
+
+        if (inputPanel.hasInvalidScores()) {
+            showError("Scores must be numbers between 0 and 100.");
             return;
         }
 

@@ -1,10 +1,8 @@
 package ui;
 
-import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -14,6 +12,7 @@ import javax.swing.event.DocumentListener;
 
 import model.Student;
 import model.Subject;
+import util.StyleConstants;
 
 public class GradeInputPanel extends JPanel {
 
@@ -25,8 +24,8 @@ public class GradeInputPanel extends JPanel {
     private JLabel resultLabel;
 
     public GradeInputPanel() {
-        setLayout(new GridLayout(3, 4, 10, 8));
-        setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+        setLayout(new GridLayout(3, 4, StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
+        setBorder(StyleConstants.INPUT_BORDER);
         createFields();
         addFieldsToPanel();
     }
@@ -84,6 +83,21 @@ public class GradeInputPanel extends JPanel {
             || examField.getText().trim().isEmpty();
     }
 
+    public boolean hasInvalidScores() {
+        return !isValidScore(quizField)
+            || !isValidScore(assignmentField)
+            || !isValidScore(examField);
+    }
+
+    private boolean isValidScore(JTextField field) {
+        try {
+            double value = Double.parseDouble(field.getText().trim());
+            return value >= 0 && value <= 100;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
     public boolean hasNoSelections() {
         return studentBox.getSelectedItem() == null
             || subjectBox.getSelectedItem() == null;
@@ -139,7 +153,7 @@ public class GradeInputPanel extends JPanel {
         assignmentField = new JTextField();
         examField = new JTextField();
         resultLabel = new JLabel("—");
-        resultLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
+        resultLabel.setFont(StyleConstants.SMALL_BOLD_FONT);
     }
 
     private void addFieldsToPanel() {

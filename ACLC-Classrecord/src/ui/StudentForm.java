@@ -2,10 +2,8 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -20,6 +18,7 @@ import javax.swing.table.DefaultTableModel;
 import dao.StudentDao;
 import model.Student;
 import model.User;
+import util.StyleConstants;
 
 public class StudentForm extends JFrame {
 
@@ -45,10 +44,10 @@ public class StudentForm extends JFrame {
 
     private JPanel createHeaderPanel(User currentUser) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 5, 20));
+        panel.setBorder(StyleConstants.HEADER_BORDER);
 
         JLabel titleLabel = new JLabel("Student Management");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        titleLabel.setFont(StyleConstants.TITLE_FONT);
 
         JButton backButton = new JButton("Back to Dashboard");
         backButton.addActionListener(e -> handleBack(currentUser));
@@ -66,7 +65,7 @@ public class StudentForm extends JFrame {
 
         studentTable = createStudentTable();
         JScrollPane scrollPane = new JScrollPane(studentTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
+        scrollPane.setBorder(StyleConstants.TABLE_BORDER);
 
         panel.add(inputPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -91,8 +90,8 @@ public class StudentForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 20, 15, 20));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
@@ -124,6 +123,11 @@ public class StudentForm extends JFrame {
             return;
         }
 
+        if (inputPanel.hasInvalidYearLevel()) {
+            showError("Year level must be between 1 and 4.");
+            return;
+        }
+
         Student student = inputPanel.toStudent();
 
         if (studentDao.add(student)) {
@@ -142,6 +146,11 @@ public class StudentForm extends JFrame {
 
         if (inputPanel.hasEmptyFields()) {
             showError("Please fill in all fields.");
+            return;
+        }
+
+        if (inputPanel.hasInvalidYearLevel()) {
+            showError("Year level must be between 1 and 4.");
             return;
         }
 

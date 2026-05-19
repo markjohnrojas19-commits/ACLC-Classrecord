@@ -2,13 +2,13 @@ package ui;
 
 import java.awt.GridLayout;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import model.Student;
+import util.StyleConstants;
 
 public class StudentInputPanel extends JPanel {
 
@@ -21,8 +21,8 @@ public class StudentInputPanel extends JPanel {
     private JComboBox<String> genderBox;
 
     public StudentInputPanel() {
-        setLayout(new GridLayout(4, 4, 10, 8));
-        setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+        setLayout(new GridLayout(4, 4, StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
+        setBorder(StyleConstants.INPUT_BORDER);
         createFields();
         addFieldsToPanel();
     }
@@ -71,6 +71,11 @@ public class StudentInputPanel extends JPanel {
             || courseField.getText().trim().isEmpty()
             || yearLevelField.getText().trim().isEmpty()
             || sectionField.getText().trim().isEmpty();
+    }
+
+    public boolean hasInvalidYearLevel() {
+        int year = parseYearLevel();
+        return year < 1 || year > 4;
     }
 
     private void createFields() {

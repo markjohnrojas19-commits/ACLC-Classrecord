@@ -79,13 +79,15 @@ This is the core workflow of the system.
 ## What happens when the dashboard loads?
 
 1. `DashboardForm` opens (after login or when navigating back).
-2. It queries the database for summary counts:
-   - `StudentDao.getCount()` — total students
-   - `SubjectDao.getCount()` — total subjects
-   - `GradeDao.getPassedCount()` — students with final grade >= 75
-   - `GradeDao.getFailedCount()` — students with final grade < 75
+2. It queries the database for summary counts via `DashboardDao`:
+   - `DashboardDao.countStudents()` — total students
+   - `DashboardDao.countSubjects()` — total subjects
+   - `DashboardDao.countPassed()` — grade records with remarks = 'PASSED'
+   - `DashboardDao.countFailed()` — grade records with remarks = 'FAILED'
 3. These counts are displayed in labels on the dashboard.
 4. Navigation buttons allow the user to open `StudentForm`, `SubjectForm`, or `GradeForm`.
+
+**Why DashboardDao is separate from StudentDao/SubjectDao/GradeDao:** The dashboard counts are a display concern — aggregate queries for a summary view. They don't belong in the CRUD DAOs because those atoms exist to manage individual records. `DashboardDao` is its own atom with a single responsibility: provide dashboard statistics.
 
 ---
 
