@@ -96,12 +96,17 @@ ACLC-Classrecord/
       GradingSeason.java    — enum: PRELIM, MIDTERM, PRE_FINAL, FINAL
       ScoreResult.java      — computed grade result (finalGrade, remarks)
       User.java             — login credentials and role
+      Attendance.java        — attendance data (studentId, subjectId, date, status)
+      AttendanceStatus.java  — enum: PRESENT, ABSENT, LATE, EXCUSED
+      Enrollment.java        — enrollment data (studentId, subjectId)
       Role.java             — enum: ADMIN, INSTRUCTOR
     dao/                  — Data Access Objects (JDBC operations)
       DatabaseConnection.java — MySQL connection utility
       StudentDao.java       — student CRUD queries
       SubjectDao.java       — subject CRUD queries
       AssessmentDao.java    — assessment CRUD queries (by season)
+      AttendanceDao.java     — attendance queries (saveOrUpdate, getBySubjectAndDate, counts)
+      EnrollmentDao.java     — enrollment queries (enroll, unenroll, getBySubjectAndSection)
       UserDao.java          — user authentication queries
       DashboardDao.java     — dashboard summary count queries (uses AVG aggregation)
     service/              — Business logic
@@ -114,6 +119,10 @@ ACLC-Classrecord/
       StudentInputPanel.java   — student input fields (extracted atom)
       SectionTablePanel.java   — reusable section table (styled JTable atom)
       SubjectForm.java      — subject management (CRUD + JTable)
+      AttendanceForm.java    — attendance management (status dropdowns by section + date)
+      AttendanceFilterPanel.java — subject + section + date filters (extracted atom)
+      EnrollmentForm.java    — enrollment management (checkbox table by section)
+      EnrollmentFilterPanel.java — subject + section dropdown filters (extracted atom)
       GradeForm.java        — assessment management (CRUD + JTabbedPane by season)
       AssessmentInputPanel.java — assessment input fields + dropdowns (extracted atom)
     util/                 — Shared utilities
@@ -158,6 +167,20 @@ Table: subjects
   subject_id    INT AUTO_INCREMENT PRIMARY KEY
   subject_code  VARCHAR(20) UNIQUE NOT NULL
   subject_name  VARCHAR(100) NOT NULL
+
+Table: enrollments
+  enrollment_id  INT AUTO_INCREMENT PRIMARY KEY
+  student_id     VARCHAR(20) NOT NULL  (FK -> students)
+  subject_id     INT NOT NULL          (FK -> subjects)
+  UNIQUE(student_id, subject_id)
+
+Table: attendance
+  attendance_id  INT AUTO_INCREMENT PRIMARY KEY
+  student_id     VARCHAR(20) NOT NULL  (FK -> students)
+  subject_id     INT NOT NULL          (FK -> subjects)
+  date           DATE NOT NULL
+  status         ENUM('Present', 'Absent', 'Late', 'Excused') NOT NULL
+  UNIQUE(student_id, subject_id, date)
 
 Table: assessments
   assessment_id    INT AUTO_INCREMENT PRIMARY KEY
@@ -333,21 +356,100 @@ Table: assessments
 
 ---
 
-# Nice-to-Have Milestones (If Time Permits)
+# Upcoming Milestones (Instructor Review Recommendations)
 
-## Milestone 10 — Attendance
+> **Context:** These milestones come from an honest review of the system from the perspective of an instructor who would use it day-to-day. Organized by priority — P0 items are dealbreakers that prevent real-world use, P1 items make the system genuinely useful, P2 items improve daily usability, P3 items are for future growth.
 
-* [ ] Step 9.1: Create attendance table in database
-* [ ] Step 9.2: Create `Attendance.java` model + `AttendanceDao.java`
-* [ ] Step 9.3: Create `AttendanceForm.java` — mark Present/Absent/Late per student per date
-* [ ] Step 9.4: Show attendance percentage
-* [ ] Milestone Complete: Attendance tracking works end-to-end
+---
 
-## Milestone 11 — Print Reports
+## Milestone 10 — Attendance Tracking (P0 — Must Have)
 
-* [ ] Step 11.1: Add print button to `GradeForm`
-* [ ] Step 11.2: Use `JTable.print()` to print class record
-* [ ] Milestone Complete: Instructor can print a grade sheet
+> **Why P0:** A "Class Record" without attendance is only half complete. ACLC requires attendance reporting. Without this, instructors still need a separate system.
+
+* [ ] Step 10.1: Design `attendance` table in schema.sql — columns: attendance_id (PK), student_id (FK), subject_id (FK), date, status (ENUM: 'Present', 'Absent', 'Late', 'Excused')
+* [ ] Step 10.2: Create `AttendanceStatus.java` enum (PRESENT, ABSENT, LATE, EXCUSED) and `Attendance.java` model class
+* [ ] Step 10.3: Create `AttendanceDao.java` — add, getByDate, getByStudent, update, delete
+* [ ] Step 10.4: Create `AttendanceForm.java` — date picker, subject dropdown, table of students with status dropdowns. Bulk entry (mark all students for one date at once)
+* [ ] Step 10.5: Add attendance summary per student — count/percentage of Present, Absent, Late, Excused
+* [ ] Step 10.6: Add "Attendance" navigation button to DashboardForm
+* [ ] Step 10.7: Update DashboardStatsPanel to show attendance summary (e.g., "Today's Attendance: 45/50")
+* [ ] Milestone Complete: Instructor can mark attendance per date per subject, view attendance summary per student
+
+## Milestone 11 — Grade Export & Printing (P0 — Must Have)
+
+> **Why P0:** Without export/print, all data entry has no output. Instructors need to submit grades on paper or as files. This is the #1 dealbreaker.
+
+* [ ] Step 11.1: Add "Print" button to GradeForm — use `JTable.print()` for quick printing of the current season tab
+* [ ] Step 11.2: Add "Export" button to GradeForm — export current season's grades to CSV file (simple, no extra libraries needed)
+* [ ] Step 11.3: Add a file chooser dialog (JFileChooser) so instructor picks where to save the export
+* [ ] Step 11.4: Format the CSV with headers: Student ID, Student Name, Subject, Assessment Name, Score, Season Average, Remarks
+* [ ] Step 11.5: (Optional) Add Excel export using Apache POI if time permits — otherwise CSV is sufficient
+* [ ] Milestone Complete: Instructor can print or export grades to a file for submission
+
+## Milestone 12 — Final Grade Across Seasons (P1 — Should Have)
+
+> **Why P1:** Right now each season shows its own average, but there's no combined final grade. Instructors need ONE final grade per student per subject that combines all four seasons. In ACLC, seasons are typically weighted differently (e.g., Prelim 20%, Midterm 20%, Pre-Final 20%, Final 40%).
+
+* [ ] Step 12.1: Add season weight constants to `GradeConstants.java` — PRELIM_WEIGHT, MIDTERM_WEIGHT, PRE_FINAL_WEIGHT, FINAL_WEIGHT (default: 0.20, 0.20, 0.20, 0.40)
+* [ ] Step 12.2: Add `computeFinalGrade(Map<GradingSeason, List<Assessment>>)` method to `GradeComputer` — computes weighted average across all seasons
+* [ ] Step 12.3: Add a "Final Grade" tab or summary panel in GradeForm — shows one row per student-subject pair with: Prelim avg, Midterm avg, Pre-Final avg, Final avg, Weighted Final Grade, Remarks
+* [ ] Step 12.4: Color-code the final grade (green for passed, red for failed)
+* [ ] Step 12.5: Update DashboardDao passed/failed counts to use the weighted final grade instead of simple average
+* [ ] Milestone Complete: Instructor sees a combined final grade per student per subject with configurable season weights
+
+## Milestone 13 — Student Grade Summary / Report Card View (P1 — Should Have)
+
+> **Why P1:** Instructors often need to look up ONE student and see all their grades across ALL subjects and ALL seasons in one view — like a report card. Currently you can only see grades organized by season, not by student.
+
+* [ ] Step 13.1: Create `StudentGradeSummaryForm.java` — student dropdown at top, table below showing all subjects x all seasons
+* [ ] Step 13.2: Table columns: Subject Code, Subject Name, Prelim Avg, Midterm Avg, Pre-Final Avg, Final Avg, Final Grade, Remarks
+* [ ] Step 13.3: Add color-coded remarks per row (green/red)
+* [ ] Step 13.4: Add "Print" / "Export" button for this view (reuse export logic from Milestone 11)
+* [ ] Step 13.5: Add navigation to this form — either from DashboardForm ("Student Summary" button) or from StudentForm ("View Grades" button on selected student)
+* [ ] Milestone Complete: Instructor can pull up any student and see their complete grade picture across all subjects
+
+## Milestone 14 — UX Improvements (P2 — Nice to Have)
+
+> **Why P2:** These are small usability improvements that reduce daily friction. Each step is independent — implement in any order.
+
+* [ ] Step 14.1: **Back to Dashboard button** — Add a "Back" button on every form (StudentForm, SubjectForm, GradeForm, AttendanceForm) that returns to DashboardForm instead of just closing the window
+* [ ] Step 14.2: **Success confirmation messages** — Show a brief success dialog after Add/Edit operations (currently only errors show dialogs). Use `JOptionPane.showMessageDialog()` with "Student added successfully" etc.
+* [ ] Step 14.3: **Column sorting** — Enable click-to-sort on JTable column headers using `TableRowSorter`. Apply to all tables (StudentForm, SubjectForm, GradeForm)
+* [ ] Step 14.4: **Student ID auto-generation** — Auto-generate student IDs in format "STU-0001", "STU-0002" etc. Make the ID field read-only on Add. Query max existing ID from database and increment.
+* [ ] Step 14.5: **Date timestamp on assessments** — Add a `date_recorded` column to the assessments table. Auto-fill with current date on insert. Display in GradeForm table.
+* [ ] Step 14.6: **Confirmation before closing forms with unsaved changes** — If instructor has typed in fields but hasn't clicked Add/Edit, warn before closing
+* [ ] Milestone Complete: Daily workflow is smoother with fewer clicks and clearer feedback
+
+## Milestone 15 — Advanced Filtering (P2 — Nice to Have)
+
+> **Why P2:** The current keyword search works, but instructors often need to filter by specific criteria — "show me all failed students in Section A for this subject."
+
+* [ ] Step 15.1: Add a section filter dropdown to GradeForm — filter assessments to show only students from a specific section
+* [ ] Step 15.2: Add a pass/fail filter toggle to GradeForm — show only passed or only failed students
+* [ ] Step 15.3: Add a subject filter to StudentForm — "show students enrolled in this subject" (requires knowing which subjects a student has assessments for)
+* [ ] Step 15.4: Add a date range filter to AttendanceForm — filter attendance records between two dates
+* [ ] Milestone Complete: Instructors can slice data by section, pass/fail status, subject, and date range
+
+## Milestone 16 — Security Hardening (P3 — Future)
+
+> **Why P3:** Important for production but not critical for a school project demo. Address before any real deployment.
+
+* [ ] Step 16.1: **Hash passwords** — Use Java's built-in `MessageDigest` (SHA-256) or add bcrypt library. Hash on registration/insert, compare hashes on login. Update UserDao.authenticate() accordingly.
+* [ ] Step 16.2: **Externalize database credentials** — Move URL, username, password from hardcoded values in `DatabaseConnection.java` to a `config.properties` file. Load with `Properties` class.
+* [ ] Step 16.3: **Session timeout** — If the app is idle for 30 minutes, auto-logout and return to LoginForm. Use a Swing Timer.
+* [ ] Step 16.4: **Audit trail** — Create an `audit_log` table (user_id, action, target_table, target_id, timestamp). Log all Add/Edit/Delete operations. Show in an admin-only Audit Log form.
+* [ ] Milestone Complete: Passwords are hashed, credentials are externalized, actions are logged
+
+## Milestone 17 — Instructor-Section-Subject Linking (P3 — Future)
+
+> **Why P3:** Only matters if multiple instructors use the system. Currently all data is visible to all users. This milestone restricts each instructor to see only "their" students and subjects.
+
+* [ ] Step 17.1: Create `instructor_subjects` junction table (user_id FK, subject_id FK, section) — links an instructor to the subjects and sections they teach
+* [ ] Step 17.2: Create `InstructorSubjectDao.java` — getSubjectsForInstructor, getSectionsForInstructor
+* [ ] Step 17.3: Filter GradeForm dropdowns to show only the logged-in instructor's subjects and sections
+* [ ] Step 17.4: Filter StudentForm to show only students in the logged-in instructor's sections
+* [ ] Step 17.5: Admin role bypasses filters and sees everything
+* [ ] Milestone Complete: Each instructor sees only their own classes; admin sees everything
 
 ---
 
@@ -376,8 +478,10 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 
 ## Future Milestones (Beyond School Project)
 
-* [ ] **M12 — Export:** PDF/Excel export using Apache POI / iTextPDF
-* [ ] **M13 — Advanced Attendance:** Calendar view, automated late detection
+* [ ] **M18 — Web Migration:** Migrate to Spring Boot + Thymeleaf for multi-user web deployment
+* [ ] **M19 — CSV/Excel Import:** Allow importing student lists and grades from spreadsheets
+* [ ] **M20 — Advanced Attendance:** Calendar view, automated late detection, SMS/email notifications
+* [ ] **M21 — Database Connection Pooling:** Replace per-query connections with HikariCP connection pool
 
 ---
 
@@ -404,6 +508,14 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 7 complete — dashboard stats
 * [x] Milestone 8 complete — polished for submission
 * [x] Milestone 9 complete — section tabs + assessment-based grading with seasons
+* [ ] Milestone 10 — Attendance Tracking (P0)
+* [ ] Milestone 11 — Grade Export & Printing (P0)
+* [ ] Milestone 12 — Final Grade Across Seasons (P1)
+* [ ] Milestone 13 — Student Grade Summary / Report Card (P1)
+* [ ] Milestone 14 — UX Improvements (P2)
+* [ ] Milestone 15 — Advanced Filtering (P2)
+* [ ] Milestone 16 — Security Hardening (P3)
+* [ ] Milestone 17 — Instructor-Section-Subject Linking (P3)
 
 ---
 

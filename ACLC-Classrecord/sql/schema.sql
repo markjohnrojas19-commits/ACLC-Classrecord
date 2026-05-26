@@ -45,6 +45,32 @@ CREATE TABLE IF NOT EXISTS assessments (
     FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
 );
 
+-- Enrollments table
+-- Links students to subjects. One row = "this student is enrolled in this subject."
+-- Attendance and grade forms use this to show only enrolled students.
+CREATE TABLE IF NOT EXISTS enrollments (
+    enrollment_id  INT AUTO_INCREMENT PRIMARY KEY,
+    student_id     VARCHAR(20) NOT NULL,
+    subject_id     INT NOT NULL,
+    UNIQUE (student_id, subject_id),
+    FOREIGN KEY (student_id) REFERENCES students(student_id),
+    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+);
+
+-- Attendance table
+-- One row = one student's attendance for one subject on one date.
+-- Only enrolled students should have attendance records.
+CREATE TABLE IF NOT EXISTS attendance (
+    attendance_id  INT AUTO_INCREMENT PRIMARY KEY,
+    student_id     VARCHAR(20) NOT NULL,
+    subject_id     INT NOT NULL,
+    date           DATE NOT NULL,
+    status         ENUM('Present', 'Absent', 'Late', 'Excused') NOT NULL,
+    UNIQUE (student_id, subject_id, date),
+    FOREIGN KEY (student_id) REFERENCES students(student_id),
+    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+);
+
 -- Insert a default admin user for testing (password: admin123)
 INSERT INTO users (username, password, role)
 VALUES ('admin', 'admin123', 'Admin')

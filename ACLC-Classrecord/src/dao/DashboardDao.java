@@ -1,9 +1,11 @@
 package dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 import util.GradeConstants;
 
@@ -19,6 +21,52 @@ public class DashboardDao {
 
     public int countAssessments() {
         return executeSimpleCount("SELECT COUNT(*) FROM assessments");
+    }
+
+    public int countEnrolled() {
+        return executeSimpleCount("SELECT COUNT(*) FROM enrollments");
+    }
+
+    public int countTodayPresent() {
+        String sql = "SELECT COUNT(*) FROM attendance WHERE date = ? AND status = 'Present'";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setDate(1, Date.valueOf(LocalDate.now()));
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Dashboard today present count error: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    public int countTodayTotal() {
+        String sql = "SELECT COUNT(*) FROM attendance WHERE date = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setDate(1, Date.valueOf(LocalDate.now()));
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Dashboard today total count error: " + e.getMessage());
+            return -1;
+        }
     }
 
     public int countPassed() {

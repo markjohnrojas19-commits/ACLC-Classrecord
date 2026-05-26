@@ -56,15 +56,21 @@ public class DashboardForm extends JFrame {
 
         JButton studentsButton = new JButton("Students");
         JButton subjectsButton = new JButton("Subjects");
+        JButton enrollmentButton = new JButton("Enrollment");
         JButton gradesButton = new JButton("Grades");
+        JButton attendanceButton = new JButton("Attendance");
 
         studentsButton.addActionListener(e -> openStudentForm());
         subjectsButton.addActionListener(e -> openSubjectForm());
+        enrollmentButton.addActionListener(e -> openEnrollmentForm());
         gradesButton.addActionListener(e -> openGradeForm());
+        attendanceButton.addActionListener(e -> openAttendanceForm());
 
         panel.add(studentsButton);
         panel.add(subjectsButton);
+        panel.add(enrollmentButton);
         panel.add(gradesButton);
+        panel.add(attendanceButton);
 
         return panel;
     }
@@ -76,6 +82,16 @@ public class DashboardForm extends JFrame {
 
     private void openGradeForm() {
         new GradeForm(currentUser).setVisible(true);
+        dispose();
+    }
+
+    private void openEnrollmentForm() {
+        new EnrollmentForm(currentUser).setVisible(true);
+        dispose();
+    }
+
+    private void openAttendanceForm() {
+        new AttendanceForm(currentUser).setVisible(true);
         dispose();
     }
 
