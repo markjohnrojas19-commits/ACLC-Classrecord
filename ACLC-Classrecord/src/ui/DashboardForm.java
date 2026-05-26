@@ -35,9 +35,11 @@ public class DashboardForm extends JFrame {
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(StyleConstants.HEADER_BORDER);
+        panel.setBackground(StyleConstants.WHITE);
 
         JLabel welcomeLabel = new JLabel("Welcome, " + currentUser.getUsername() + "!");
         welcomeLabel.setFont(StyleConstants.TITLE_FONT);
+        welcomeLabel.setForeground(StyleConstants.PRIMARY);
 
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> handleLogout());

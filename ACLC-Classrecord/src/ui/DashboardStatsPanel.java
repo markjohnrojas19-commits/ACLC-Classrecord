@@ -22,6 +22,7 @@ public class DashboardStatsPanel extends JPanel {
 
         setLayout(new GridLayout(2, 2, 20, 20));
         setBorder(StyleConstants.STATS_BORDER);
+        setBackground(StyleConstants.WHITE);
 
         studentsLabel = createStatLabel("Total Students", "0");
         subjectsLabel = createStatLabel("Total Subjects", "0");
@@ -37,8 +38,8 @@ public class DashboardStatsPanel extends JPanel {
     public void refresh() {
         updateLabel(studentsLabel, "Total Students", dashboardDao.countStudents());
         updateLabel(subjectsLabel, "Total Subjects", dashboardDao.countSubjects());
-        updateLabel(passedLabel, "Passed", dashboardDao.countPassed());
-        updateLabel(failedLabel, "Failed", dashboardDao.countFailed());
+        updatePassedLabel(dashboardDao.countPassed());
+        updateFailedLabel(dashboardDao.countFailed());
     }
 
     private void updateLabel(JLabel label, String title, int count) {
@@ -46,9 +47,24 @@ public class DashboardStatsPanel extends JPanel {
         label.setText(title + ": " + display);
     }
 
+    private void updatePassedLabel(int count) {
+        updateLabel(passedLabel, "Passed", count);
+        if (count > 0) {
+            passedLabel.setForeground(StyleConstants.SUCCESS);
+        }
+    }
+
+    private void updateFailedLabel(int count) {
+        updateLabel(failedLabel, "Failed", count);
+        if (count > 0) {
+            failedLabel.setForeground(StyleConstants.DANGER);
+        }
+    }
+
     private JLabel createStatLabel(String title, String value) {
         JLabel label = new JLabel(title + ": " + value, SwingConstants.CENTER);
         label.setFont(StyleConstants.BODY_FONT);
+        label.setForeground(StyleConstants.TEXT_PRIMARY);
         return label;
     }
 }

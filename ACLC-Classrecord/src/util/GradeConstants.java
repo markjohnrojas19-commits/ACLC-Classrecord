@@ -2,10 +2,9 @@ package util;
 
 public final class GradeConstants {
 
-    public static final double QUIZ_WEIGHT = 0.30;
-    public static final double ASSIGNMENT_WEIGHT = 0.30;
-    public static final double EXAM_WEIGHT = 0.40;
     public static final double PASSING_GRADE = 75.0;
+    public static final double MIN_SCORE = 0.0;
+    public static final double MAX_SCORE = 100.0;
 
     private GradeConstants() {
     }

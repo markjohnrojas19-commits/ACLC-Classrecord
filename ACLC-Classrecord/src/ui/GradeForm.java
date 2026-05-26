@@ -1,6 +1,7 @@
 package ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,16 +14,20 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
-import dao.GradeDao;
+import dao.AssessmentDao;
 import dao.StudentDao;
 import dao.SubjectDao;
-import model.Grade;
-import model.GradeRecord;
+import model.Assessment;
+import model.GradingSeason;
 import model.ScoreResult;
 import model.Student;
 import model.Subject;
@@ -32,20 +37,20 @@ import util.StyleConstants;
 
 public class GradeForm extends JFrame {
 
-    private GradeInputPanel inputPanel;
-    private JTable gradeTable;
-    private GradeDao gradeDao;
+    private AssessmentInputPanel inputPanel;
+    private JTabbedPane seasonTabs;
+    private AssessmentDao assessmentDao;
     private GradeComputer gradeComputer;
     private JTextField searchField;
-    private List<GradeRecord> currentRecords;
+    private Map<GradingSeason, List<Assessment>> seasonRecords;
 
     public GradeForm(User currentUser) {
-        gradeDao = new GradeDao();
+        assessmentDao = new AssessmentDao();
         gradeComputer = new GradeComputer();
-        currentRecords = new ArrayList<>();
+        seasonRecords = new HashMap<>();
 
-        setTitle("ACLC Class Record — Grade Management");
-        setSize(1000, 600);
+        setTitle("ACLC Class Record \u2014 Grade Management");
+        setSize(1050, 700);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -54,16 +59,17 @@ public class GradeForm extends JFrame {
         add(createButtonPanel(), BorderLayout.SOUTH);
 
         populateDropdowns();
-        setupAutoCompute();
-        refreshTable();
+        refreshAllTabs();
     }
 
     private JPanel createHeaderPanel(User currentUser) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(StyleConstants.HEADER_BORDER);
+        panel.setBackground(StyleConstants.WHITE);
 
         JLabel titleLabel = new JLabel("Grade Management");
         titleLabel.setFont(StyleConstants.TITLE_FONT);
+        titleLabel.setForeground(StyleConstants.PRIMARY);
 
         JButton backButton = new JButton("Back to Dashboard");
         backButton.addActionListener(e -> handleBack(currentUser));
@@ -77,21 +83,53 @@ public class GradeForm extends JFrame {
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        inputPanel = new GradeInputPanel();
-
-        gradeTable = createGradeTable();
-        JScrollPane scrollPane = new JScrollPane(gradeTable);
-        scrollPane.setBorder(StyleConstants.TABLE_BORDER);
+        inputPanel = new AssessmentInputPanel();
+        seasonTabs = createSeasonTabs();
 
         panel.add(inputPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(seasonTabs, BorderLayout.CENTER);
 
         return panel;
     }
 
-    private JTable createGradeTable() {
-        String[] columns = {"ID", "Student", "Subject", "Quiz", "Assignment",
-                            "Exam", "Final Grade", "Remarks"};
+    private JTabbedPane createSeasonTabs() {
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(StyleConstants.TAB_FONT);
+
+        for (GradingSeason season : GradingSeason.values()) {
+            JPanel tabContent = createSeasonTabContent(season);
+            tabs.addTab(season.toDisplayName(), tabContent);
+        }
+
+        return tabs;
+    }
+
+    private JPanel createSeasonTabContent(GradingSeason season) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(StyleConstants.WHITE);
+
+        JTable table = createAssessmentTable();
+        table.getSelectionModel().addListSelectionListener(e -> loadSelectedAssessment());
+
+        JLabel averageLabel = new JLabel("Season Average: \u2014");
+        averageLabel.setFont(StyleConstants.SMALL_BOLD_FONT);
+        averageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        averageLabel.setOpaque(true);
+        averageLabel.setBackground(StyleConstants.SEASON_AVERAGE_BG);
+        averageLabel.setForeground(StyleConstants.TEXT_PRIMARY);
+
+        JPanel averagePanel = new JPanel(new BorderLayout());
+        averagePanel.setBorder(StyleConstants.SECTION_BORDER);
+        averagePanel.add(averageLabel, BorderLayout.CENTER);
+
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(averagePanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JTable createAssessmentTable() {
+        String[] columns = {"ID", "Student", "Subject", "Assessment", "Score"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -101,13 +139,18 @@ public class GradeForm extends JFrame {
 
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getSelectionModel().addListSelectionListener(e -> loadSelectedGrade());
+        table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
+        table.setFont(StyleConstants.BODY_FONT);
+        table.setGridColor(StyleConstants.BORDER_COLOR);
+        table.setDefaultRenderer(Object.class, createAlternatingRenderer());
+        styleTableHeader(table);
 
         return table;
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
+            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton addButton = new JButton("Add");
@@ -134,89 +177,68 @@ public class GradeForm extends JFrame {
         return panel;
     }
 
-    private void setupAutoCompute() {
-        inputPanel.addScoreChangeListener(this::computeAndDisplay);
-    }
-
-    private void computeAndDisplay() {
-        double quiz = inputPanel.getQuiz();
-        double assignment = inputPanel.getAssignment();
-        double exam = inputPanel.getExam();
-
-        ScoreResult result = gradeComputer.compute(quiz, assignment, exam);
-        inputPanel.updateResult(result.getFinalGrade(), result.getRemarks());
-    }
-
     private void handleAdd() {
         if (inputPanel.hasNoSelections()) {
             showError("Please select a student and subject.");
             return;
         }
-
-        if (inputPanel.hasEmptyScores()) {
-            showError("Please fill in all score fields.");
+        if (inputPanel.hasEmptyFields()) {
+            showError("Please fill in the assessment name and score.");
+            return;
+        }
+        if (inputPanel.hasInvalidScore()) {
+            showError("Score must be a number between 0 and 100.");
             return;
         }
 
-        if (inputPanel.hasInvalidScores()) {
-            showError("Scores must be numbers between 0 and 100.");
-            return;
-        }
+        Assessment assessment = buildAssessmentFromInput(0);
 
-        Grade grade = buildGradeFromInput(0);
-        ScoreResult result = computeResult();
-
-        if (gradeDao.add(grade, result)) {
-            refreshTable();
+        if (assessmentDao.add(assessment)) {
+            refreshAllTabs();
             inputPanel.clear();
         } else {
-            showError("Failed to add grade. This student-subject combination may already exist.");
+            showError("Failed to add. This assessment may already exist for this student/subject/season.");
         }
     }
 
     private void handleEdit() {
-        if (gradeTable.getSelectedRow() == -1) {
-            showError("Please select a grade to edit.");
+        Assessment selected = getSelectedAssessment();
+        if (selected == null) {
+            showError("Please select an assessment to edit.");
+            return;
+        }
+        if (inputPanel.hasEmptyFields()) {
+            showError("Please fill in the assessment name and score.");
+            return;
+        }
+        if (inputPanel.hasInvalidScore()) {
+            showError("Score must be a number between 0 and 100.");
             return;
         }
 
-        if (inputPanel.hasEmptyScores()) {
-            showError("Please fill in all score fields.");
-            return;
-        }
+        Assessment assessment = buildAssessmentFromInput(selected.getAssessmentId());
 
-        if (inputPanel.hasInvalidScores()) {
-            showError("Scores must be numbers between 0 and 100.");
-            return;
-        }
-
-        int gradeId = (int) gradeTable.getValueAt(gradeTable.getSelectedRow(), 0);
-        Grade grade = buildGradeFromInput(gradeId);
-        ScoreResult result = computeResult();
-
-        if (gradeDao.update(grade, result)) {
-            refreshTable();
+        if (assessmentDao.update(assessment)) {
+            refreshAllTabs();
             inputPanel.clear();
         } else {
-            showError("Failed to update grade.");
+            showError("Failed to update assessment.");
         }
     }
 
     private void handleDelete() {
-        int selectedRow = gradeTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            showError("Please select a grade to delete.");
+        Assessment selected = getSelectedAssessment();
+        if (selected == null) {
+            showError("Please select an assessment to delete.");
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Delete this grade record?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            "Delete this assessment record?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            int gradeId = (int) gradeTable.getValueAt(selectedRow, 0);
-            gradeDao.delete(gradeId);
-            refreshTable();
+            assessmentDao.delete(selected.getAssessmentId());
+            refreshAllTabs();
             inputPanel.clear();
         }
     }
@@ -225,58 +247,136 @@ public class GradeForm extends JFrame {
         String keyword = searchField.getText().trim();
 
         if (keyword.isEmpty()) {
-            refreshTable();
+            refreshAllTabs();
             return;
         }
 
-        List<GradeRecord> results = gradeDao.search(keyword);
-        populateTable(results);
+        List<Assessment> results = assessmentDao.search(keyword);
+        populateAllTabs(results);
     }
 
-    private Grade buildGradeFromInput(int gradeId) {
+    private Assessment buildAssessmentFromInput(int assessmentId) {
         Student student = inputPanel.getSelectedStudent();
         Subject subject = inputPanel.getSelectedSubject();
 
-        return new Grade(gradeId, student.getStudentId(), subject.getSubjectId(),
-                         inputPanel.getQuiz(), inputPanel.getAssignment(), inputPanel.getExam());
+        return new Assessment(
+            assessmentId,
+            student.getStudentId(),
+            subject.getSubjectId(),
+            inputPanel.getSelectedSeason(),
+            inputPanel.getAssessmentName(),
+            inputPanel.getScore()
+        );
     }
 
-    private ScoreResult computeResult() {
-        return gradeComputer.compute(
-            inputPanel.getQuiz(), inputPanel.getAssignment(), inputPanel.getExam());
+    private Assessment getSelectedAssessment() {
+        int tabIndex = seasonTabs.getSelectedIndex();
+        GradingSeason season = GradingSeason.values()[tabIndex];
+        JTable table = getTableForTab(tabIndex);
+
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            return null;
+        }
+
+        List<Assessment> records = seasonRecords.getOrDefault(season, new ArrayList<>());
+        if (selectedRow >= records.size()) {
+            return null;
+        }
+        return records.get(selectedRow);
     }
 
-    private void refreshTable() {
-        List<GradeRecord> records = gradeDao.getAll();
-        populateTable(records);
+    private void loadSelectedAssessment() {
+        Assessment selected = getSelectedAssessment();
+        if (selected == null) {
+            return;
+        }
+        inputPanel.fromAssessment(selected);
     }
 
-    private void populateTable(List<GradeRecord> records) {
-        currentRecords = records;
+    private void refreshAllTabs() {
+        List<Assessment> allAssessments = assessmentDao.getAll();
+        populateAllTabs(allAssessments);
+    }
+
+    private void populateAllTabs(List<Assessment> assessments) {
         Map<String, String> studentNames = buildStudentNameMap();
         Map<Integer, String> subjectNames = buildSubjectNameMap();
 
-        DefaultTableModel model = (DefaultTableModel) gradeTable.getModel();
+        for (int i = 0; i < GradingSeason.values().length; i++) {
+            GradingSeason season = GradingSeason.values()[i];
+            List<Assessment> filtered = filterBySeason(assessments, season);
+            seasonRecords.put(season, filtered);
+            populateSeasonTab(i, filtered, studentNames, subjectNames);
+        }
+    }
+
+    private void populateSeasonTab(int tabIndex, List<Assessment> assessments,
+                                   Map<String, String> studentNames,
+                                   Map<Integer, String> subjectNames) {
+        JTable table = getTableForTab(tabIndex);
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
 
-        for (GradeRecord record : records) {
-            Grade grade = record.getGrade();
-            ScoreResult result = record.getScoreResult();
-
-            String studentDisplay = studentNames.getOrDefault(grade.getStudentId(), grade.getStudentId());
-            String subjectDisplay = subjectNames.getOrDefault(grade.getSubjectId(), String.valueOf(grade.getSubjectId()));
+        for (Assessment assessment : assessments) {
+            String studentDisplay = studentNames.getOrDefault(
+                assessment.getStudentId(), assessment.getStudentId());
+            String subjectDisplay = subjectNames.getOrDefault(
+                assessment.getSubjectId(), String.valueOf(assessment.getSubjectId()));
 
             model.addRow(new Object[]{
-                grade.getGradeId(),
+                assessment.getAssessmentId(),
                 studentDisplay,
                 subjectDisplay,
-                grade.getQuiz(),
-                grade.getAssignment(),
-                grade.getExam(),
-                result.getFinalGrade(),
-                result.getRemarks()
+                assessment.getAssessmentName(),
+                assessment.getScore()
             });
         }
+
+        updateSeasonAverage(tabIndex, assessments);
+    }
+
+    private void updateSeasonAverage(int tabIndex, List<Assessment> assessments) {
+        JLabel averageLabel = getAverageLabelForTab(tabIndex);
+
+        if (assessments.isEmpty()) {
+            averageLabel.setText("Season Average: \u2014");
+            averageLabel.setForeground(StyleConstants.TEXT_SECONDARY);
+            return;
+        }
+
+        ScoreResult result = gradeComputer.computeAverage(assessments);
+        String display = String.format("Season Average: %.2f \u2014 %s",
+            result.getFinalGrade(), result.getRemarks());
+        averageLabel.setText(display);
+
+        if ("PASSED".equals(result.getRemarks())) {
+            averageLabel.setForeground(StyleConstants.SUCCESS);
+        } else {
+            averageLabel.setForeground(StyleConstants.DANGER);
+        }
+    }
+
+    private JTable getTableForTab(int tabIndex) {
+        JPanel tabPanel = (JPanel) seasonTabs.getComponentAt(tabIndex);
+        JScrollPane scrollPane = (JScrollPane) tabPanel.getComponent(0);
+        return (JTable) scrollPane.getViewport().getView();
+    }
+
+    private JLabel getAverageLabelForTab(int tabIndex) {
+        JPanel tabPanel = (JPanel) seasonTabs.getComponentAt(tabIndex);
+        JPanel averagePanel = (JPanel) tabPanel.getComponent(1);
+        return (JLabel) averagePanel.getComponent(0);
+    }
+
+    private List<Assessment> filterBySeason(List<Assessment> assessments, GradingSeason season) {
+        List<Assessment> filtered = new ArrayList<>();
+        for (Assessment assessment : assessments) {
+            if (assessment.getSeason() == season) {
+                filtered.add(assessment);
+            }
+        }
+        return filtered;
     }
 
     private Map<String, String> buildStudentNameMap() {
@@ -295,21 +395,6 @@ public class GradeForm extends JFrame {
         return map;
     }
 
-    private void loadSelectedGrade() {
-        int selectedRow = gradeTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            return;
-        }
-
-        GradeRecord record = currentRecords.get(selectedRow);
-        Grade grade = record.getGrade();
-
-        inputPanel.selectStudent(grade.getStudentId());
-        inputPanel.selectSubject(grade.getSubjectId());
-        inputPanel.setScores(grade.getQuiz(), grade.getAssignment(), grade.getExam());
-    }
-
     private void populateDropdowns() {
         inputPanel.populateStudents(new StudentDao().getAll());
         inputPanel.populateSubjects(new SubjectDao().getAll());
@@ -322,5 +407,29 @@ public class GradeForm extends JFrame {
 
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void styleTableHeader(JTable table) {
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(StyleConstants.TABLE_HEADER_BG);
+        header.setForeground(StyleConstants.TABLE_HEADER_FG);
+        header.setFont(StyleConstants.TABLE_HEADER_FONT);
+    }
+
+    private DefaultTableCellRenderer createAlternatingRenderer() {
+        return new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component cell = super.getTableCellRendererComponent(
+                    t, value, isSelected, hasFocus, row, column);
+
+                if (!isSelected) {
+                    cell.setBackground(row % 2 == 0
+                        ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+                }
+                return cell;
+            }
+        };
     }
 }

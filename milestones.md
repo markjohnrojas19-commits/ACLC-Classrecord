@@ -92,32 +92,35 @@ ACLC-Classrecord/
     model/                — Plain Java classes (domain objects)
       Student.java          — student data (id, name, course, year, section, gender)
       Subject.java          — subject data (code, name)
-      Grade.java            — grade data (quiz, assignment, exam, final grade, remarks)
+      Assessment.java       — assessment data (studentId, subjectId, season, name, score)
+      GradingSeason.java    — enum: PRELIM, MIDTERM, PRE_FINAL, FINAL
+      ScoreResult.java      — computed grade result (finalGrade, remarks)
       User.java             — login credentials and role
+      Role.java             — enum: ADMIN, INSTRUCTOR
     dao/                  — Data Access Objects (JDBC operations)
       DatabaseConnection.java — MySQL connection utility
       StudentDao.java       — student CRUD queries
       SubjectDao.java       — subject CRUD queries
-      GradeDao.java         — grade CRUD queries
+      AssessmentDao.java    — assessment CRUD queries (by season)
       UserDao.java          — user authentication queries
-      DashboardDao.java     — dashboard summary count queries
+      DashboardDao.java     — dashboard summary count queries (uses AVG aggregation)
     service/              — Business logic
-      GradeComputer.java    — grade computation with configurable weights
-      AuthService.java      — login validation
+      GradeComputer.java    — computes average from assessment lists
     ui/                   — Java Swing forms
       LoginForm.java        — login screen
       DashboardForm.java    — main menu with summary stats
-      StudentForm.java      — student management (CRUD + JTable)
-      SubjectForm.java      — subject management (CRUD + JTable)
-      GradeForm.java        — grade input and auto-computation
       DashboardStatsPanel.java — dashboard summary statistics display
+      StudentForm.java      — student management (CRUD + JTabbedPane by section)
       StudentInputPanel.java   — student input fields (extracted atom)
-      GradeInputPanel.java     — grade input fields + dropdowns (extracted atom)
+      SectionTablePanel.java   — reusable section table (styled JTable atom)
+      SubjectForm.java      — subject management (CRUD + JTable)
+      GradeForm.java        — assessment management (CRUD + JTabbedPane by season)
+      AssessmentInputPanel.java — assessment input fields + dropdowns (extracted atom)
     util/                 — Shared utilities
-      GradeConstants.java   — configurable grade weights (QUIZ_WEIGHT, etc.)
-      StyleConstants.java   — shared UI styling (fonts, borders, gaps)
+      GradeConstants.java   — passing grade threshold + score bounds
+      StyleConstants.java   — shared UI styling (fonts, borders, gaps, colors)
   sql/
-    schema.sql            — database creation script
+    schema.sql            — database creation script (assessments table)
   README.md
   CLAUDE.md
   milestones.md
@@ -156,16 +159,14 @@ Table: subjects
   subject_code  VARCHAR(20) UNIQUE NOT NULL
   subject_name  VARCHAR(100) NOT NULL
 
-Table: grades
-  grade_id      INT AUTO_INCREMENT PRIMARY KEY
-  student_id    VARCHAR(20) NOT NULL  (FK -> students)
-  subject_id    INT NOT NULL          (FK -> subjects)
-  quiz          DOUBLE DEFAULT 0
-  assignment    DOUBLE DEFAULT 0
-  exam          DOUBLE DEFAULT 0
-  final_grade   DOUBLE DEFAULT 0
-  remarks       VARCHAR(10) DEFAULT 'N/A'
-  UNIQUE(student_id, subject_id)
+Table: assessments
+  assessment_id    INT AUTO_INCREMENT PRIMARY KEY
+  student_id       VARCHAR(20) NOT NULL  (FK -> students)
+  subject_id       INT NOT NULL          (FK -> subjects)
+  season           ENUM('Prelim', 'Midterm', 'Pre-Final', 'Final') NOT NULL
+  assessment_name  VARCHAR(50) NOT NULL
+  score            DOUBLE NOT NULL DEFAULT 0
+  UNIQUE(student_id, subject_id, season, assessment_name)
 ```
 
 ---
@@ -315,11 +316,26 @@ Table: grades
 * [x] Step 8.4: Error handling for database failures (DashboardDao returns -1, panel shows "Error")
 * [x] Milestone Complete: App feels polished and handles edge cases gracefully
 
+## Milestone 9 — Section Organization & Assessment-Based Grading
+
+> **Goal:** Replace the flat grade table with section-organized student views and a flexible assessment-based grading system with grading seasons.
+
+* [x] Step 9.1: Create `GradingSeason` enum (PRELIM, MIDTERM, PRE_FINAL, FINAL) and `Assessment` model class (assessmentId, studentId, subjectId, season, assessmentName, score)
+* [x] Step 9.2: Replace `grades` table with `assessments` table in schema.sql — flexible per-assessment scores instead of fixed quiz/assignment/exam columns
+* [x] Step 9.3: Create `AssessmentDao.java` with CRUD + getBySeason + search
+* [x] Step 9.4: Update `GradeComputer` to compute simple average from assessment lists. Simplify `GradeConstants` to only PASSING_GRADE + score bounds
+* [x] Step 9.5: Create `SectionTablePanel` atom — styled JTable with alternating row colors and dark header
+* [x] Step 9.6: Refactor `StudentForm` to use JTabbedPane — "All" tab + dynamic tabs per section. Sections extracted from student data automatically
+* [x] Step 9.7: Create `AssessmentInputPanel` (season dropdown, assessment name, score) and refactor `GradeForm` with season tabs (Prelim, Midterm, Pre-Final, Final) each showing filtered assessments + season average
+* [x] Step 9.8: Update `DashboardDao` to compute passed/failed from `AVG(score)` aggregation on assessments table. Update `StyleConstants` with modern color palette (slate grays, muted blues, alternating row colors)
+* [x] Step 9.9: Remove old files (Grade.java, GradeRecord.java, GradeDao.java, GradeInputPanel.java). Update md files.
+* [x] Milestone Complete: Students organized by section, grades organized by season with flexible assessment types
+
 ---
 
 # Nice-to-Have Milestones (If Time Permits)
 
-## Milestone 9 — Attendance
+## Milestone 10 — Attendance
 
 * [ ] Step 9.1: Create attendance table in database
 * [ ] Step 9.2: Create `Attendance.java` model + `AttendanceDao.java`
@@ -327,10 +343,10 @@ Table: grades
 * [ ] Step 9.4: Show attendance percentage
 * [ ] Milestone Complete: Attendance tracking works end-to-end
 
-## Milestone 10 — Print Reports
+## Milestone 11 — Print Reports
 
-* [ ] Step 10.1: Add print button to `GradeForm`
-* [ ] Step 10.2: Use `JTable.print()` to print class record
+* [ ] Step 11.1: Add print button to `GradeForm`
+* [ ] Step 11.2: Use `JTable.print()` to print class record
 * [ ] Milestone Complete: Instructor can print a grade sheet
 
 ---
@@ -360,9 +376,8 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 
 ## Future Milestones (Beyond School Project)
 
-* [ ] **M11 — Export:** PDF/Excel export using Apache POI / iTextPDF
-* [ ] **M12 — Advanced Attendance:** Calendar view, automated late detection
-* [ ] **M13 — Multi-term:** Support midterm/finals/general average computation
+* [ ] **M12 — Export:** PDF/Excel export using Apache POI / iTextPDF
+* [ ] **M13 — Advanced Attendance:** Calendar view, automated late detection
 
 ---
 
@@ -388,6 +403,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 6 complete — grade auto-compute
 * [x] Milestone 7 complete — dashboard stats
 * [x] Milestone 8 complete — polished for submission
+* [x] Milestone 9 complete — section tabs + assessment-based grading with seasons
 
 ---
 

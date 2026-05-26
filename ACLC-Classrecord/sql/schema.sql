@@ -30,17 +30,17 @@ CREATE TABLE IF NOT EXISTS subjects (
     subject_name  VARCHAR(100) NOT NULL
 );
 
--- Grades table
-CREATE TABLE IF NOT EXISTS grades (
-    grade_id      INT AUTO_INCREMENT PRIMARY KEY,
-    student_id    VARCHAR(20) NOT NULL,
-    subject_id    INT NOT NULL,
-    quiz          DOUBLE DEFAULT 0,
-    assignment    DOUBLE DEFAULT 0,
-    exam          DOUBLE DEFAULT 0,
-    final_grade   DOUBLE DEFAULT 0,
-    remarks       VARCHAR(10) DEFAULT 'N/A',
-    UNIQUE (student_id, subject_id),
+-- Assessments table (replaces old grades table)
+-- Each row is one assessment score for a student in a subject during a grading season.
+-- Examples: "Quiz 1" under Midterm, "Unit Test A" under Prelim, "Project" under Final.
+CREATE TABLE IF NOT EXISTS assessments (
+    assessment_id    INT AUTO_INCREMENT PRIMARY KEY,
+    student_id       VARCHAR(20) NOT NULL,
+    subject_id       INT NOT NULL,
+    season           ENUM('Prelim', 'Midterm', 'Pre-Final', 'Final') NOT NULL,
+    assessment_name  VARCHAR(50) NOT NULL,
+    score            DOUBLE NOT NULL DEFAULT 0,
+    UNIQUE (student_id, subject_id, season, assessment_name),
     FOREIGN KEY (student_id) REFERENCES students(student_id),
     FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
 );

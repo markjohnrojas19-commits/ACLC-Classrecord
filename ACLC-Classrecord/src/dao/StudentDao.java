@@ -71,18 +71,42 @@ public class StudentDao {
     }
 
     public boolean delete(String studentId) {
-        String sql = "DELETE FROM students WHERE student_id = ?";
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, studentId);
-            statement.executeUpdate();
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            deleteRelatedGrades(connection, studentId);
+            deleteRelatedAssessments(connection, studentId);
+            deleteStudent(connection, studentId);
             return true;
 
         } catch (SQLException e) {
             System.out.println("Delete student error: " + e.getMessage());
             return false;
+        }
+    }
+
+    private void deleteRelatedGrades(Connection connection, String studentId) throws SQLException {
+        String sql = "DELETE FROM grades WHERE student_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, studentId);
+            statement.executeUpdate();
+        }
+    }
+
+    private void deleteRelatedAssessments(Connection connection, String studentId) throws SQLException {
+        String sql = "DELETE FROM assessments WHERE student_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, studentId);
+            statement.executeUpdate();
+        }
+    }
+
+    private void deleteStudent(Connection connection, String studentId) throws SQLException {
+        String sql = "DELETE FROM students WHERE student_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, studentId);
+            statement.executeUpdate();
         }
     }
 

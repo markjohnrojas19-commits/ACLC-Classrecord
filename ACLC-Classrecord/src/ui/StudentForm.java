@@ -2,18 +2,18 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.table.DefaultTableModel;
 
 import dao.StudentDao;
 import model.Student;
@@ -23,15 +23,15 @@ import util.StyleConstants;
 public class StudentForm extends JFrame {
 
     private StudentInputPanel inputPanel;
-    private JTable studentTable;
+    private JTabbedPane sectionTabs;
     private StudentDao studentDao;
     private JTextField searchField;
 
     public StudentForm(User currentUser) {
         studentDao = new StudentDao();
 
-        setTitle("ACLC Class Record — Student Management");
-        setSize(900, 600);
+        setTitle("ACLC Class Record \u2014 Student Management");
+        setSize(950, 650);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -39,15 +39,17 @@ public class StudentForm extends JFrame {
         add(createCenterPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
 
-        refreshTable();
+        refreshTabs();
     }
 
     private JPanel createHeaderPanel(User currentUser) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(StyleConstants.HEADER_BORDER);
+        panel.setBackground(StyleConstants.WHITE);
 
         JLabel titleLabel = new JLabel("Student Management");
         titleLabel.setFont(StyleConstants.TITLE_FONT);
+        titleLabel.setForeground(StyleConstants.PRIMARY);
 
         JButton backButton = new JButton("Back to Dashboard");
         backButton.addActionListener(e -> handleBack(currentUser));
@@ -63,34 +65,18 @@ public class StudentForm extends JFrame {
 
         inputPanel = new StudentInputPanel();
 
-        studentTable = createStudentTable();
-        JScrollPane scrollPane = new JScrollPane(studentTable);
-        scrollPane.setBorder(StyleConstants.TABLE_BORDER);
+        sectionTabs = new JTabbedPane();
+        sectionTabs.setFont(StyleConstants.TAB_FONT);
 
         panel.add(inputPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(sectionTabs, BorderLayout.CENTER);
 
         return panel;
     }
 
-    private JTable createStudentTable() {
-        String[] columns = {"Student ID", "First Name", "Last Name", "Course", "Year", "Section", "Gender"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        JTable table = new JTable(model);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getSelectionModel().addListSelectionListener(e -> loadSelectedStudent());
-
-        return table;
-    }
-
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
+            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton addButton = new JButton("Add");
@@ -117,6 +103,84 @@ public class StudentForm extends JFrame {
         return panel;
     }
 
+    private void refreshTabs() {
+        List<Student> allStudents = studentDao.getAll();
+        buildSectionTabs(allStudents);
+    }
+
+    private void buildSectionTabs(List<Student> students) {
+        sectionTabs.removeAll();
+
+        SectionTablePanel allPanel = createSectionPanel();
+        allPanel.populate(students);
+        sectionTabs.addTab("All", allPanel);
+
+        List<String> sections = extractSections(students);
+
+        for (String section : sections) {
+            SectionTablePanel sectionPanel = createSectionPanel();
+            sectionPanel.populate(filterBySection(students, section));
+            sectionTabs.addTab("Section " + section, sectionPanel);
+        }
+    }
+
+    private SectionTablePanel createSectionPanel() {
+        SectionTablePanel panel = new SectionTablePanel();
+        panel.getTable().getSelectionModel()
+            .addListSelectionListener(e -> loadSelectedFromActiveTab());
+        return panel;
+    }
+
+    private List<String> extractSections(List<Student> students) {
+        Set<String> sections = new LinkedHashSet<>();
+        for (Student student : students) {
+            sections.add(student.getSection());
+        }
+        return new ArrayList<>(sections);
+    }
+
+    private List<Student> filterBySection(List<Student> students, String section) {
+        List<Student> filtered = new ArrayList<>();
+        for (Student student : students) {
+            if (student.getSection().equals(section)) {
+                filtered.add(student);
+            }
+        }
+        return filtered;
+    }
+
+    private SectionTablePanel getActivePanel() {
+        return (SectionTablePanel) sectionTabs.getSelectedComponent();
+    }
+
+    private void loadSelectedFromActiveTab() {
+        SectionTablePanel activePanel = getActivePanel();
+        if (activePanel == null) {
+            return;
+        }
+
+        int selectedRow = activePanel.getSelectedRow();
+        if (selectedRow == -1) {
+            return;
+        }
+
+        Student student = extractStudentFromRow(activePanel, selectedRow);
+        inputPanel.fromStudent(student);
+        inputPanel.lockStudentId();
+    }
+
+    private Student extractStudentFromRow(SectionTablePanel panel, int row) {
+        return new Student(
+            (String) panel.getValueAt(row, 0),
+            (String) panel.getValueAt(row, 1),
+            (String) panel.getValueAt(row, 2),
+            (String) panel.getValueAt(row, 3),
+            (int) panel.getValueAt(row, 4),
+            (String) panel.getValueAt(row, 5),
+            (String) panel.getValueAt(row, 6)
+        );
+    }
+
     private void handleAdd() {
         if (inputPanel.hasEmptyFields()) {
             showError("Please fill in all fields.");
@@ -131,7 +195,7 @@ public class StudentForm extends JFrame {
         Student student = inputPanel.toStudent();
 
         if (studentDao.add(student)) {
-            refreshTable();
+            refreshTabs();
             inputPanel.clear();
         } else {
             showError("Failed to add student. The Student ID may already exist.");
@@ -139,7 +203,8 @@ public class StudentForm extends JFrame {
     }
 
     private void handleEdit() {
-        if (studentTable.getSelectedRow() == -1) {
+        SectionTablePanel activePanel = getActivePanel();
+        if (activePanel == null || activePanel.getSelectedRow() == -1) {
             showError("Please select a student to edit.");
             return;
         }
@@ -157,7 +222,7 @@ public class StudentForm extends JFrame {
         Student student = inputPanel.toStudent();
 
         if (studentDao.update(student)) {
-            refreshTable();
+            refreshTabs();
             inputPanel.clear();
         } else {
             showError("Failed to update student.");
@@ -165,20 +230,19 @@ public class StudentForm extends JFrame {
     }
 
     private void handleDelete() {
-        int selectedRow = studentTable.getSelectedRow();
-
-        if (selectedRow == -1) {
+        SectionTablePanel activePanel = getActivePanel();
+        if (activePanel == null || activePanel.getSelectedRow() == -1) {
             showError("Please select a student to delete.");
             return;
         }
 
-        String studentId = (String) studentTable.getValueAt(selectedRow, 0);
+        String studentId = (String) activePanel.getValueAt(activePanel.getSelectedRow(), 0);
         int confirm = JOptionPane.showConfirmDialog(this,
             "Delete student " + studentId + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             studentDao.delete(studentId);
-            refreshTable();
+            refreshTabs();
             inputPanel.clear();
         }
     }
@@ -187,55 +251,12 @@ public class StudentForm extends JFrame {
         String keyword = searchField.getText().trim();
 
         if (keyword.isEmpty()) {
-            refreshTable();
+            refreshTabs();
             return;
         }
 
         List<Student> results = studentDao.search(keyword);
-        populateTable(results);
-    }
-
-    private void refreshTable() {
-        List<Student> students = studentDao.getAll();
-        populateTable(students);
-    }
-
-    private void populateTable(List<Student> students) {
-        DefaultTableModel model = (DefaultTableModel) studentTable.getModel();
-        model.setRowCount(0);
-
-        for (Student student : students) {
-            model.addRow(new Object[]{
-                student.getStudentId(),
-                student.getFirstname(),
-                student.getLastname(),
-                student.getCourse(),
-                student.getYearLevel(),
-                student.getSection(),
-                student.getGender()
-            });
-        }
-    }
-
-    private void loadSelectedStudent() {
-        int selectedRow = studentTable.getSelectedRow();
-
-        if (selectedRow == -1) {
-            return;
-        }
-
-        Student student = new Student(
-            (String) studentTable.getValueAt(selectedRow, 0),
-            (String) studentTable.getValueAt(selectedRow, 1),
-            (String) studentTable.getValueAt(selectedRow, 2),
-            (String) studentTable.getValueAt(selectedRow, 3),
-            (int) studentTable.getValueAt(selectedRow, 4),
-            (String) studentTable.getValueAt(selectedRow, 5),
-            (String) studentTable.getValueAt(selectedRow, 6)
-        );
-
-        inputPanel.fromStudent(student);
-        inputPanel.lockStudentId();
+        buildSectionTabs(results);
     }
 
     private void handleBack(User currentUser) {

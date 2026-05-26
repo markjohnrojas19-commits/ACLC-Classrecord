@@ -1,24 +1,33 @@
 package service;
 
+import java.util.List;
+
+import model.Assessment;
 import model.ScoreResult;
 import util.GradeConstants;
 
 public class GradeComputer {
 
-    public ScoreResult compute(double quiz, double assignment, double exam) {
-        double finalGrade = computeWeightedAverage(quiz, assignment, exam);
-        String remarks = determineRemarks(finalGrade);
-        return new ScoreResult(finalGrade, remarks);
+    public ScoreResult computeAverage(List<Assessment> assessments) {
+        double average = calculateAverage(assessments);
+        String remarks = determineRemarks(average);
+        return new ScoreResult(average, remarks);
     }
 
-    private double computeWeightedAverage(double quiz, double assignment, double exam) {
-        return (quiz * GradeConstants.QUIZ_WEIGHT)
-             + (assignment * GradeConstants.ASSIGNMENT_WEIGHT)
-             + (exam * GradeConstants.EXAM_WEIGHT);
+    private double calculateAverage(List<Assessment> assessments) {
+        if (assessments.isEmpty()) {
+            return 0.0;
+        }
+
+        double total = 0.0;
+        for (Assessment assessment : assessments) {
+            total += assessment.getScore();
+        }
+        return total / assessments.size();
     }
 
-    private String determineRemarks(double finalGrade) {
-        if (finalGrade >= GradeConstants.PASSING_GRADE) {
+    private String determineRemarks(double average) {
+        if (average >= GradeConstants.PASSING_GRADE) {
             return "PASSED";
         }
         return "FAILED";
