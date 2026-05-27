@@ -362,18 +362,19 @@ Table: assessments
 
 ---
 
-## Milestone 10 — Attendance Tracking (P0 — Must Have)
+## Milestone 10 — Enrollment & Attendance Tracking (P0 — Must Have)
 
-> **Why P0:** A "Class Record" without attendance is only half complete. ACLC requires attendance reporting. Without this, instructors still need a separate system.
+> **Why P0:** A "Class Record" without attendance is only half complete. ACLC requires attendance reporting. Without this, instructors still need a separate system. Enrollment links students to subjects — a prerequisite for meaningful attendance and grade filtering.
 
-* [ ] Step 10.1: Design `attendance` table in schema.sql — columns: attendance_id (PK), student_id (FK), subject_id (FK), date, status (ENUM: 'Present', 'Absent', 'Late', 'Excused')
-* [ ] Step 10.2: Create `AttendanceStatus.java` enum (PRESENT, ABSENT, LATE, EXCUSED) and `Attendance.java` model class
-* [ ] Step 10.3: Create `AttendanceDao.java` — add, getByDate, getByStudent, update, delete
-* [ ] Step 10.4: Create `AttendanceForm.java` — date picker, subject dropdown, table of students with status dropdowns. Bulk entry (mark all students for one date at once)
-* [ ] Step 10.5: Add attendance summary per student — count/percentage of Present, Absent, Late, Excused
-* [ ] Step 10.6: Add "Attendance" navigation button to DashboardForm
-* [ ] Step 10.7: Update DashboardStatsPanel to show attendance summary (e.g., "Today's Attendance: 45/50")
-* [ ] Milestone Complete: Instructor can mark attendance per date per subject, view attendance summary per student
+* [x] Step 10.1: Design `enrollments` and `attendance` tables in schema.sql — enrollments links students to subjects (unique student_id + subject_id), attendance tracks per-date status (unique student_id + subject_id + date)
+* [x] Step 10.2: Create `AttendanceStatus.java` enum (PRESENT, ABSENT, LATE, EXCUSED), `Attendance.java` model (5 fields), and `Enrollment.java` model (3 fields)
+* [x] Step 10.3: Create `EnrollmentDao.java` — enroll, unenroll, isEnrolled, getBySubject, getStudentsBySubjectAndSection, getSectionsBySubject
+* [x] Step 10.4: Create `AttendanceDao.java` — add, update, saveOrUpdate (upsert), getBySubjectAndDate, getByStudent, countByStatus, countTodayPresent, countTodayTotal
+* [x] Step 10.5: Create `EnrollmentForm.java` + `EnrollmentFilterPanel.java` — checkbox table by subject + section, bulk enroll/unenroll buttons, save compares checkbox state to DB and enrolls/unenrolls accordingly
+* [x] Step 10.6: Create `AttendanceForm.java` + `AttendanceFilterPanel.java` — subject + section + date filters, status dropdowns per student, "Mark All Present" bulk button, only shows enrolled students
+* [x] Step 10.7: Add "Enrollment" and "Attendance" navigation buttons to DashboardForm
+* [x] Step 10.8: Update DashboardStatsPanel — added Enrolled count and "Today's Attendance: X / Y" display. Grid layout expanded to 3x2.
+* [x] Milestone Complete: Instructor can enroll students in subjects, mark attendance per date per subject (only enrolled students), view attendance on dashboard
 
 ## Milestone 11 — Grade Export & Printing (P0 — Must Have)
 
@@ -390,12 +391,12 @@ Table: assessments
 
 > **Why P1:** Right now each season shows its own average, but there's no combined final grade. Instructors need ONE final grade per student per subject that combines all four seasons. In ACLC, seasons are typically weighted differently (e.g., Prelim 20%, Midterm 20%, Pre-Final 20%, Final 40%).
 
-* [ ] Step 12.1: Add season weight constants to `GradeConstants.java` — PRELIM_WEIGHT, MIDTERM_WEIGHT, PRE_FINAL_WEIGHT, FINAL_WEIGHT (default: 0.20, 0.20, 0.20, 0.40)
-* [ ] Step 12.2: Add `computeFinalGrade(Map<GradingSeason, List<Assessment>>)` method to `GradeComputer` — computes weighted average across all seasons
-* [ ] Step 12.3: Add a "Final Grade" tab or summary panel in GradeForm — shows one row per student-subject pair with: Prelim avg, Midterm avg, Pre-Final avg, Final avg, Weighted Final Grade, Remarks
-* [ ] Step 12.4: Color-code the final grade (green for passed, red for failed)
-* [ ] Step 12.5: Update DashboardDao passed/failed counts to use the weighted final grade instead of simple average
-* [ ] Milestone Complete: Instructor sees a combined final grade per student per subject with configurable season weights
+* [x] Step 12.1: Add season weight constants to `GradeConstants.java` — PRELIM_WEIGHT, MIDTERM_WEIGHT, PRE_FINAL_WEIGHT, FINAL_WEIGHT (default: 0.20, 0.20, 0.20, 0.40)
+* [x] Step 12.2: Add `computeFinalGrade(Map<GradingSeason, List<Assessment>>)` method to `GradeComputer` — computes weighted average across all seasons
+* [x] Step 12.3: Add a "Final Grade" tab or summary panel in GradeForm — shows one row per student-subject pair with: Prelim avg, Midterm avg, Pre-Final avg, Final avg, Weighted Final Grade, Remarks
+* [x] Step 12.4: Color-code the final grade (green for passed, red for failed)
+* [x] Step 12.5: Update DashboardDao passed/failed counts to use the weighted final grade instead of simple average
+* [x] Milestone Complete: Instructor sees a combined final grade per student per subject with configurable season weights
 
 ## Milestone 13 — Student Grade Summary / Report Card View (P1 — Should Have)
 
@@ -508,9 +509,9 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 7 complete — dashboard stats
 * [x] Milestone 8 complete — polished for submission
 * [x] Milestone 9 complete — section tabs + assessment-based grading with seasons
-* [ ] Milestone 10 — Attendance Tracking (P0)
+* [x] Milestone 10 complete — enrollment & attendance tracking with section-based workflow
 * [ ] Milestone 11 — Grade Export & Printing (P0)
-* [ ] Milestone 12 — Final Grade Across Seasons (P1)
+* [x] Milestone 12 — Final Grade Across Seasons (P1)
 * [ ] Milestone 13 — Student Grade Summary / Report Card (P1)
 * [ ] Milestone 14 — UX Improvements (P2)
 * [ ] Milestone 15 — Advanced Filtering (P2)

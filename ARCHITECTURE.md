@@ -96,7 +96,7 @@ This is the core workflow of the system.
 3. These counts are displayed in labels on the dashboard (Passed in green, Failed in red).
 4. Navigation buttons allow the user to open `StudentForm`, `SubjectForm`, or `GradeForm`.
 
-**How passed/failed counts work with assessments:** Since individual assessments don't have a final grade, the dashboard uses SQL aggregation: `SELECT ... FROM assessments GROUP BY student_id, subject_id HAVING AVG(score) >= 75.0`. This groups all of a student's assessments in a subject (across all seasons) and checks if the overall average passes.
+**How passed/failed counts work with weighted grades:** The dashboard uses SQL conditional aggregation to compute the same weighted formula as `GradeComputer.computeFinalGrade()`. For each student-subject pair: `COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * 0.20 + ... + COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * 0.40`. The `HAVING` clause checks if this weighted grade is >= 75 (passed) or < 75 (failed). Season weights are passed as PreparedStatement parameters from `GradeConstants`, keeping the SQL and Java computations in sync.
 
 **Why DashboardDao is separate from StudentDao/SubjectDao/AssessmentDao:** The dashboard counts are a display concern — aggregate queries for a summary view. They don't belong in the CRUD DAOs because those atoms exist to manage individual records. `DashboardDao` is its own atom with a single responsibility: provide dashboard statistics.
 
@@ -151,3 +151,72 @@ In this project, the service layer is thin (mainly `GradeComputer`), because the
 6. The season dropdown in the input panel auto-selects to match the active tab's season when loading from a row selection.
 
 **Assessment storage:** Each assessment is one row: (student_id, subject_id, season, assessment_name, score). The UNIQUE constraint prevents duplicate assessment names within the same student-subject-season combination.
+
+### How does the Final Grade tab work?
+
+The 5th tab in `GradeForm` — "Final Grade" — shows a summary of weighted grades across all four seasons.
+
+1. When the tab populates, `populateFinalGradeTab()` groups all assessments by student-subject pair using a composite key (`studentId|subjectId`).
+2. For each pair, it further groups assessments by `GradingSeason`.
+3. Each season's simple average is computed via `GradeComputer.computeAverage()`.
+4. The weighted final grade is computed via `GradeComputer.computeFinalGrade()` — Prelim × 0.20 + Midterm × 0.20 + Pre-Final × 0.20 + Final × 0.40.
+5. One row per student-subject pair: Student, Subject, Prelim avg, Midterm avg, Pre-Final avg, Final avg, Weighted Final Grade, Remarks.
+6. The Final Grade and Remarks columns are color-coded: green for PASSED (>= 75), red for FAILED (< 75).
+
+**Read-only tab.** The Final Grade tab is a summary view. Clicking a row does not populate the input panel (the `getSelectedAssessment()` guard returns null for tab index >= 4). To edit individual assessments, use the season tabs.
+
+**Missing seasons show 0.00.** If a student has no assessments in a season, that season's average is 0.00 and contributes 0 to the weighted total.
+
+---
+
+## What happens when students are enrolled in a subject?
+
+Enrollment is the bridge between students and subjects. Before a student can have attendance marked or grades entered for a subject, they must be enrolled.
+
+1. User navigates to `EnrollmentForm` from the dashboard.
+2. `EnrollmentFilterPanel` shows two dropdowns: Subject and Section. Subjects come from `SubjectDao.getAll()`. Sections come from `StudentDao` (all distinct sections in the students table).
+3. User selects a subject and section. `EnrollmentForm` loads all students in that section and shows them in a JTable with a checkbox column.
+4. For each student, the checkbox is pre-populated: checked if `EnrollmentDao.isEnrolled(studentId, subjectId)` returns true.
+5. User checks/unchecks students and clicks "Save."
+6. Save logic compares each row's checkbox state to the database:
+   - Checked + not enrolled → `EnrollmentDao.enroll(studentId, subjectId)`
+   - Unchecked + enrolled → `EnrollmentDao.unenrollByStudentAndSubject(studentId, subjectId)`
+   - No change → skip
+7. A summary dialog shows how many were enrolled/unenrolled.
+
+**Bulk operations:** "Enroll All" checks every box, "Unenroll All" unchecks every box — but changes don't persist until "Save" is clicked.
+
+**Why enrollment exists:** Without it, attendance and grade forms would show every student in the database for every subject. Enrollment scopes the data — only enrolled students appear in `AttendanceForm` and `GradeForm`.
+
+---
+
+## What happens when attendance is marked?
+
+1. User navigates to `AttendanceForm` from the dashboard.
+2. `AttendanceFilterPanel` shows three controls: Subject dropdown, Section dropdown (populated dynamically by `EnrollmentDao.getSectionsBySubject()`), and Date field (defaults to today).
+3. User selects a subject, section, and date. `AttendanceForm` loads enrolled students via `EnrollmentDao.getStudentsBySubjectAndSection()`.
+4. Each student row has a status dropdown: Present, Absent, Late, Excused. If attendance was already marked for this date, existing statuses are pre-loaded via `AttendanceDao.getBySubjectAndDate()`.
+5. User sets each student's status and clicks "Save."
+6. For each row, `AttendanceDao.saveOrUpdate()` checks if a record exists for that student+subject+date:
+   - If exists → updates the status
+   - If not → inserts a new record
+7. This upsert pattern means re-saving attendance for the same date updates rather than duplicates.
+
+**Bulk entry:** "Mark All Present" sets every dropdown to "Present" — useful for days with full attendance. User still clicks "Save" to persist.
+
+**Only enrolled students appear.** The `EnrollmentDao.getStudentsBySubjectAndSection()` JOIN query ensures only students enrolled in the selected subject AND belonging to the selected section are shown.
+
+---
+
+## How does the dashboard show enrollment and attendance?
+
+The dashboard stats panel (`DashboardStatsPanel`) shows 6 statistics in a 3x2 grid:
+
+1. **Total Students** — `DashboardDao.countStudents()`
+2. **Total Subjects** — `DashboardDao.countSubjects()`
+3. **Enrolled** — `DashboardDao.countEnrolled()` (total enrollment records)
+4. **Passed** — `DashboardDao.countPassed()` (student-subject pairs with AVG score >= 75)
+5. **Failed** — `DashboardDao.countFailed()` (student-subject pairs with AVG score < 75)
+6. **Today's Attendance** — displayed as "X / Y" where X = `countTodayPresent()` and Y = `countTodayTotal()`
+
+All counts refresh when the dashboard opens via `statsPanel.refresh()`.

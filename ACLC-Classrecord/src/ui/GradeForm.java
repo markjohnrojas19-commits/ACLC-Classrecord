@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,6 +102,8 @@ public class GradeForm extends JFrame {
             tabs.addTab(season.toDisplayName(), tabContent);
         }
 
+        tabs.addTab("Final Grade", createFinalGradeTabContent());
+
         return tabs;
     }
 
@@ -126,6 +129,37 @@ public class GradeForm extends JFrame {
         panel.add(averagePanel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private JPanel createFinalGradeTabContent() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(StyleConstants.WHITE);
+
+        JTable table = createFinalGradeTable();
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JTable createFinalGradeTable() {
+        String[] columns = {"Student", "Subject", "Prelim", "Midterm",
+                            "Pre-Final", "Final", "Final Grade", "Remarks"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
+        table.setFont(StyleConstants.BODY_FONT);
+        table.setGridColor(StyleConstants.BORDER_COLOR);
+        table.setDefaultRenderer(Object.class, createFinalGradeRenderer());
+        styleTableHeader(table);
+
+        return table;
     }
 
     private JTable createAssessmentTable() {
@@ -271,6 +305,9 @@ public class GradeForm extends JFrame {
 
     private Assessment getSelectedAssessment() {
         int tabIndex = seasonTabs.getSelectedIndex();
+        if (tabIndex >= GradingSeason.values().length) {
+            return null;
+        }
         GradingSeason season = GradingSeason.values()[tabIndex];
         JTable table = getTableForTab(tabIndex);
 
@@ -309,6 +346,8 @@ public class GradeForm extends JFrame {
             seasonRecords.put(season, filtered);
             populateSeasonTab(i, filtered, studentNames, subjectNames);
         }
+
+        populateFinalGradeTab(assessments, studentNames, subjectNames);
     }
 
     private void populateSeasonTab(int tabIndex, List<Assessment> assessments,
@@ -355,6 +394,72 @@ public class GradeForm extends JFrame {
         } else {
             averageLabel.setForeground(StyleConstants.DANGER);
         }
+    }
+
+    private void populateFinalGradeTab(List<Assessment> assessments,
+                                       Map<String, String> studentNames,
+                                       Map<Integer, String> subjectNames) {
+        JTable table = getTableForTab(GradingSeason.values().length);
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
+
+        Map<String, Map<GradingSeason, List<Assessment>>> grouped =
+            groupByStudentSubject(assessments);
+
+        for (Map.Entry<String, Map<GradingSeason, List<Assessment>>> entry : grouped.entrySet()) {
+            String key = entry.getKey();
+            Map<GradingSeason, List<Assessment>> seasonMap = entry.getValue();
+
+            String studentId = key.split("\\|")[0];
+            int subjectId = Integer.parseInt(key.split("\\|")[1]);
+
+            String studentDisplay = studentNames.getOrDefault(studentId, studentId);
+            String subjectDisplay = subjectNames.getOrDefault(subjectId,
+                String.valueOf(subjectId));
+
+            ScoreResult weightedResult = gradeComputer.computeFinalGrade(seasonMap);
+
+            model.addRow(new Object[]{
+                studentDisplay,
+                subjectDisplay,
+                formatSeasonAverage(seasonMap, GradingSeason.PRELIM),
+                formatSeasonAverage(seasonMap, GradingSeason.MIDTERM),
+                formatSeasonAverage(seasonMap, GradingSeason.PRE_FINAL),
+                formatSeasonAverage(seasonMap, GradingSeason.FINAL),
+                String.format("%.2f", weightedResult.getFinalGrade()),
+                weightedResult.getRemarks()
+            });
+        }
+    }
+
+    private String formatSeasonAverage(Map<GradingSeason, List<Assessment>> seasonMap,
+                                       GradingSeason season) {
+        ScoreResult result = gradeComputer.computeAverage(seasonMap.get(season));
+        return String.format("%.2f", result.getFinalGrade());
+    }
+
+    private Map<String, Map<GradingSeason, List<Assessment>>> groupByStudentSubject(
+            List<Assessment> assessments) {
+        Map<String, Map<GradingSeason, List<Assessment>>> grouped = new LinkedHashMap<>();
+
+        for (Assessment a : assessments) {
+            String key = a.getStudentId() + "|" + a.getSubjectId();
+
+            Map<GradingSeason, List<Assessment>> seasonMap = grouped.get(key);
+            if (seasonMap == null) {
+                seasonMap = new HashMap<>();
+                grouped.put(key, seasonMap);
+            }
+
+            List<Assessment> list = seasonMap.get(a.getSeason());
+            if (list == null) {
+                list = new ArrayList<>();
+                seasonMap.put(a.getSeason(), list);
+            }
+            list.add(a);
+        }
+
+        return grouped;
     }
 
     private JTable getTableForTab(int tabIndex) {
@@ -414,6 +519,37 @@ public class GradeForm extends JFrame {
         header.setBackground(StyleConstants.TABLE_HEADER_BG);
         header.setForeground(StyleConstants.TABLE_HEADER_FG);
         header.setFont(StyleConstants.TABLE_HEADER_FONT);
+    }
+
+    private DefaultTableCellRenderer createFinalGradeRenderer() {
+        return new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component cell = super.getTableCellRendererComponent(
+                    t, value, isSelected, hasFocus, row, column);
+
+                if (!isSelected) {
+                    cell.setBackground(row % 2 == 0
+                        ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+
+                    int remarksCol = 7;
+                    int finalGradeCol = 6;
+                    String remarks = (String) t.getModel().getValueAt(row, remarksCol);
+
+                    if (column == remarksCol || column == finalGradeCol) {
+                        if ("PASSED".equals(remarks)) {
+                            cell.setForeground(StyleConstants.SUCCESS);
+                        } else {
+                            cell.setForeground(StyleConstants.DANGER);
+                        }
+                    } else {
+                        cell.setForeground(StyleConstants.TEXT_PRIMARY);
+                    }
+                }
+                return cell;
+            }
+        };
     }
 
     private DefaultTableCellRenderer createAlternatingRenderer() {

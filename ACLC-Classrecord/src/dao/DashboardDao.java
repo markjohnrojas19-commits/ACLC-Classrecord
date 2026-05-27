@@ -80,16 +80,25 @@ public class DashboardDao {
     private int executePassFailCount(boolean passed) {
         String comparison = passed ? ">=" : "<";
         String sql = "SELECT COUNT(*) FROM ("
-                   + "SELECT student_id, subject_id "
+                   + "SELECT student_id, subject_id, "
+                   + "COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * ? + "
+                   + "COALESCE(AVG(CASE WHEN season = 'Midterm' THEN score END), 0) * ? + "
+                   + "COALESCE(AVG(CASE WHEN season = 'Pre-Final' THEN score END), 0) * ? + "
+                   + "COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * ? "
+                   + "AS weighted_grade "
                    + "FROM assessments "
                    + "GROUP BY student_id, subject_id "
-                   + "HAVING AVG(score) " + comparison + " ?"
+                   + "HAVING weighted_grade " + comparison + " ?"
                    + ") AS result";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setDouble(1, GradeConstants.PASSING_GRADE);
+            statement.setDouble(1, GradeConstants.PRELIM_WEIGHT);
+            statement.setDouble(2, GradeConstants.MIDTERM_WEIGHT);
+            statement.setDouble(3, GradeConstants.PRE_FINAL_WEIGHT);
+            statement.setDouble(4, GradeConstants.FINAL_WEIGHT);
+            statement.setDouble(5, GradeConstants.PASSING_GRADE);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
