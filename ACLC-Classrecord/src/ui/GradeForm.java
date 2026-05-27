@@ -3,13 +3,20 @@ package ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.print.PrinterException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.text.MessageFormat;
+
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -191,11 +198,15 @@ public class GradeForm extends JFrame {
         JButton editButton = new JButton("Edit");
         JButton deleteButton = new JButton("Delete");
         JButton clearButton = new JButton("Clear");
+        JButton printButton = new JButton("Print");
+        JButton exportButton = new JButton("Export CSV");
 
         addButton.addActionListener(e -> handleAdd());
         editButton.addActionListener(e -> handleEdit());
         deleteButton.addActionListener(e -> handleDelete());
         clearButton.addActionListener(e -> inputPanel.clear());
+        printButton.addActionListener(e -> handlePrint());
+        exportButton.addActionListener(e -> handleExportCsv());
 
         searchField = new JTextField(15);
         JButton searchButton = new JButton("Search");
@@ -205,6 +216,8 @@ public class GradeForm extends JFrame {
         panel.add(editButton);
         panel.add(deleteButton);
         panel.add(clearButton);
+        panel.add(printButton);
+        panel.add(exportButton);
         panel.add(searchField);
         panel.add(searchButton);
 
@@ -287,6 +300,107 @@ public class GradeForm extends JFrame {
 
         List<Assessment> results = assessmentDao.search(keyword);
         populateAllTabs(results);
+    }
+
+    private void handlePrint() {
+        int tabIndex = seasonTabs.getSelectedIndex();
+        String tabTitle = seasonTabs.getTitleAt(tabIndex);
+        JTable table = getTableForTab(tabIndex);
+
+        try {
+            MessageFormat header = new MessageFormat("ACLC Class Record — " + tabTitle);
+            MessageFormat footer = new MessageFormat("Page {0}");
+            table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+        } catch (PrinterException ex) {
+            showError("Printing failed: " + ex.getMessage());
+        }
+    }
+
+    private void handleExportCsv() {
+        JTable table = getTableForTab(seasonTabs.getSelectedIndex());
+        if (table.getRowCount() == 0) {
+            showError("No data to export.");
+            return;
+        }
+
+        File file = chooseExportFile();
+        if (file == null) {
+            return;
+        }
+
+        writeTableToCsv(table, file);
+    }
+
+    private File chooseExportFile() {
+        String tabTitle = seasonTabs.getTitleAt(seasonTabs.getSelectedIndex());
+        String defaultName = "grades_" + tabTitle.replace(" ", "_").toLowerCase() + ".csv";
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export Grades to CSV");
+        chooser.setSelectedFile(new File(defaultName));
+
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+
+        File file = chooser.getSelectedFile();
+        if (!file.getName().endsWith(".csv")) {
+            file = new File(file.getAbsolutePath() + ".csv");
+        }
+        return file;
+    }
+
+    private void writeTableToCsv(JTable table, File file) {
+        try (FileWriter writer = new FileWriter(file)) {
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+
+            writeCsvRow(writer, getColumnHeaders(model));
+
+            for (int row = 0; row < model.getRowCount(); row++) {
+                writeCsvRow(writer, getRowValues(model, row));
+            }
+
+            JOptionPane.showMessageDialog(this,
+                "Exported " + model.getRowCount() + " rows to:\n" + file.getAbsolutePath(),
+                "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            showError("Export failed: " + ex.getMessage());
+        }
+    }
+
+    private String[] getColumnHeaders(DefaultTableModel model) {
+        String[] headers = new String[model.getColumnCount()];
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            headers[col] = model.getColumnName(col);
+        }
+        return headers;
+    }
+
+    private String[] getRowValues(DefaultTableModel model, int row) {
+        String[] values = new String[model.getColumnCount()];
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            Object value = model.getValueAt(row, col);
+            values[col] = (value == null) ? "" : value.toString();
+        }
+        return values;
+    }
+
+    private void writeCsvRow(FileWriter writer, String[] values) throws IOException {
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                writer.write(",");
+            }
+            writer.write(escapeCsv(values[i]));
+        }
+        writer.write("\n");
+    }
+
+    private String escapeCsv(String value) {
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     private Assessment buildAssessmentFromInput(int assessmentId) {

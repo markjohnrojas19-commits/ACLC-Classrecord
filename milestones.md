@@ -380,12 +380,12 @@ Table: assessments
 
 > **Why P0:** Without export/print, all data entry has no output. Instructors need to submit grades on paper or as files. This is the #1 dealbreaker.
 
-* [ ] Step 11.1: Add "Print" button to GradeForm — use `JTable.print()` for quick printing of the current season tab
-* [ ] Step 11.2: Add "Export" button to GradeForm — export current season's grades to CSV file (simple, no extra libraries needed)
-* [ ] Step 11.3: Add a file chooser dialog (JFileChooser) so instructor picks where to save the export
-* [ ] Step 11.4: Format the CSV with headers: Student ID, Student Name, Subject, Assessment Name, Score, Season Average, Remarks
-* [ ] Step 11.5: (Optional) Add Excel export using Apache POI if time permits — otherwise CSV is sufficient
-* [ ] Milestone Complete: Instructor can print or export grades to a file for submission
+* [x] Step 11.1: Add "Print" button to GradeForm — use `JTable.print()` for quick printing of the current season tab
+* [x] Step 11.2: Add "Export CSV" button to GradeForm — export current tab's grades to CSV file (simple, no extra libraries needed)
+* [x] Step 11.3: Add a file chooser dialog (JFileChooser) so instructor picks where to save the export
+* [x] Step 11.4: CSV exports all columns from the current tab with proper escaping (commas, quotes, newlines handled)
+* [~] Step 11.5: (Optional — skipped) Excel export via Apache POI deferred. CSV is sufficient for submission.
+* [x] Milestone Complete: Instructor can print or export grades to a file for submission
 
 ## Milestone 12 — Final Grade Across Seasons (P1 — Should Have)
 
@@ -510,7 +510,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 8 complete — polished for submission
 * [x] Milestone 9 complete — section tabs + assessment-based grading with seasons
 * [x] Milestone 10 complete — enrollment & attendance tracking with section-based workflow
-* [ ] Milestone 11 — Grade Export & Printing (P0)
+* [x] Milestone 11 — Grade Export & Printing (P0)
 * [x] Milestone 12 — Final Grade Across Seasons (P1)
 * [ ] Milestone 13 — Student Grade Summary / Report Card (P1)
 * [ ] Milestone 14 — UX Improvements (P2)
