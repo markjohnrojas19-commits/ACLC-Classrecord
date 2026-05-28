@@ -34,7 +34,13 @@ public class SubjectForm extends JFrame {
 
         setTitle("ACLC Class Record — Subject Management");
         setSize(900, 600);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                handleBack(currentUser);
+            }
+        });
         setLocationRelativeTo(null);
 
         add(createHeaderPanel(currentUser), BorderLayout.NORTH);
@@ -101,6 +107,7 @@ public class SubjectForm extends JFrame {
         };
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(e -> loadSelectedSubject());
 
@@ -146,6 +153,7 @@ public class SubjectForm extends JFrame {
         if (subjectDao.add(subject)) {
             refreshTable();
             clearFields();
+            showSuccess("Subject added successfully.");
         } else {
             showError("Failed to add subject. The subject code may already exist.");
         }
@@ -168,6 +176,7 @@ public class SubjectForm extends JFrame {
         if (subjectDao.update(subject)) {
             refreshTable();
             clearFields();
+            showSuccess("Subject updated successfully.");
         } else {
             showError("Failed to update subject.");
         }
@@ -214,6 +223,10 @@ public class SubjectForm extends JFrame {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void refreshTable() {
         List<Subject> subjects = subjectDao.getAll();
         populateTable(subjects);
@@ -250,7 +263,22 @@ public class SubjectForm extends JFrame {
     }
 
     private void handleBack(User currentUser) {
+        if (hasUnsavedChanges() && !confirmDiscard()) {
+            return;
+        }
         new DashboardForm(currentUser).setVisible(true);
         dispose();
+    }
+
+    private boolean hasUnsavedChanges() {
+        return !subjectCodeField.getText().trim().isEmpty()
+            || !subjectNameField.getText().trim().isEmpty();
+    }
+
+    private boolean confirmDiscard() {
+        int choice = JOptionPane.showConfirmDialog(this,
+            "You have unsaved changes. Discard and go back?",
+            "Unsaved Changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        return choice == JOptionPane.YES_OPTION;
     }
 }

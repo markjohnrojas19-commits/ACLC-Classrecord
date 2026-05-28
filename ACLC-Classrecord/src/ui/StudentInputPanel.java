@@ -64,6 +64,15 @@ public class StudentInputPanel extends JPanel {
         studentIdField.setEditable(false);
     }
 
+    public boolean hasChanges() {
+        return !studentIdField.getText().trim().isEmpty()
+            || !firstnameField.getText().trim().isEmpty()
+            || !lastnameField.getText().trim().isEmpty()
+            || !courseField.getText().trim().isEmpty()
+            || !yearLevelField.getText().trim().isEmpty()
+            || !sectionField.getText().trim().isEmpty();
+    }
+
     public boolean hasEmptyFields() {
         return studentIdField.getText().trim().isEmpty()
             || firstnameField.getText().trim().isEmpty()

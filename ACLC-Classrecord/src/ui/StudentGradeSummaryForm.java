@@ -134,6 +134,7 @@ public class StudentGradeSummaryForm extends JFrame {
         };
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);

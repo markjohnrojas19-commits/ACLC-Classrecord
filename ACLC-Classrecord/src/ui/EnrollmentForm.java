@@ -101,6 +101,7 @@ public class EnrollmentForm extends JFrame {
         };
 
         table = new JTable(tableModel);
+        table.setAutoCreateRowSorter(true);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);

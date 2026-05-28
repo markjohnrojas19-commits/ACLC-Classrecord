@@ -414,12 +414,12 @@ Table: assessments
 
 > **Why P2:** These are small usability improvements that reduce daily friction. Each step is independent — implement in any order.
 
-* [ ] Step 14.1: **Back to Dashboard button** — Add a "Back" button on every form (StudentForm, SubjectForm, GradeForm, AttendanceForm) that returns to DashboardForm instead of just closing the window
-* [ ] Step 14.2: **Success confirmation messages** — Show a brief success dialog after Add/Edit operations (currently only errors show dialogs). Use `JOptionPane.showMessageDialog()` with "Student added successfully" etc.
-* [ ] Step 14.3: **Column sorting** — Enable click-to-sort on JTable column headers using `TableRowSorter`. Apply to all tables (StudentForm, SubjectForm, GradeForm)
-* [ ] Step 14.4: **Student ID auto-generation** — Auto-generate student IDs in format "STU-0001", "STU-0002" etc. Make the ID field read-only on Add. Query max existing ID from database and increment.
+* [x] Step 14.1: **Back to Dashboard button** — Already implemented on all forms during their respective milestones
+* [x] Step 14.2: **Success confirmation messages** — Added `showSuccess()` helper + success dialogs after Add/Edit in StudentForm, SubjectForm, GradeForm. EnrollmentForm and AttendanceForm already had success messages.
+* [x] Step 14.3: **Column sorting** — Added `setAutoCreateRowSorter(true)` to all JTables (SubjectForm, SectionTablePanel, GradeForm season + final tabs, EnrollmentForm, StudentGradeSummaryForm). Fixed GradeForm parallel list lookup to use `convertRowIndexToModel()`.
+* [~] Step 14.4: **Student ID auto-generation** — Skipped. Students have school-assigned IDs that instructors type manually.
 * [ ] Step 14.5: **Date timestamp on assessments** — Add a `date_recorded` column to the assessments table. Auto-fill with current date on insert. Display in GradeForm table.
-* [ ] Step 14.6: **Confirmation before closing forms with unsaved changes** — If instructor has typed in fields but hasn't clicked Add/Edit, warn before closing
+* [x] Step 14.6: **Confirmation before closing forms with unsaved changes** — Added unsaved changes detection to StudentForm, SubjectForm, GradeForm. Back button and window close (X) both check for unsaved input and confirm before discarding.
 * [ ] Milestone Complete: Daily workflow is smoother with fewer clicks and clearer feedback
 
 ## Milestone 15 — Advanced Filtering (P2 — Nice to Have)

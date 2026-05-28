@@ -59,7 +59,13 @@ public class GradeForm extends JFrame {
 
         setTitle("ACLC Class Record \u2014 Grade Management");
         setSize(1050, 700);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                handleBack(currentUser);
+            }
+        });
         setLocationRelativeTo(null);
 
         add(createHeaderPanel(currentUser), BorderLayout.NORTH);
@@ -159,6 +165,7 @@ public class GradeForm extends JFrame {
         };
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
@@ -179,6 +186,7 @@ public class GradeForm extends JFrame {
         };
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
@@ -243,6 +251,7 @@ public class GradeForm extends JFrame {
         if (assessmentDao.add(assessment)) {
             refreshAllTabs();
             inputPanel.clear();
+            showSuccess("Assessment added successfully.");
         } else {
             showError("Failed to add. This assessment may already exist for this student/subject/season.");
         }
@@ -268,6 +277,7 @@ public class GradeForm extends JFrame {
         if (assessmentDao.update(assessment)) {
             refreshAllTabs();
             inputPanel.clear();
+            showSuccess("Assessment updated successfully.");
         } else {
             showError("Failed to update assessment.");
         }
@@ -425,16 +435,17 @@ public class GradeForm extends JFrame {
         GradingSeason season = GradingSeason.values()[tabIndex];
         JTable table = getTableForTab(tabIndex);
 
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
+        int viewRow = table.getSelectedRow();
+        if (viewRow == -1) {
             return null;
         }
 
+        int modelRow = table.convertRowIndexToModel(viewRow);
         List<Assessment> records = seasonRecords.getOrDefault(season, new ArrayList<>());
-        if (selectedRow >= records.size()) {
+        if (modelRow >= records.size()) {
             return null;
         }
-        return records.get(selectedRow);
+        return records.get(modelRow);
     }
 
     private void loadSelectedAssessment() {
@@ -620,12 +631,26 @@ public class GradeForm extends JFrame {
     }
 
     private void handleBack(User currentUser) {
+        if (inputPanel.hasChanges() && !confirmDiscard()) {
+            return;
+        }
         new DashboardForm(currentUser).setVisible(true);
         dispose();
     }
 
+    private boolean confirmDiscard() {
+        int choice = JOptionPane.showConfirmDialog(this,
+            "You have unsaved changes. Discard and go back?",
+            "Unsaved Changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        return choice == JOptionPane.YES_OPTION;
+    }
+
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void styleTableHeader(JTable table) {

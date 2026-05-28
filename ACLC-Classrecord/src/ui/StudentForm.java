@@ -34,7 +34,13 @@ public class StudentForm extends JFrame {
 
         setTitle("ACLC Class Record \u2014 Student Management");
         setSize(950, 650);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                handleBack(currentUser);
+            }
+        });
         setLocationRelativeTo(null);
 
         add(createHeaderPanel(currentUser), BorderLayout.NORTH);
@@ -202,6 +208,7 @@ public class StudentForm extends JFrame {
         if (studentDao.add(student)) {
             refreshTabs();
             inputPanel.clear();
+            showSuccess("Student added successfully.");
         } else {
             showError("Failed to add student. The Student ID may already exist.");
         }
@@ -229,6 +236,7 @@ public class StudentForm extends JFrame {
         if (studentDao.update(student)) {
             refreshTabs();
             inputPanel.clear();
+            showSuccess("Student updated successfully.");
         } else {
             showError("Failed to update student.");
         }
@@ -277,11 +285,25 @@ public class StudentForm extends JFrame {
     }
 
     private void handleBack(User currentUser) {
+        if (inputPanel.hasChanges() && !confirmDiscard()) {
+            return;
+        }
         new DashboardForm(currentUser).setVisible(true);
         dispose();
     }
 
+    private boolean confirmDiscard() {
+        int choice = JOptionPane.showConfirmDialog(this,
+            "You have unsaved changes. Discard and go back?",
+            "Unsaved Changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        return choice == JOptionPane.YES_OPTION;
+    }
+
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 }

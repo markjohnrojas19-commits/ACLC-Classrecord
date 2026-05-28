@@ -68,6 +68,7 @@ public class SectionTablePanel extends JPanel {
         };
 
         JTable newTable = new JTable(model);
+        newTable.setAutoCreateRowSorter(true);
         newTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         newTable.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         newTable.setFont(StyleConstants.BODY_FONT);

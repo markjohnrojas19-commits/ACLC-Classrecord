@@ -90,6 +90,11 @@ public class AssessmentInputPanel extends JPanel {
             || subjectBox.getSelectedItem() == null;
     }
 
+    public boolean hasChanges() {
+        return !assessmentNameField.getText().trim().isEmpty()
+            || !scoreField.getText().trim().isEmpty();
+    }
+
     public boolean hasEmptyFields() {
         return assessmentNameField.getText().trim().isEmpty()
             || scoreField.getText().trim().isEmpty();
