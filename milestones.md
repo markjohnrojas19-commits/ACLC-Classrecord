@@ -125,6 +125,7 @@ ACLC-Classrecord/
       EnrollmentFilterPanel.java — subject + section dropdown filters (extracted atom)
       GradeForm.java        — assessment management (CRUD + JTabbedPane by season)
       AssessmentInputPanel.java — assessment input fields + dropdowns (extracted atom)
+      StudentGradeSummaryForm.java — per-student report card (all subjects x all seasons)
     util/                 — Shared utilities
       GradeConstants.java   — passing grade threshold + score bounds
       StyleConstants.java   — shared UI styling (fonts, borders, gaps, colors)
@@ -402,12 +403,12 @@ Table: assessments
 
 > **Why P1:** Instructors often need to look up ONE student and see all their grades across ALL subjects and ALL seasons in one view — like a report card. Currently you can only see grades organized by season, not by student.
 
-* [ ] Step 13.1: Create `StudentGradeSummaryForm.java` — student dropdown at top, table below showing all subjects x all seasons
-* [ ] Step 13.2: Table columns: Subject Code, Subject Name, Prelim Avg, Midterm Avg, Pre-Final Avg, Final Avg, Final Grade, Remarks
-* [ ] Step 13.3: Add color-coded remarks per row (green/red)
-* [ ] Step 13.4: Add "Print" / "Export" button for this view (reuse export logic from Milestone 11)
-* [ ] Step 13.5: Add navigation to this form — either from DashboardForm ("Student Summary" button) or from StudentForm ("View Grades" button on selected student)
-* [ ] Milestone Complete: Instructor can pull up any student and see their complete grade picture across all subjects
+* [x] Step 13.1: Add `getByStudent(studentId)` to AssessmentDao — returns all assessments for one student
+* [x] Step 13.2: Create `StudentGradeSummaryForm.java` — student dropdown at top, report card table below (Subject Code, Subject Name, Prelim, Midterm, Pre-Final, Final, Final Grade, Remarks)
+* [x] Step 13.3: Color-code Final Grade and Remarks columns (green for PASSED, red for FAILED)
+* [x] Step 13.4: Add Print + Export CSV buttons (reuse export pattern from Milestone 11)
+* [x] Step 13.5: Add navigation — "Student Summary" button on DashboardForm + "View Grades" button on StudentForm (opens with preselected student)
+* [x] Milestone Complete: Instructor can pull up any student and see their complete grade picture across all subjects
 
 ## Milestone 14 — UX Improvements (P2 — Nice to Have)
 
@@ -512,7 +513,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 10 complete — enrollment & attendance tracking with section-based workflow
 * [x] Milestone 11 — Grade Export & Printing (P0)
 * [x] Milestone 12 — Final Grade Across Seasons (P1)
-* [ ] Milestone 13 — Student Grade Summary / Report Card (P1)
+* [x] Milestone 13 — Student Grade Summary / Report Card (P1)
 * [ ] Milestone 14 — UX Improvements (P2)
 * [ ] Milestone 15 — Advanced Filtering (P2)
 * [ ] Milestone 16 — Security Hardening (P3)

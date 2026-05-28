@@ -26,8 +26,10 @@ public class StudentForm extends JFrame {
     private JTabbedPane sectionTabs;
     private StudentDao studentDao;
     private JTextField searchField;
+    private User currentUser;
 
     public StudentForm(User currentUser) {
+        this.currentUser = currentUser;
         studentDao = new StudentDao();
 
         setTitle("ACLC Class Record \u2014 Student Management");
@@ -83,11 +85,13 @@ public class StudentForm extends JFrame {
         JButton editButton = new JButton("Edit");
         JButton deleteButton = new JButton("Delete");
         JButton clearButton = new JButton("Clear");
+        JButton viewGradesButton = new JButton("View Grades");
 
         addButton.addActionListener(e -> handleAdd());
         editButton.addActionListener(e -> handleEdit());
         deleteButton.addActionListener(e -> handleDelete());
         clearButton.addActionListener(e -> inputPanel.clear());
+        viewGradesButton.addActionListener(e -> handleViewGrades());
 
         searchField = new JTextField(15);
         JButton searchButton = new JButton("Search");
@@ -97,6 +101,7 @@ public class StudentForm extends JFrame {
         panel.add(editButton);
         panel.add(deleteButton);
         panel.add(clearButton);
+        panel.add(viewGradesButton);
         panel.add(searchField);
         panel.add(searchButton);
 
@@ -257,6 +262,18 @@ public class StudentForm extends JFrame {
 
         List<Student> results = studentDao.search(keyword);
         buildSectionTabs(results);
+    }
+
+    private void handleViewGrades() {
+        SectionTablePanel activePanel = getActivePanel();
+        if (activePanel == null || activePanel.getSelectedRow() == -1) {
+            showError("Please select a student to view grades.");
+            return;
+        }
+
+        Student student = extractStudentFromRow(activePanel, activePanel.getSelectedRow());
+        new StudentGradeSummaryForm(currentUser, student).setVisible(true);
+        dispose();
     }
 
     private void handleBack(User currentUser) {

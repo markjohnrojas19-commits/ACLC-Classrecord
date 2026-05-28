@@ -57,6 +57,29 @@ public class AssessmentDao {
         return results;
     }
 
+    public List<Assessment> getByStudent(String studentId) {
+        String sql = "SELECT * FROM assessments WHERE student_id = ? "
+                   + "ORDER BY subject_id, season, assessment_name";
+        List<Assessment> results = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, studentId);
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    results.add(extractAssessment(result));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get by student error: " + e.getMessage());
+        }
+
+        return results;
+    }
+
     public boolean update(Assessment assessment) {
         String sql = "UPDATE assessments SET student_id = ?, subject_id = ?, season = ?, "
                    + "assessment_name = ?, score = ? WHERE assessment_id = ?";
