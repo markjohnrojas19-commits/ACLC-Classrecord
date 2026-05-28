@@ -110,6 +110,25 @@ public class StudentDao {
         }
     }
 
+    public List<String> getAllSections() {
+        String sql = "SELECT DISTINCT section FROM students ORDER BY section";
+        List<String> sections = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet result = statement.executeQuery()) {
+
+            while (result.next()) {
+                sections.add(result.getString("section"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get all sections error: " + e.getMessage());
+        }
+
+        return sections;
+    }
+
     public List<Student> search(String keyword) {
         String sql = "SELECT * FROM students WHERE student_id LIKE ? OR firstname LIKE ? OR lastname LIKE ? "
                    + "ORDER BY lastname, firstname";

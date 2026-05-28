@@ -70,17 +70,23 @@ public class DashboardStatsPanel extends JPanel {
     }
 
     private void updateAttendanceLabel() {
+        int sectionsMarked = dashboardDao.countTodaySectionsMarked();
+        int totalSections = dashboardDao.countTotalEnrolledSections();
         int present = dashboardDao.countTodayPresent();
         int total = dashboardDao.countTodayTotal();
 
-        if (present < 0 || total < 0) {
+        if (sectionsMarked < 0 || totalSections < 0 || present < 0 || total < 0) {
             attendanceLabel.setText("Today's Attendance: Error");
             return;
         }
 
-        attendanceLabel.setText("Today's Attendance: " + present + " / " + total);
+        String display = String.format("Today: %d/%d sections (%d/%d present)",
+            sectionsMarked, totalSections, present, total);
+        attendanceLabel.setText(display);
 
-        if (total > 0) {
+        if (sectionsMarked >= totalSections && totalSections > 0) {
+            attendanceLabel.setForeground(StyleConstants.SUCCESS);
+        } else if (sectionsMarked > 0) {
             attendanceLabel.setForeground(StyleConstants.PRIMARY);
         }
     }

@@ -24,6 +24,7 @@ import javax.swing.table.JTableHeader;
 
 import dao.AttendanceDao;
 import dao.EnrollmentDao;
+import dao.StudentDao;
 import dao.SubjectDao;
 import model.Attendance;
 import model.AttendanceStatus;
@@ -142,7 +143,7 @@ public class AttendanceForm extends JFrame {
 
     private void attachFilterListeners() {
         filterPanel.addSubjectListener(e -> refreshSections());
-        filterPanel.addSectionListener(e -> refreshTable());
+        filterPanel.addSectionListener(e -> refreshDatesAndTable());
         filterPanel.addDateListener(e -> refreshTable());
     }
 
@@ -157,14 +158,40 @@ public class AttendanceForm extends JFrame {
         filterPanel.populateSections(sections);
     }
 
-    private void refreshTable() {
+    private void refreshDatesAndTable() {
+        refreshDates();
+        refreshTable();
+    }
+
+    private void refreshDates() {
         Subject subject = filterPanel.getSelectedSubject();
         String section = filterPanel.getSelectedSection();
-        LocalDate date = filterPanel.getSelectedDate();
+
+        if (subject == null || section == null) {
+            filterPanel.populateDates(new ArrayList<>());
+            return;
+        }
+
+        List<LocalDate> dates = attendanceDao.getDatesBySubjectAndSection(
+            subject.getSubjectId(), section);
+        filterPanel.populateDates(dates);
+    }
+
+    private void refreshTable() {
+        if (filterPanel.isDateRangeMode()) {
+            refreshTableForRange();
+        } else {
+            refreshTableForSingleDate();
+        }
+    }
+
+    private void refreshTableForSingleDate() {
+        Subject subject = filterPanel.getSelectedSubject();
+        String section = filterPanel.getSelectedSection();
+        LocalDate date = filterPanel.getStartDate();
 
         if (subject == null || section == null || date == null) {
-            tableModel.setRowCount(0);
-            currentStudents.clear();
+            clearTable();
             return;
         }
 
@@ -173,7 +200,7 @@ public class AttendanceForm extends JFrame {
         Map<String, AttendanceStatus> existingRecords = loadExistingAttendance(
             subject.getSubjectId(), date);
 
-        tableModel.setRowCount(0);
+        applySingleDateModel();
 
         for (Student student : currentStudents) {
             AttendanceStatus status = existingRecords.getOrDefault(
@@ -185,6 +212,77 @@ public class AttendanceForm extends JFrame {
                 status.toDisplayName()
             });
         }
+    }
+
+    private void refreshTableForRange() {
+        Subject subject = filterPanel.getSelectedSubject();
+        String section = filterPanel.getSelectedSection();
+        LocalDate startDate = filterPanel.getStartDate();
+        LocalDate endDate = filterPanel.getEndDate();
+
+        if (subject == null || section == null || startDate == null || endDate == null) {
+            clearTable();
+            return;
+        }
+
+        List<Attendance> records = attendanceDao.getBySubjectSectionAndDateRange(
+            subject.getSubjectId(), section, startDate, endDate);
+        Map<String, String> studentNames = buildStudentNameMap();
+
+        applyRangeModel();
+
+        for (Attendance record : records) {
+            String name = studentNames.getOrDefault(record.getStudentId(),
+                record.getStudentId());
+
+            tableModel.addRow(new Object[]{
+                record.getStudentId(),
+                name,
+                record.getDate().toString(),
+                record.getStatus().toDisplayName()
+            });
+        }
+
+        currentStudents.clear();
+    }
+
+    private void clearTable() {
+        tableModel.setRowCount(0);
+        currentStudents.clear();
+    }
+
+    private void applySingleDateModel() {
+        String[] columns = {"Student ID", "Name", "Status"};
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 2;
+            }
+        };
+        table.setModel(tableModel);
+
+        JComboBox<String> statusEditor = createStatusComboBox();
+        table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(statusEditor));
+    }
+
+    private void applyRangeModel() {
+        String[] columns = {"Student ID", "Name", "Date", "Status"};
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table.setModel(tableModel);
+    }
+
+    private Map<String, String> buildStudentNameMap() {
+        Map<String, String> map = new HashMap<>();
+        for (Student student : new StudentDao().getAll()) {
+            map.put(student.getStudentId(),
+                student.getFirstname() + " " + student.getLastname());
+        }
+        return map;
     }
 
     private Map<String, AttendanceStatus> loadExistingAttendance(int subjectId, LocalDate date) {
@@ -199,8 +297,13 @@ public class AttendanceForm extends JFrame {
     }
 
     private void handleSave() {
+        if (filterPanel.isDateRangeMode()) {
+            showError("Cannot save in date range view. Use a single date to mark attendance.");
+            return;
+        }
+
         Subject subject = filterPanel.getSelectedSubject();
-        LocalDate date = filterPanel.getSelectedDate();
+        LocalDate date = filterPanel.getStartDate();
 
         if (subject == null) {
             showError("Please select a subject.");
@@ -251,6 +354,10 @@ public class AttendanceForm extends JFrame {
     }
 
     private void handleMarkAllPresent() {
+        if (filterPanel.isDateRangeMode()) {
+            showError("Cannot modify attendance in date range view. Use a single date.");
+            return;
+        }
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             tableModel.setValueAt(AttendanceStatus.PRESENT.toDisplayName(), row, 2);
         }

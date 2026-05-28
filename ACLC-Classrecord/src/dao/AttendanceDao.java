@@ -58,6 +58,32 @@ public class AttendanceDao {
         return add(attendance);
     }
 
+    public List<LocalDate> getDatesBySubjectAndSection(int subjectId, String section) {
+        String sql = "SELECT DISTINCT a.date FROM attendance a "
+                   + "JOIN students s ON a.student_id = s.student_id "
+                   + "WHERE a.subject_id = ? AND s.section = ? "
+                   + "ORDER BY a.date DESC";
+        List<LocalDate> dates = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, subjectId);
+            statement.setString(2, section);
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    dates.add(result.getDate("date").toLocalDate());
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get dates by subject and section error: " + e.getMessage());
+        }
+
+        return dates;
+    }
+
     public List<Attendance> getBySubjectAndDate(int subjectId, LocalDate date) {
         String sql = "SELECT * FROM attendance WHERE subject_id = ? AND date = ? "
                    + "ORDER BY student_id";
@@ -77,6 +103,36 @@ public class AttendanceDao {
 
         } catch (SQLException e) {
             System.out.println("Get attendance by subject and date error: " + e.getMessage());
+        }
+
+        return results;
+    }
+
+    public List<Attendance> getBySubjectSectionAndDateRange(int subjectId,
+            String section, LocalDate startDate, LocalDate endDate) {
+        String sql = "SELECT a.* FROM attendance a "
+                   + "JOIN students s ON a.student_id = s.student_id "
+                   + "WHERE a.subject_id = ? AND s.section = ? "
+                   + "AND a.date BETWEEN ? AND ? "
+                   + "ORDER BY a.date, s.lastname, s.firstname";
+        List<Attendance> results = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, subjectId);
+            statement.setString(2, section);
+            statement.setDate(3, Date.valueOf(startDate));
+            statement.setDate(4, Date.valueOf(endDate));
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    results.add(extractAttendance(result));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get attendance by date range error: " + e.getMessage());
         }
 
         return results;

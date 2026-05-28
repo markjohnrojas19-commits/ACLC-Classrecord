@@ -90,6 +90,31 @@ public class EnrollmentDao {
         return executeQueryWithSubject(sql, subjectId);
     }
 
+    public List<Student> getStudentsBySubject(int subjectId) {
+        String sql = "SELECT s.* FROM students s "
+                   + "JOIN enrollments e ON s.student_id = e.student_id "
+                   + "WHERE e.subject_id = ? "
+                   + "ORDER BY s.lastname, s.firstname";
+        List<Student> students = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, subjectId);
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    students.add(extractStudent(result));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get students by subject error: " + e.getMessage());
+        }
+
+        return students;
+    }
+
     public List<Student> getStudentsBySubjectAndSection(int subjectId, String section) {
         String sql = "SELECT s.* FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "

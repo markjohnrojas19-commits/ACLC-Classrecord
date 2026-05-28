@@ -24,7 +24,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -46,10 +45,10 @@ import util.StyleConstants;
 public class GradeForm extends JFrame {
 
     private AssessmentInputPanel inputPanel;
+    private GradeFilterPanel filterPanel;
     private JTabbedPane seasonTabs;
     private AssessmentDao assessmentDao;
     private GradeComputer gradeComputer;
-    private JTextField searchField;
     private Map<GradingSeason, List<Assessment>> seasonRecords;
 
     public GradeForm(User currentUser) {
@@ -73,6 +72,7 @@ public class GradeForm extends JFrame {
         add(createButtonPanel(), BorderLayout.SOUTH);
 
         populateDropdowns();
+        populateSectionFilter();
         refreshAllTabs();
     }
 
@@ -98,11 +98,24 @@ public class GradeForm extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
 
         inputPanel = new AssessmentInputPanel();
+        filterPanel = createFilterPanel();
         seasonTabs = createSeasonTabs();
 
-        panel.add(inputPanel, BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(inputPanel, BorderLayout.NORTH);
+        topPanel.add(filterPanel, BorderLayout.SOUTH);
+
+        panel.add(topPanel, BorderLayout.NORTH);
         panel.add(seasonTabs, BorderLayout.CENTER);
 
+        return panel;
+    }
+
+    private GradeFilterPanel createFilterPanel() {
+        GradeFilterPanel panel = new GradeFilterPanel();
+        panel.addSectionListener(e -> refreshAllTabs());
+        panel.addStatusListener(e -> refreshAllTabs());
+        panel.addSearchListener(e -> handleSearch());
         return panel;
     }
 
@@ -216,7 +229,6 @@ public class GradeForm extends JFrame {
         printButton.addActionListener(e -> handlePrint());
         exportButton.addActionListener(e -> handleExportCsv());
 
-        searchField = new JTextField(15);
         JButton searchButton = new JButton("Search");
         searchButton.addActionListener(e -> handleSearch());
 
@@ -226,7 +238,6 @@ public class GradeForm extends JFrame {
         panel.add(clearButton);
         panel.add(printButton);
         panel.add(exportButton);
-        panel.add(searchField);
         panel.add(searchButton);
 
         return panel;
@@ -301,7 +312,7 @@ public class GradeForm extends JFrame {
     }
 
     private void handleSearch() {
-        String keyword = searchField.getText().trim();
+        String keyword = filterPanel.getSearchKeyword();
 
         if (keyword.isEmpty()) {
             refreshAllTabs();
@@ -456,6 +467,11 @@ public class GradeForm extends JFrame {
         inputPanel.fromAssessment(selected);
     }
 
+    private void populateSectionFilter() {
+        List<String> sections = new StudentDao().getAllSections();
+        filterPanel.populateSections(sections);
+    }
+
     private void refreshAllTabs() {
         List<Assessment> allAssessments = assessmentDao.getAll();
         populateAllTabs(allAssessments);
@@ -464,10 +480,12 @@ public class GradeForm extends JFrame {
     private void populateAllTabs(List<Assessment> assessments) {
         Map<String, String> studentNames = buildStudentNameMap();
         Map<Integer, String> subjectNames = buildSubjectNameMap();
+        assessments = filterBySection(assessments);
 
         for (int i = 0; i < GradingSeason.values().length; i++) {
             GradingSeason season = GradingSeason.values()[i];
             List<Assessment> filtered = filterBySeason(assessments, season);
+            filtered = filterByStatus(filtered);
             seasonRecords.put(season, filtered);
             populateSeasonTab(i, filtered, studentNames, subjectNames);
         }
@@ -544,6 +562,10 @@ public class GradeForm extends JFrame {
 
             ScoreResult weightedResult = gradeComputer.computeFinalGrade(seasonMap);
 
+            if (!matchesStatusFilter(weightedResult)) {
+                continue;
+            }
+
             model.addRow(new Object[]{
                 studentDisplay,
                 subjectDisplay,
@@ -607,6 +629,76 @@ public class GradeForm extends JFrame {
             }
         }
         return filtered;
+    }
+
+    private boolean matchesStatusFilter(ScoreResult result) {
+        if (filterPanel.isAllResults()) {
+            return true;
+        }
+        boolean passed = "PASSED".equals(result.getRemarks());
+        return passed == filterPanel.isPassedOnly();
+    }
+
+    private List<Assessment> filterByStatus(List<Assessment> assessments) {
+        if (filterPanel.isAllResults()) {
+            return assessments;
+        }
+
+        boolean keepPassed = filterPanel.isPassedOnly();
+        Map<String, List<Assessment>> groups = groupByStudentSubjectFlat(assessments);
+        List<Assessment> filtered = new ArrayList<>();
+
+        for (List<Assessment> group : groups.values()) {
+            ScoreResult result = gradeComputer.computeAverage(group);
+            boolean passed = "PASSED".equals(result.getRemarks());
+            if (passed == keepPassed) {
+                filtered.addAll(group);
+            }
+        }
+
+        return filtered;
+    }
+
+    private Map<String, List<Assessment>> groupByStudentSubjectFlat(List<Assessment> assessments) {
+        Map<String, List<Assessment>> groups = new LinkedHashMap<>();
+
+        for (Assessment a : assessments) {
+            String key = a.getStudentId() + "|" + a.getSubjectId();
+            List<Assessment> list = groups.get(key);
+            if (list == null) {
+                list = new ArrayList<>();
+                groups.put(key, list);
+            }
+            list.add(a);
+        }
+
+        return groups;
+    }
+
+    private List<Assessment> filterBySection(List<Assessment> assessments) {
+        if (filterPanel.isAllSections()) {
+            return assessments;
+        }
+
+        String section = filterPanel.getSelectedSection();
+        Map<String, String> sectionMap = buildStudentSectionMap();
+
+        List<Assessment> filtered = new ArrayList<>();
+        for (Assessment assessment : assessments) {
+            String studentSection = sectionMap.get(assessment.getStudentId());
+            if (section.equals(studentSection)) {
+                filtered.add(assessment);
+            }
+        }
+        return filtered;
+    }
+
+    private Map<String, String> buildStudentSectionMap() {
+        Map<String, String> map = new HashMap<>();
+        for (Student student : new StudentDao().getAll()) {
+            map.put(student.getStudentId(), student.getSection());
+        }
+        return map;
     }
 
     private Map<String, String> buildStudentNameMap() {

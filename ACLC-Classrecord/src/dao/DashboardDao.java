@@ -69,6 +69,38 @@ public class DashboardDao {
         }
     }
 
+    public int countTodaySectionsMarked() {
+        String sql = "SELECT COUNT(DISTINCT CONCAT(a.subject_id, '|', s.section)) "
+                   + "FROM attendance a "
+                   + "JOIN students s ON a.student_id = s.student_id "
+                   + "WHERE a.date = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setDate(1, Date.valueOf(LocalDate.now()));
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Dashboard today sections marked error: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    public int countTotalEnrolledSections() {
+        String sql = "SELECT COUNT(DISTINCT CONCAT(e.subject_id, '|', s.section)) "
+                   + "FROM enrollments e "
+                   + "JOIN students s ON e.student_id = s.student_id";
+
+        return executeSimpleCount(sql);
+    }
+
     public int countPassed() {
         return executePassFailCount(true);
     }

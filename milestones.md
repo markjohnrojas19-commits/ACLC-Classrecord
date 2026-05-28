@@ -116,6 +116,7 @@ ACLC-Classrecord/
       DashboardForm.java    — main menu with summary stats
       DashboardStatsPanel.java — dashboard summary statistics display
       StudentForm.java      — student management (CRUD + JTabbedPane by section)
+      StudentFilterPanel.java  — subject filter + search field (extracted atom)
       StudentInputPanel.java   — student input fields (extracted atom)
       SectionTablePanel.java   — reusable section table (styled JTable atom)
       SubjectForm.java      — subject management (CRUD + JTable)
@@ -124,6 +125,7 @@ ACLC-Classrecord/
       EnrollmentForm.java    — enrollment management (checkbox table by section)
       EnrollmentFilterPanel.java — subject + section dropdown filters (extracted atom)
       GradeForm.java        — assessment management (CRUD + JTabbedPane by season)
+      GradeFilterPanel.java    — section filter + search field (extracted atom)
       AssessmentInputPanel.java — assessment input fields + dropdowns (extracted atom)
       StudentGradeSummaryForm.java — per-student report card (all subjects x all seasons)
     util/                 — Shared utilities
@@ -418,19 +420,19 @@ Table: assessments
 * [x] Step 14.2: **Success confirmation messages** — Added `showSuccess()` helper + success dialogs after Add/Edit in StudentForm, SubjectForm, GradeForm. EnrollmentForm and AttendanceForm already had success messages.
 * [x] Step 14.3: **Column sorting** — Added `setAutoCreateRowSorter(true)` to all JTables (SubjectForm, SectionTablePanel, GradeForm season + final tabs, EnrollmentForm, StudentGradeSummaryForm). Fixed GradeForm parallel list lookup to use `convertRowIndexToModel()`.
 * [~] Step 14.4: **Student ID auto-generation** — Skipped. Students have school-assigned IDs that instructors type manually.
-* [ ] Step 14.5: **Date timestamp on assessments** — Add a `date_recorded` column to the assessments table. Auto-fill with current date on insert. Display in GradeForm table.
+* [~] Step 14.5: **Date timestamp on assessments** — Skipped. Low-value for demo; date column adds visual noise without changing functionality.
 * [x] Step 14.6: **Confirmation before closing forms with unsaved changes** — Added unsaved changes detection to StudentForm, SubjectForm, GradeForm. Back button and window close (X) both check for unsaved input and confirm before discarding.
-* [ ] Milestone Complete: Daily workflow is smoother with fewer clicks and clearer feedback
+* [x] Milestone Complete: Daily workflow is smoother with fewer clicks and clearer feedback
 
 ## Milestone 15 — Advanced Filtering (P2 — Nice to Have)
 
 > **Why P2:** The current keyword search works, but instructors often need to filter by specific criteria — "show me all failed students in Section A for this subject."
 
-* [ ] Step 15.1: Add a section filter dropdown to GradeForm — filter assessments to show only students from a specific section
-* [ ] Step 15.2: Add a pass/fail filter toggle to GradeForm — show only passed or only failed students
-* [ ] Step 15.3: Add a subject filter to StudentForm — "show students enrolled in this subject" (requires knowing which subjects a student has assessments for)
-* [ ] Step 15.4: Add a date range filter to AttendanceForm — filter attendance records between two dates
-* [ ] Milestone Complete: Instructors can slice data by section, pass/fail status, subject, and date range
+* [x] Step 15.1: Add a section filter dropdown to GradeForm — filter assessments to show only students from a specific section. Created `GradeFilterPanel` atom (section dropdown + search field). Added `getAllSections()` to StudentDao. In-memory filtering via student-to-section map.
+* [x] Step 15.2: Add a pass/fail filter toggle to GradeForm — status dropdown (All Results / Passed Only / Failed Only). Season tabs filter by per-student-subject season average. Final Grade tab filters by weighted final grade.
+* [x] Step 15.3: Add a subject filter to StudentForm — "show students enrolled in this subject". Created `StudentFilterPanel` atom (subject dropdown + search field). Added `getStudentsBySubject()` to EnrollmentDao. Section tabs rebuild from filtered student set.
+* [x] Step 15.4: Add a date range filter to AttendanceForm — "From" and "To" date fields. Single date = editable entry mode (existing behavior). Date range = read-only summary view with Date column. Added `getBySubjectSectionAndDateRange()` to AttendanceDao.
+* [x] Milestone Complete: Instructors can slice data by section, pass/fail status, subject, and date range
 
 ## Milestone 16 — Security Hardening (P3 — Future)
 
@@ -514,8 +516,8 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 11 — Grade Export & Printing (P0)
 * [x] Milestone 12 — Final Grade Across Seasons (P1)
 * [x] Milestone 13 — Student Grade Summary / Report Card (P1)
-* [ ] Milestone 14 — UX Improvements (P2)
-* [ ] Milestone 15 — Advanced Filtering (P2)
+* [x] Milestone 14 — UX Improvements (P2)
+* [x] Milestone 15 — Advanced Filtering (P2)
 * [ ] Milestone 16 — Security Hardening (P3)
 * [ ] Milestone 17 — Instructor-Section-Subject Linking (P3)
 

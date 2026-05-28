@@ -13,19 +13,21 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
 
+import dao.EnrollmentDao;
 import dao.StudentDao;
+import dao.SubjectDao;
 import model.Student;
+import model.Subject;
 import model.User;
 import util.StyleConstants;
 
 public class StudentForm extends JFrame {
 
     private StudentInputPanel inputPanel;
+    private StudentFilterPanel filterPanel;
     private JTabbedPane sectionTabs;
     private StudentDao studentDao;
-    private JTextField searchField;
     private User currentUser;
 
     public StudentForm(User currentUser) {
@@ -72,13 +74,26 @@ public class StudentForm extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
 
         inputPanel = new StudentInputPanel();
+        filterPanel = createFilterPanel();
 
         sectionTabs = new JTabbedPane();
         sectionTabs.setFont(StyleConstants.TAB_FONT);
 
-        panel.add(inputPanel, BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(inputPanel, BorderLayout.NORTH);
+        topPanel.add(filterPanel, BorderLayout.SOUTH);
+
+        panel.add(topPanel, BorderLayout.NORTH);
         panel.add(sectionTabs, BorderLayout.CENTER);
 
+        return panel;
+    }
+
+    private StudentFilterPanel createFilterPanel() {
+        StudentFilterPanel panel = new StudentFilterPanel();
+        panel.populateSubjects(new SubjectDao().getAll());
+        panel.addSubjectListener(e -> refreshTabs());
+        panel.addSearchListener(e -> handleSearch());
         return panel;
     }
 
@@ -99,7 +114,6 @@ public class StudentForm extends JFrame {
         clearButton.addActionListener(e -> inputPanel.clear());
         viewGradesButton.addActionListener(e -> handleViewGrades());
 
-        searchField = new JTextField(15);
         JButton searchButton = new JButton("Search");
         searchButton.addActionListener(e -> handleSearch());
 
@@ -108,15 +122,22 @@ public class StudentForm extends JFrame {
         panel.add(deleteButton);
         panel.add(clearButton);
         panel.add(viewGradesButton);
-        panel.add(searchField);
         panel.add(searchButton);
 
         return panel;
     }
 
     private void refreshTabs() {
-        List<Student> allStudents = studentDao.getAll();
-        buildSectionTabs(allStudents);
+        List<Student> students = loadStudents();
+        buildSectionTabs(students);
+    }
+
+    private List<Student> loadStudents() {
+        if (filterPanel.isAllSubjects()) {
+            return studentDao.getAll();
+        }
+        Subject subject = filterPanel.getSelectedSubject();
+        return new EnrollmentDao().getStudentsBySubject(subject.getSubjectId());
     }
 
     private void buildSectionTabs(List<Student> students) {
@@ -261,7 +282,7 @@ public class StudentForm extends JFrame {
     }
 
     private void handleSearch() {
-        String keyword = searchField.getText().trim();
+        String keyword = filterPanel.getSearchKeyword();
 
         if (keyword.isEmpty()) {
             refreshTabs();
@@ -269,7 +290,26 @@ public class StudentForm extends JFrame {
         }
 
         List<Student> results = studentDao.search(keyword);
+        results = filterBySubject(results);
         buildSectionTabs(results);
+    }
+
+    private List<Student> filterBySubject(List<Student> students) {
+        if (filterPanel.isAllSubjects()) {
+            return students;
+        }
+
+        Subject subject = filterPanel.getSelectedSubject();
+        EnrollmentDao enrollmentDao = new EnrollmentDao();
+        List<Student> filtered = new ArrayList<>();
+
+        for (Student student : students) {
+            if (enrollmentDao.isEnrolled(student.getStudentId(), subject.getSubjectId())) {
+                filtered.add(student);
+            }
+        }
+
+        return filtered;
     }
 
     private void handleViewGrades() {
