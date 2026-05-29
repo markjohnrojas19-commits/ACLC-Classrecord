@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -69,7 +70,7 @@ public class BatchScoreEntryForm extends JFrame {
         titleLabel.setFont(StyleConstants.TITLE_FONT);
         titleLabel.setForeground(StyleConstants.PRIMARY);
 
-        JButton backButton = new JButton("Back to Dashboard");
+        JButton backButton = new JButton("Back to Grades");
         backButton.addActionListener(e -> handleBack(currentUser));
 
         panel.add(titleLabel, BorderLayout.WEST);
@@ -101,6 +102,7 @@ public class BatchScoreEntryForm extends JFrame {
         };
 
         table = new JTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);
@@ -114,8 +116,13 @@ public class BatchScoreEntryForm extends JFrame {
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton saveButton = new JButton("Save All");
+        JButton deleteButton = new JButton("Delete Selected");
+
         saveButton.addActionListener(e -> handleSaveAll());
+        deleteButton.addActionListener(e -> handleDeleteSelected());
+
         panel.add(saveButton);
+        panel.add(deleteButton);
 
         return panel;
     }
@@ -240,6 +247,54 @@ public class BatchScoreEntryForm extends JFrame {
         refreshTable();
     }
 
+    private void handleDeleteSelected() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            showError("Please select a student row to delete.");
+            return;
+        }
+
+        Subject subject = filterPanel.getSelectedSubject();
+        String assessmentName = filterPanel.getAssessmentName();
+        GradingSeason season = filterPanel.getSelectedSeason();
+
+        if (subject == null || assessmentName.isEmpty()) {
+            showError("Please select a subject and enter an assessment name.");
+            return;
+        }
+
+        String studentId = currentStudents.get(selectedRow).getStudentId();
+        int assessmentId = findAssessmentId(studentId, subject.getSubjectId(),
+            season, assessmentName);
+
+        if (assessmentId == -1) {
+            showError("No saved score to delete for this student.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Delete this score?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            assessmentDao.delete(assessmentId);
+            refreshTable();
+        }
+    }
+
+    private int findAssessmentId(String studentId, int subjectId,
+            GradingSeason season, String assessmentName) {
+        List<Assessment> existing = assessmentDao.getBySeason(season);
+
+        for (Assessment a : existing) {
+            if (a.getStudentId().equals(studentId)
+                    && a.getSubjectId() == subjectId
+                    && a.getAssessmentName().equals(assessmentName)) {
+                return a.getAssessmentId();
+            }
+        }
+        return -1;
+    }
+
     private boolean isValidScore(String text) {
         try {
             double value = Double.parseDouble(text);
@@ -265,7 +320,7 @@ public class BatchScoreEntryForm extends JFrame {
     }
 
     private void handleBack(User currentUser) {
-        new DashboardForm(currentUser).setVisible(true);
+        new GradeForm(currentUser).setVisible(true);
         dispose();
     }
 

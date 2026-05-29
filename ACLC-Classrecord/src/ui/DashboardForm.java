@@ -51,7 +51,7 @@ public class DashboardForm extends JFrame {
     }
 
     private JPanel createNavigationPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 4,
+        JPanel panel = new JPanel(new GridLayout(2, 3,
             StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
@@ -59,7 +59,6 @@ public class DashboardForm extends JFrame {
         JButton subjectsButton = new JButton("Subjects");
         JButton enrollmentButton = new JButton("Enrollment");
         JButton gradesButton = new JButton("Grades");
-        JButton batchEntryButton = new JButton("Batch Score Entry");
         JButton attendanceButton = new JButton("Attendance");
         JButton summaryButton = new JButton("Student Summary");
 
@@ -67,7 +66,6 @@ public class DashboardForm extends JFrame {
         subjectsButton.addActionListener(e -> openSubjectForm());
         enrollmentButton.addActionListener(e -> openEnrollmentForm());
         gradesButton.addActionListener(e -> openGradeForm());
-        batchEntryButton.addActionListener(e -> openBatchScoreEntryForm());
         attendanceButton.addActionListener(e -> openAttendanceForm());
         summaryButton.addActionListener(e -> openStudentSummaryForm());
 
@@ -75,7 +73,6 @@ public class DashboardForm extends JFrame {
         panel.add(subjectsButton);
         panel.add(enrollmentButton);
         panel.add(gradesButton);
-        panel.add(batchEntryButton);
         panel.add(attendanceButton);
         panel.add(summaryButton);
 
@@ -99,11 +96,6 @@ public class DashboardForm extends JFrame {
 
     private void openAttendanceForm() {
         new AttendanceForm(currentUser).setVisible(true);
-        dispose();
-    }
-
-    private void openBatchScoreEntryForm() {
-        new BatchScoreEntryForm(currentUser).setVisible(true);
         dispose();
     }
 

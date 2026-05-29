@@ -44,7 +44,7 @@ import util.StyleConstants;
 
 public class GradeForm extends JFrame {
 
-    private AssessmentInputPanel inputPanel;
+    private User currentUser;
     private GradeFilterPanel filterPanel;
     private JTabbedPane seasonTabs;
     private AssessmentDao assessmentDao;
@@ -52,41 +52,35 @@ public class GradeForm extends JFrame {
     private Map<GradingSeason, List<Assessment>> seasonRecords;
 
     public GradeForm(User currentUser) {
+        this.currentUser = currentUser;
         assessmentDao = new AssessmentDao();
         gradeComputer = new GradeComputer();
         seasonRecords = new HashMap<>();
 
-        setTitle("ACLC Class Record \u2014 Grade Management");
+        setTitle("ACLC Class Record \u2014 Grades");
         setSize(1050, 700);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                handleBack(currentUser);
-            }
-        });
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        add(createHeaderPanel(currentUser), BorderLayout.NORTH);
+        add(createHeaderPanel(), BorderLayout.NORTH);
         add(createCenterPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
 
-        populateDropdowns();
         populateSectionFilter();
         refreshAllTabs();
     }
 
-    private JPanel createHeaderPanel(User currentUser) {
+    private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(StyleConstants.HEADER_BORDER);
         panel.setBackground(StyleConstants.WHITE);
 
-        JLabel titleLabel = new JLabel("Grade Management");
+        JLabel titleLabel = new JLabel("Grades");
         titleLabel.setFont(StyleConstants.TITLE_FONT);
         titleLabel.setForeground(StyleConstants.PRIMARY);
 
         JButton backButton = new JButton("Back to Dashboard");
-        backButton.addActionListener(e -> handleBack(currentUser));
+        backButton.addActionListener(e -> handleBack());
 
         panel.add(titleLabel, BorderLayout.WEST);
         panel.add(backButton, BorderLayout.EAST);
@@ -97,15 +91,10 @@ public class GradeForm extends JFrame {
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        inputPanel = new AssessmentInputPanel();
         filterPanel = createFilterPanel();
         seasonTabs = createSeasonTabs();
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(inputPanel, BorderLayout.NORTH);
-        topPanel.add(filterPanel, BorderLayout.SOUTH);
-
-        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(filterPanel, BorderLayout.NORTH);
         panel.add(seasonTabs, BorderLayout.CENTER);
 
         return panel;
@@ -115,7 +104,7 @@ public class GradeForm extends JFrame {
         GradeFilterPanel panel = new GradeFilterPanel();
         panel.addSectionListener(e -> refreshAllTabs());
         panel.addStatusListener(e -> refreshAllTabs());
-        panel.addSearchListener(e -> handleSearch());
+        panel.addSearchListener(e -> refreshWithSearch());
         return panel;
     }
 
@@ -138,7 +127,6 @@ public class GradeForm extends JFrame {
         panel.setBackground(StyleConstants.WHITE);
 
         JTable table = createAssessmentTable();
-        table.getSelectionModel().addListSelectionListener(e -> loadSelectedAssessment());
 
         JLabel averageLabel = new JLabel("Season Average: \u2014");
         averageLabel.setFont(StyleConstants.SMALL_BOLD_FONT);
@@ -215,103 +203,27 @@ public class GradeForm extends JFrame {
             StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
-        JButton addButton = new JButton("Add");
-        JButton editButton = new JButton("Edit");
-        JButton deleteButton = new JButton("Delete");
-        JButton clearButton = new JButton("Clear");
+        JButton enterScoresButton = new JButton("Enter Scores");
         JButton printButton = new JButton("Print");
         JButton exportButton = new JButton("Export CSV");
 
-        addButton.addActionListener(e -> handleAdd());
-        editButton.addActionListener(e -> handleEdit());
-        deleteButton.addActionListener(e -> handleDelete());
-        clearButton.addActionListener(e -> inputPanel.clear());
+        enterScoresButton.addActionListener(e -> openBatchScoreEntry());
         printButton.addActionListener(e -> handlePrint());
         exportButton.addActionListener(e -> handleExportCsv());
 
-        JButton searchButton = new JButton("Search");
-        searchButton.addActionListener(e -> handleSearch());
-
-        panel.add(addButton);
-        panel.add(editButton);
-        panel.add(deleteButton);
-        panel.add(clearButton);
+        panel.add(enterScoresButton);
         panel.add(printButton);
         panel.add(exportButton);
-        panel.add(searchButton);
 
         return panel;
     }
 
-    private void handleAdd() {
-        if (inputPanel.hasNoSelections()) {
-            showError("Please select a student and subject.");
-            return;
-        }
-        if (inputPanel.hasEmptyFields()) {
-            showError("Please fill in the assessment name and score.");
-            return;
-        }
-        if (inputPanel.hasInvalidScore()) {
-            showError("Score must be a number between 0 and 100.");
-            return;
-        }
-
-        Assessment assessment = buildAssessmentFromInput(0);
-
-        if (assessmentDao.add(assessment)) {
-            refreshAllTabs();
-            inputPanel.clear();
-            showSuccess("Assessment added successfully.");
-        } else {
-            showError("Failed to add. This assessment may already exist for this student/subject/season.");
-        }
+    private void openBatchScoreEntry() {
+        new BatchScoreEntryForm(currentUser).setVisible(true);
+        dispose();
     }
 
-    private void handleEdit() {
-        Assessment selected = getSelectedAssessment();
-        if (selected == null) {
-            showError("Please select an assessment to edit.");
-            return;
-        }
-        if (inputPanel.hasEmptyFields()) {
-            showError("Please fill in the assessment name and score.");
-            return;
-        }
-        if (inputPanel.hasInvalidScore()) {
-            showError("Score must be a number between 0 and 100.");
-            return;
-        }
-
-        Assessment assessment = buildAssessmentFromInput(selected.getAssessmentId());
-
-        if (assessmentDao.update(assessment)) {
-            refreshAllTabs();
-            inputPanel.clear();
-            showSuccess("Assessment updated successfully.");
-        } else {
-            showError("Failed to update assessment.");
-        }
-    }
-
-    private void handleDelete() {
-        Assessment selected = getSelectedAssessment();
-        if (selected == null) {
-            showError("Please select an assessment to delete.");
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-            "Delete this assessment record?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            assessmentDao.delete(selected.getAssessmentId());
-            refreshAllTabs();
-            inputPanel.clear();
-        }
-    }
-
-    private void handleSearch() {
+    private void refreshWithSearch() {
         String keyword = filterPanel.getSearchKeyword();
 
         if (keyword.isEmpty()) {
@@ -422,49 +334,6 @@ public class GradeForm extends JFrame {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
         return value;
-    }
-
-    private Assessment buildAssessmentFromInput(int assessmentId) {
-        Student student = inputPanel.getSelectedStudent();
-        Subject subject = inputPanel.getSelectedSubject();
-
-        return new Assessment(
-            assessmentId,
-            student.getStudentId(),
-            subject.getSubjectId(),
-            inputPanel.getSelectedSeason(),
-            inputPanel.getAssessmentName(),
-            inputPanel.getScore()
-        );
-    }
-
-    private Assessment getSelectedAssessment() {
-        int tabIndex = seasonTabs.getSelectedIndex();
-        if (tabIndex >= GradingSeason.values().length) {
-            return null;
-        }
-        GradingSeason season = GradingSeason.values()[tabIndex];
-        JTable table = getTableForTab(tabIndex);
-
-        int viewRow = table.getSelectedRow();
-        if (viewRow == -1) {
-            return null;
-        }
-
-        int modelRow = table.convertRowIndexToModel(viewRow);
-        List<Assessment> records = seasonRecords.getOrDefault(season, new ArrayList<>());
-        if (modelRow >= records.size()) {
-            return null;
-        }
-        return records.get(modelRow);
-    }
-
-    private void loadSelectedAssessment() {
-        Assessment selected = getSelectedAssessment();
-        if (selected == null) {
-            return;
-        }
-        inputPanel.fromAssessment(selected);
     }
 
     private void populateSectionFilter() {
@@ -717,32 +586,13 @@ public class GradeForm extends JFrame {
         return map;
     }
 
-    private void populateDropdowns() {
-        inputPanel.populateStudents(new StudentDao().getAll());
-        inputPanel.populateSubjects(new SubjectDao().getAll());
-    }
-
-    private void handleBack(User currentUser) {
-        if (inputPanel.hasChanges() && !confirmDiscard()) {
-            return;
-        }
+    private void handleBack() {
         new DashboardForm(currentUser).setVisible(true);
         dispose();
     }
 
-    private boolean confirmDiscard() {
-        int choice = JOptionPane.showConfirmDialog(this,
-            "You have unsaved changes. Discard and go back?",
-            "Unsaved Changes", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        return choice == JOptionPane.YES_OPTION;
-    }
-
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
-    }
-
-    private void showSuccess(String message) {
-        JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void styleTableHeader(JTable table) {
