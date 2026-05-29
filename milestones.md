@@ -436,7 +436,18 @@ Table: assessments
 * [x] Step 15.4: Add a date range filter to AttendanceForm — "From" and "To" date fields. Single date = editable entry mode (existing behavior). Date range = read-only summary view with Date column. Added `getBySubjectSectionAndDateRange()` to AttendanceDao.
 * [x] Milestone Complete: Instructors can slice data by section, pass/fail status, subject, and date range
 
-## Milestone 16 — Security Hardening (P3 — Future)
+## Milestone 16 — Batch Score Entry & Enrollment UX (P2 — Nice to Have)
+
+> **Why P2:** Entering scores one-by-one through GradeForm is slow for a full class. Batch entry lets the instructor pick one assessment and fill in scores for all enrolled students at once. Enrollment UX improved with a select-all checkbox.
+
+* [x] Step 16.1: **Enrollment select-all checkbox** — Added "Select All" checkbox in the Enroll column header. Clicking toggles all row checkboxes on/off. Removed redundant Enroll All / Unenroll All buttons. Split `EnrollmentFilterPanel.addFilterListener()` into `addSubjectListener()` + `addSectionListener()`.
+* [x] Step 16.2: **BatchScoreFilterPanel** — Created filter panel with Subject, Section, Season, Assessment Name fields + "Load Students" button.
+* [x] Step 16.3: **BatchScoreEntryForm** — Editable table of enrolled students with Score column. Existing scores pre-populated. "Save All" saves via `AssessmentDao.saveOrUpdate()` (upsert by student + subject + season + name). Empty rows skipped. Summary dialog shows saved/skipped counts.
+* [x] Step 16.4: **AssessmentDao.saveOrUpdate()** — Checks if assessment exists (by student + subject + season + name), updates if found, inserts if not.
+* [x] Step 16.5: **Dashboard navigation** — Added "Batch Score Entry" button. Changed DashboardForm layout from FlowLayout to GridLayout (2x4) to accommodate growing navigation.
+* [x] Milestone Complete: Instructor can enter scores for an entire class in one screen instead of adding assessments one-by-one
+
+## Milestone 17 — Security Hardening (P3 — Future)
 
 > **Why P3:** Important for production but not critical for a school project demo. Address before any real deployment.
 
@@ -446,7 +457,7 @@ Table: assessments
 * [ ] Step 16.4: **Audit trail** — Create an `audit_log` table (user_id, action, target_table, target_id, timestamp). Log all Add/Edit/Delete operations. Show in an admin-only Audit Log form.
 * [ ] Milestone Complete: Passwords are hashed, credentials are externalized, actions are logged
 
-## Milestone 17 — Instructor-Section-Subject Linking (P3 — Future)
+## Milestone 18 — Instructor-Section-Subject Linking (P3 — Future)
 
 > **Why P3:** Only matters if multiple instructors use the system. Currently all data is visible to all users. This milestone restricts each instructor to see only "their" students and subjects.
 
@@ -484,10 +495,10 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 
 ## Future Milestones (Beyond School Project)
 
-* [ ] **M18 — Web Migration:** Migrate to Spring Boot + Thymeleaf for multi-user web deployment
-* [ ] **M19 — CSV/Excel Import:** Allow importing student lists and grades from spreadsheets
-* [ ] **M20 — Advanced Attendance:** Calendar view, automated late detection, SMS/email notifications
-* [ ] **M21 — Database Connection Pooling:** Replace per-query connections with HikariCP connection pool
+* [ ] **M19 — Web Migration:** Migrate to Spring Boot + Thymeleaf for multi-user web deployment
+* [ ] **M20 — CSV/Excel Import:** Allow importing student lists and grades from spreadsheets
+* [ ] **M21 — Advanced Attendance:** Calendar view, automated late detection, SMS/email notifications
+* [ ] **M22 — Database Connection Pooling:** Replace per-query connections with HikariCP connection pool
 
 ---
 
@@ -520,8 +531,9 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 13 — Student Grade Summary / Report Card (P1)
 * [x] Milestone 14 — UX Improvements (P2)
 * [x] Milestone 15 — Advanced Filtering (P2)
-* [ ] Milestone 16 — Security Hardening (P3)
-* [ ] Milestone 17 — Instructor-Section-Subject Linking (P3)
+* [x] Milestone 16 — Batch Score Entry & Enrollment UX (P2)
+* [ ] Milestone 17 — Security Hardening (P3)
+* [ ] Milestone 18 — Instructor-Section-Subject Linking (P3)
 
 ---
 
