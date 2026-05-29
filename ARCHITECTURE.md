@@ -37,11 +37,13 @@
 7. On success, `StudentForm` rebuilds all section tabs — the new student appears in the "All" tab and in its section's tab.
 8. Input fields are cleared, ready for the next entry.
 
-**Section tabs are dynamic.** When a student is added with a new section value (e.g., "C"), a new tab "Section C" appears automatically. Sections are extracted from the current student data — no separate sections table needed.
+**Section tabs are dynamic.** Tabs use a combined Course-Year-Section label (e.g., "BSIT-1A", "BSCS-2A") built from `Student.getCourseSection()`. This distinguishes BSIT section A from BSCS section A. The label is computed from three separate DB columns (`course`, `year_level`, `section`) — no data denormalization. When a student is added, a new tab appears automatically if the combined label is new.
 
 **The same pattern applies to Edit and Delete** — the form calls the appropriate DAO method, then rebuilds all tabs.
 
 **Delete cascading:** When a student is deleted, `StudentDao.delete()` first removes all related rows from the `grades` and `assessments` tables, then deletes the student. This is done in code (not via `ON DELETE CASCADE` in the schema) so the behavior is explicit and readable. All three deletes use the same JDBC connection.
+
+**Batch entry:** `BatchStudentEntryForm` opens as a modal dialog from StudentForm. A defaults panel at the top lets the instructor set Course, Year Level, and Section once — clicking "Apply to All Rows" fills those columns in every table row. New rows added via "Add 5 Rows" are also pre-filled with the current defaults. The instructor only needs to type Student ID, First Name, Last Name, and Gender per row. Any row can still override the defaults for edge cases.
 
 ---
 

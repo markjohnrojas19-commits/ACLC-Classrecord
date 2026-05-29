@@ -12,6 +12,10 @@ import model.Student;
 public class StudentDao {
 
     public boolean add(Student student) {
+        if (existsById(student.getStudentId())) {
+            return false;
+        }
+
         String sql = "INSERT INTO students (student_id, firstname, lastname, course, year_level, section, gender) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -24,6 +28,23 @@ public class StudentDao {
 
         } catch (SQLException e) {
             System.out.println("Add student error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean existsById(String studentId) {
+        String sql = "SELECT 1 FROM students WHERE student_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, studentId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Check student exists error: " + e.getMessage());
             return false;
         }
     }
@@ -111,7 +132,8 @@ public class StudentDao {
     }
 
     public List<String> getAllSections() {
-        String sql = "SELECT DISTINCT section FROM students ORDER BY section";
+        String sql = "SELECT DISTINCT CONCAT(course, '-', year_level, section) AS course_section "
+                   + "FROM students ORDER BY course_section";
         List<String> sections = new ArrayList<>();
 
         try (Connection connection = DatabaseConnection.getConnection();
@@ -119,7 +141,7 @@ public class StudentDao {
              ResultSet result = statement.executeQuery()) {
 
             while (result.next()) {
-                sections.add(result.getString("section"));
+                sections.add(result.getString("course_section"));
             }
 
         } catch (SQLException e) {

@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -31,18 +32,33 @@ public class BatchStudentEntryForm extends JDialog {
     private DefaultTableModel tableModel;
     private Runnable onSaveComplete;
 
+    private JTextField defaultCourseField;
+    private JComboBox<String> defaultYearBox;
+    private JComboBox<String> defaultSectionBox;
+
     private static final int INITIAL_ROWS = 10;
+    private static final String[] SECTION_OPTIONS = {"", "A", "B", "C", "D", "E"};
+    private static final int COURSE_COL = 3;
+    private static final int YEAR_COL = 4;
+    private static final int SECTION_COL = 5;
 
     public BatchStudentEntryForm(JFrame parent, Runnable onSaveComplete) {
         super(parent, "Add Multiple Students", true);
         this.onSaveComplete = onSaveComplete;
 
-        setSize(950, 550);
+        setSize(950, 600);
         setLocationRelativeTo(parent);
 
-        add(createHeaderLabel(), BorderLayout.NORTH);
+        add(createTopPanel(), BorderLayout.NORTH);
         add(createTablePanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
+    }
+
+    private JPanel createTopPanel() {
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(createHeaderLabel(), BorderLayout.NORTH);
+        topPanel.add(createDefaultsPanel(), BorderLayout.SOUTH);
+        return topPanel;
     }
 
     private JLabel createHeaderLabel() {
@@ -50,6 +66,52 @@ public class BatchStudentEntryForm extends JDialog {
         label.setFont(StyleConstants.SMALL_BOLD_FONT);
         label.setBorder(StyleConstants.HEADER_BORDER);
         return label;
+    }
+
+    private JPanel createDefaultsPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panel.setBorder(StyleConstants.INPUT_BORDER);
+
+        defaultCourseField = new JTextField(10);
+        defaultYearBox = new JComboBox<>(new String[]{"", "1", "2", "3", "4"});
+        defaultSectionBox = new JComboBox<>(SECTION_OPTIONS);
+        defaultSectionBox.setEditable(true);
+
+        JButton applyButton = new JButton("Apply to All Rows");
+        applyButton.addActionListener(e -> applyDefaultsToAllRows());
+
+        panel.add(new JLabel("Course:"));
+        panel.add(defaultCourseField);
+        panel.add(new JLabel("Year Level:"));
+        panel.add(defaultYearBox);
+        panel.add(new JLabel("Section:"));
+        panel.add(defaultSectionBox);
+        panel.add(applyButton);
+
+        return panel;
+    }
+
+    private void applyDefaultsToAllRows() {
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            fillRowWithDefaults(row);
+        }
+    }
+
+    private void fillRowWithDefaults(int row) {
+        String course = defaultCourseField.getText().trim();
+        String year = (String) defaultYearBox.getSelectedItem();
+        Object sectionItem = defaultSectionBox.getSelectedItem();
+        String section = sectionItem != null ? sectionItem.toString().trim() : "";
+
+        if (!course.isEmpty()) {
+            tableModel.setValueAt(course, row, COURSE_COL);
+        }
+        if (year != null && !year.isEmpty()) {
+            tableModel.setValueAt(year, row, YEAR_COL);
+        }
+        if (!section.isEmpty()) {
+            tableModel.setValueAt(section, row, SECTION_COL);
+        }
     }
 
     private JScrollPane createTablePanel() {
@@ -63,12 +125,17 @@ public class BatchStudentEntryForm extends JDialog {
         table.setGridColor(StyleConstants.BORDER_COLOR);
         table.setDefaultRenderer(Object.class, createAlternatingRenderer());
         styleTableHeader(table);
-        setupGenderColumn();
+        setupColumnEditors();
 
         return new JScrollPane(table);
     }
 
-    private void setupGenderColumn() {
+    private void setupColumnEditors() {
+        JComboBox<String> sectionBox = new JComboBox<>(SECTION_OPTIONS);
+        sectionBox.setEditable(true);
+        TableColumn sectionColumn = table.getColumnModel().getColumn(SECTION_COL);
+        sectionColumn.setCellEditor(new DefaultCellEditor(sectionBox));
+
         JComboBox<String> genderBox = new JComboBox<>(
             new String[]{"", "Male", "Female"});
         TableColumn genderColumn = table.getColumnModel().getColumn(6);
@@ -96,8 +163,12 @@ public class BatchStudentEntryForm extends JDialog {
     }
 
     private void addEmptyRows() {
+        int firstNewRow = tableModel.getRowCount();
         for (int i = 0; i < 5; i++) {
             tableModel.addRow(new Object[]{"", "", "", "", "", "", ""});
+        }
+        for (int row = firstNewRow; row < tableModel.getRowCount(); row++) {
+            fillRowWithDefaults(row);
         }
     }
 

@@ -174,7 +174,7 @@ public class EnrollmentForm extends JFrame {
     private List<String> extractSections(List<Student> students) {
         Set<String> sections = new LinkedHashSet<>();
         for (Student student : students) {
-            sections.add(student.getSection());
+            sections.add(student.getCourseSection());
         }
         return new ArrayList<>(sections);
     }
@@ -206,10 +206,10 @@ public class EnrollmentForm extends JFrame {
         }
     }
 
-    private List<Student> getStudentsBySection(String section) {
+    private List<Student> getStudentsBySection(String courseSection) {
         List<Student> filtered = new ArrayList<>();
         for (Student student : new StudentDao().getAll()) {
-            if (student.getSection().equals(section)) {
+            if (student.getCourseSection().equals(courseSection)) {
                 filtered.add(student);
             }
         }

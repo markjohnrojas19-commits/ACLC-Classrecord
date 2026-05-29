@@ -592,7 +592,7 @@ public class GradeForm extends JFrame {
     private Map<String, String> buildStudentSectionMap() {
         Map<String, String> map = new HashMap<>();
         for (Student student : new StudentDao().getAll()) {
-            map.put(student.getStudentId(), student.getSection());
+            map.put(student.getStudentId(), student.getCourseSection());
         }
         return map;
     }

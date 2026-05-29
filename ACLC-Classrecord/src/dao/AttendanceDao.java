@@ -58,10 +58,10 @@ public class AttendanceDao {
         return add(attendance);
     }
 
-    public List<LocalDate> getDatesBySubjectAndSection(int subjectId, String section) {
+    public List<LocalDate> getDatesBySubjectAndSection(int subjectId, String courseSection) {
         String sql = "SELECT DISTINCT a.date FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
-                   + "WHERE a.subject_id = ? AND s.section = ? "
+                   + "WHERE a.subject_id = ? AND CONCAT(s.course, '-', s.year_level, s.section) = ? "
                    + "ORDER BY a.date DESC";
         List<LocalDate> dates = new ArrayList<>();
 
@@ -69,7 +69,7 @@ public class AttendanceDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, subjectId);
-            statement.setString(2, section);
+            statement.setString(2, courseSection);
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -109,10 +109,10 @@ public class AttendanceDao {
     }
 
     public List<Attendance> getBySubjectSectionAndDateRange(int subjectId,
-            String section, LocalDate startDate, LocalDate endDate) {
+            String courseSection, LocalDate startDate, LocalDate endDate) {
         String sql = "SELECT a.* FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
-                   + "WHERE a.subject_id = ? AND s.section = ? "
+                   + "WHERE a.subject_id = ? AND CONCAT(s.course, '-', s.year_level, s.section) = ? "
                    + "AND a.date BETWEEN ? AND ? "
                    + "ORDER BY a.date, s.lastname, s.firstname";
         List<Attendance> results = new ArrayList<>();
@@ -121,7 +121,7 @@ public class AttendanceDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, subjectId);
-            statement.setString(2, section);
+            statement.setString(2, courseSection);
             statement.setDate(3, Date.valueOf(startDate));
             statement.setDate(4, Date.valueOf(endDate));
 

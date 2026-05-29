@@ -69,6 +69,10 @@ public class Student {
         this.section = section;
     }
 
+    public String getCourseSection() {
+        return course + "-" + yearLevel + section;
+    }
+
     public String getGender() {
         return gender;
     }

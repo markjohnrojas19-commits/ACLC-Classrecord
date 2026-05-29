@@ -115,10 +115,10 @@ public class EnrollmentDao {
         return students;
     }
 
-    public List<Student> getStudentsBySubjectAndSection(int subjectId, String section) {
+    public List<Student> getStudentsBySubjectAndSection(int subjectId, String courseSection) {
         String sql = "SELECT s.* FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
-                   + "WHERE e.subject_id = ? AND s.section = ? "
+                   + "WHERE e.subject_id = ? AND CONCAT(s.course, '-', s.year_level, s.section) = ? "
                    + "ORDER BY s.lastname, s.firstname";
         List<Student> students = new ArrayList<>();
 
@@ -126,7 +126,7 @@ public class EnrollmentDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, subjectId);
-            statement.setString(2, section);
+            statement.setString(2, courseSection);
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -142,10 +142,11 @@ public class EnrollmentDao {
     }
 
     public List<String> getSectionsBySubject(int subjectId) {
-        String sql = "SELECT DISTINCT s.section FROM students s "
+        String sql = "SELECT DISTINCT CONCAT(s.course, '-', s.year_level, s.section) AS course_section "
+                   + "FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
                    + "WHERE e.subject_id = ? "
-                   + "ORDER BY s.section";
+                   + "ORDER BY course_section";
         List<String> sections = new ArrayList<>();
 
         try (Connection connection = DatabaseConnection.getConnection();
@@ -155,7 +156,7 @@ public class EnrollmentDao {
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
-                    sections.add(result.getString("section"));
+                    sections.add(result.getString("course_section"));
                 }
             }
 

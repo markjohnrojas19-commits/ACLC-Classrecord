@@ -162,7 +162,7 @@ public class StudentForm extends JFrame {
         for (String section : sections) {
             SectionTablePanel sectionPanel = createSectionPanel();
             sectionPanel.populate(filterBySection(students, section));
-            sectionTabs.addTab("Section " + section, sectionPanel);
+            sectionTabs.addTab(section, sectionPanel);
         }
     }
 
@@ -176,15 +176,15 @@ public class StudentForm extends JFrame {
     private List<String> extractSections(List<Student> students) {
         Set<String> sections = new LinkedHashSet<>();
         for (Student student : students) {
-            sections.add(student.getSection());
+            sections.add(student.getCourseSection());
         }
         return new ArrayList<>(sections);
     }
 
-    private List<Student> filterBySection(List<Student> students, String section) {
+    private List<Student> filterBySection(List<Student> students, String courseSection) {
         List<Student> filtered = new ArrayList<>();
         for (Student student : students) {
-            if (student.getSection().equals(section)) {
+            if (student.getCourseSection().equals(courseSection)) {
                 filtered.add(student);
             }
         }

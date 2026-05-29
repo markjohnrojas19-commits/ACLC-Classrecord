@@ -70,7 +70,7 @@ public class DashboardDao {
     }
 
     public int countTodaySectionsMarked() {
-        String sql = "SELECT COUNT(DISTINCT CONCAT(a.subject_id, '|', s.section)) "
+        String sql = "SELECT COUNT(DISTINCT CONCAT(a.subject_id, '|', s.course, '-', s.year_level, s.section)) "
                    + "FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
                    + "WHERE a.date = ?";
@@ -94,7 +94,7 @@ public class DashboardDao {
     }
 
     public int countTotalEnrolledSections() {
-        String sql = "SELECT COUNT(DISTINCT CONCAT(e.subject_id, '|', s.section)) "
+        String sql = "SELECT COUNT(DISTINCT CONCAT(e.subject_id, '|', s.course, '-', s.year_level, s.section)) "
                    + "FROM enrollments e "
                    + "JOIN students s ON e.student_id = s.student_id";
 
