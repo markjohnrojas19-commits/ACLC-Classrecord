@@ -51,8 +51,11 @@ public class EnrollmentFilterPanel extends JPanel {
         }
     }
 
-    public void addFilterListener(ActionListener listener) {
+    public void addSubjectListener(ActionListener listener) {
         subjectBox.addActionListener(listener);
+    }
+
+    public void addSectionListener(ActionListener listener) {
         sectionBox.addActionListener(listener);
     }
 }

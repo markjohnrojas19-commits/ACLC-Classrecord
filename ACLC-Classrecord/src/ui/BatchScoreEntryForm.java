@@ -3,47 +3,51 @@ package ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.GridLayout;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumn;
 
+import dao.AssessmentDao;
 import dao.EnrollmentDao;
-import dao.StudentDao;
 import dao.SubjectDao;
+import model.Assessment;
+import model.GradingSeason;
 import model.Student;
 import model.Subject;
 import model.User;
+import util.GradeConstants;
 import util.StyleConstants;
 
-public class EnrollmentForm extends JFrame {
+public class BatchScoreEntryForm extends JFrame {
 
-    private EnrollmentFilterPanel filterPanel;
-    private EnrollmentDao enrollmentDao;
+    private BatchScoreFilterPanel filterPanel;
     private JTable table;
     private DefaultTableModel tableModel;
     private List<Student> currentStudents;
+    private EnrollmentDao enrollmentDao;
+    private AssessmentDao assessmentDao;
 
-    public EnrollmentForm(User currentUser) {
+    public BatchScoreEntryForm(User currentUser) {
         enrollmentDao = new EnrollmentDao();
+        assessmentDao = new AssessmentDao();
         currentStudents = new ArrayList<>();
 
-        setTitle("ACLC Class Record \u2014 Enrollment");
+        setTitle("ACLC Class Record \u2014 Batch Score Entry");
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -52,7 +56,7 @@ public class EnrollmentForm extends JFrame {
         add(createCenterPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
 
-        populateDropdowns();
+        populateSubjects();
         attachFilterListeners();
     }
 
@@ -61,7 +65,7 @@ public class EnrollmentForm extends JFrame {
         panel.setBorder(StyleConstants.HEADER_BORDER);
         panel.setBackground(StyleConstants.WHITE);
 
-        JLabel titleLabel = new JLabel("Enrollment Management");
+        JLabel titleLabel = new JLabel("Batch Score Entry");
         titleLabel.setFont(StyleConstants.TITLE_FONT);
         titleLabel.setForeground(StyleConstants.PRIMARY);
 
@@ -77,7 +81,7 @@ public class EnrollmentForm extends JFrame {
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        filterPanel = new EnrollmentFilterPanel();
+        filterPanel = new BatchScoreFilterPanel();
         createTable();
 
         panel.add(filterPanel, BorderLayout.NORTH);
@@ -87,63 +91,21 @@ public class EnrollmentForm extends JFrame {
     }
 
     private void createTable() {
-        String[] columns = {"Enroll", "Student ID", "Name", "Course", "Year"};
+        String[] columns = {"Student ID", "Name", "Score"};
 
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public Class<?> getColumnClass(int column) {
-                if (column == 0) {
-                    return Boolean.class;
-                }
-                return Object.class;
-            }
-
-            @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 0;
+                return column == 2;
             }
         };
 
         table = new JTable(tableModel);
-        table.setAutoCreateRowSorter(true);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);
         table.setDefaultRenderer(Object.class, createAlternatingRenderer());
         styleTableHeader(table);
-        addSelectAllCheckbox();
-    }
-
-    private void addSelectAllCheckbox() {
-        TableColumn enrollColumn = table.getColumnModel().getColumn(0);
-        enrollColumn.setMaxWidth(60);
-
-        JCheckBox headerCheckbox = new JCheckBox();
-        headerCheckbox.setHorizontalAlignment(JCheckBox.CENTER);
-        headerCheckbox.setBackground(StyleConstants.TABLE_HEADER_BG);
-
-        enrollColumn.setHeaderRenderer((tbl, value, isSelected, hasFocus, row, col) -> {
-            JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
-            panel.setBackground(StyleConstants.TABLE_HEADER_BG);
-            panel.add(headerCheckbox);
-            JLabel label = new JLabel("All");
-            label.setForeground(StyleConstants.TABLE_HEADER_FG);
-            label.setFont(StyleConstants.TABLE_HEADER_FONT);
-            panel.add(label);
-            return panel;
-        });
-
-        table.getTableHeader().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int col = table.columnAtPoint(e.getPoint());
-                if (col == 0) {
-                    headerCheckbox.setSelected(!headerCheckbox.isSelected());
-                    setAllCheckboxes(headerCheckbox.isSelected());
-                    table.getTableHeader().repaint();
-                }
-            }
-        });
     }
 
     private JPanel createButtonPanel() {
@@ -151,115 +113,155 @@ public class EnrollmentForm extends JFrame {
             StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
-        JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(e -> handleSave());
+        JButton saveButton = new JButton("Save All");
+        saveButton.addActionListener(e -> handleSaveAll());
         panel.add(saveButton);
 
         return panel;
     }
 
-    private void populateDropdowns() {
+    private void populateSubjects() {
         List<Subject> subjects = new SubjectDao().getAll();
-        List<String> sections = extractSections(new StudentDao().getAll());
-
         filterPanel.populateSubjects(subjects);
-        filterPanel.populateSections(sections);
     }
 
     private void attachFilterListeners() {
-        filterPanel.addSubjectListener(e -> refreshTable());
+        filterPanel.addSubjectListener(e -> refreshSections());
         filterPanel.addSectionListener(e -> refreshTable());
+        filterPanel.addSeasonListener(e -> refreshTable());
+        filterPanel.addLoadListener(e -> refreshTable());
     }
 
-    private List<String> extractSections(List<Student> students) {
-        Set<String> sections = new LinkedHashSet<>();
-        for (Student student : students) {
-            sections.add(student.getSection());
+    private void refreshSections() {
+        Subject subject = filterPanel.getSelectedSubject();
+        if (subject == null) {
+            filterPanel.populateSections(new ArrayList<>());
+            return;
         }
-        return new ArrayList<>(sections);
+
+        List<String> sections = enrollmentDao.getSectionsBySubject(subject.getSubjectId());
+        filterPanel.populateSections(sections);
     }
 
     private void refreshTable() {
         Subject subject = filterPanel.getSelectedSubject();
         String section = filterPanel.getSelectedSection();
+        String assessmentName = filterPanel.getAssessmentName();
 
-        if (subject == null || section == null) {
+        if (subject == null || section == null || assessmentName.isEmpty()) {
             tableModel.setRowCount(0);
             currentStudents.clear();
             return;
         }
 
-        currentStudents = getStudentsBySection(section);
+        currentStudents = enrollmentDao.getStudentsBySubjectAndSection(
+            subject.getSubjectId(), section);
+        Map<String, Double> existingScores = loadExistingScores(
+            subject.getSubjectId(), filterPanel.getSelectedSeason(), assessmentName);
+
         tableModel.setRowCount(0);
 
         for (Student student : currentStudents) {
-            boolean enrolled = enrollmentDao.isEnrolled(
-                student.getStudentId(), subject.getSubjectId());
+            Double score = existingScores.get(student.getStudentId());
+            String scoreText = (score != null) ? String.valueOf(score) : "";
 
             tableModel.addRow(new Object[]{
-                enrolled,
                 student.getStudentId(),
                 student.getFirstname() + " " + student.getLastname(),
-                student.getCourse(),
-                student.getYearLevel()
+                scoreText
             });
         }
     }
 
-    private List<Student> getStudentsBySection(String section) {
-        List<Student> filtered = new ArrayList<>();
-        for (Student student : new StudentDao().getAll()) {
-            if (student.getSection().equals(section)) {
-                filtered.add(student);
+    private Map<String, Double> loadExistingScores(int subjectId,
+            GradingSeason season, String assessmentName) {
+        Map<String, Double> map = new HashMap<>();
+        List<Assessment> existing = assessmentDao.getBySeason(season);
+
+        for (Assessment a : existing) {
+            if (a.getSubjectId() == subjectId
+                    && a.getAssessmentName().equals(assessmentName)) {
+                map.put(a.getStudentId(), a.getScore());
             }
         }
-        return filtered;
+
+        return map;
     }
 
-    private void handleSave() {
+    private void handleSaveAll() {
         Subject subject = filterPanel.getSelectedSubject();
+        String assessmentName = filterPanel.getAssessmentName();
+        GradingSeason season = filterPanel.getSelectedSeason();
+
         if (subject == null) {
             showError("Please select a subject.");
             return;
         }
-
-        int enrolled = 0;
-        int unenrolled = 0;
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            boolean checked = (boolean) tableModel.getValueAt(row, 0);
-            String studentId = currentStudents.get(row).getStudentId();
-            boolean currentlyEnrolled = enrollmentDao.isEnrolled(studentId, subject.getSubjectId());
-
-            if (checked && !currentlyEnrolled) {
-                enrollmentDao.enroll(studentId, subject.getSubjectId());
-                enrolled++;
-            } else if (!checked && currentlyEnrolled) {
-                enrollmentDao.unenrollByStudentAndSubject(studentId, subject.getSubjectId());
-                unenrolled++;
-            }
+        if (assessmentName.isEmpty()) {
+            showError("Please enter an assessment name.");
+            return;
         }
-
-        showResult(enrolled, unenrolled);
-        refreshTable();
-    }
-
-    private void setAllCheckboxes(boolean value) {
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            tableModel.setValueAt(value, row, 0);
-        }
-    }
-
-    private void showResult(int enrolled, int unenrolled) {
-        if (enrolled == 0 && unenrolled == 0) {
-            JOptionPane.showMessageDialog(this, "No changes to save.",
-                "Info", JOptionPane.INFORMATION_MESSAGE);
+        if (currentStudents.isEmpty()) {
+            showError("No students to save scores for.");
             return;
         }
 
-        String message = "Enrolled: " + enrolled + ", Unenrolled: " + unenrolled;
+        stopCellEditing();
+
+        int saved = 0;
+        int skipped = 0;
+
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String scoreText = String.valueOf(tableModel.getValueAt(row, 2)).trim();
+
+            if (scoreText.isEmpty()) {
+                skipped++;
+                continue;
+            }
+
+            if (!isValidScore(scoreText)) {
+                showError("Invalid score at row " + (row + 1)
+                    + ". Score must be a number between 0 and 100.");
+                return;
+            }
+
+            double score = Double.parseDouble(scoreText);
+            String studentId = currentStudents.get(row).getStudentId();
+
+            Assessment assessment = new Assessment(
+                0, studentId, subject.getSubjectId(), season, assessmentName, score);
+
+            if (assessmentDao.saveOrUpdate(assessment)) {
+                saved++;
+            }
+        }
+
+        showSaveResult(saved, skipped);
+        refreshTable();
+    }
+
+    private boolean isValidScore(String text) {
+        try {
+            double value = Double.parseDouble(text);
+            return value >= GradeConstants.MIN_SCORE && value <= GradeConstants.MAX_SCORE;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void stopCellEditing() {
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+    }
+
+    private void showSaveResult(int saved, int skipped) {
+        String message = "Saved: " + saved + " scores.";
+        if (skipped > 0) {
+            message += "\nSkipped: " + skipped + " (empty scores).";
+        }
         JOptionPane.showMessageDialog(this, message,
-            "Enrollment Updated", JOptionPane.INFORMATION_MESSAGE);
+            "Batch Save Complete", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleBack(User currentUser) {

@@ -188,7 +188,23 @@ Enrollment is the bridge between students and subjects. Before a student can hav
    - No change → skip
 7. A summary dialog shows how many were enrolled/unenrolled.
 
-**Bulk operations:** "Enroll All" checks every box, "Unenroll All" unchecks every box — but changes don't persist until "Save" is clicked.
+**Bulk operations:** The "Enroll" column header contains a "Select All" checkbox — checking it toggles all visible rows on/off. Changes don't persist until "Save" is clicked.
+
+---
+
+## What happens when scores are entered in batch?
+
+Batch Score Entry is the fastest way to enter grades for a whole class at once — instead of adding one assessment at a time in GradeForm.
+
+1. User navigates to `BatchScoreEntryForm` from the dashboard.
+2. `BatchScoreFilterPanel` shows four controls: Subject, Section (populated from enrolled sections), Season, and Assessment Name. A "Load Students" button triggers the table refresh.
+3. User selects subject, section, season, types an assessment name (e.g., "Quiz 1"), and clicks "Load Students."
+4. `BatchScoreEntryForm` loads all enrolled students for that subject+section via `EnrollmentDao.getStudentsBySubjectAndSection()`. If scores already exist for this assessment (same student + subject + season + name), they are pre-populated via `AssessmentDao.getBySeason()`.
+5. The table shows Student ID, Name, and an editable Score column. The instructor types scores for each student.
+6. "Save All" iterates every row. Empty scores are skipped. Each non-empty score is saved via `AssessmentDao.saveOrUpdate()` — which checks if the assessment already exists (by student + subject + season + name) and updates it, otherwise inserts a new record.
+7. A summary dialog shows how many were saved and how many were skipped.
+
+**Why this exists:** Entering 40 individual assessments through GradeForm takes 20-30 minutes. Batch entry reduces it to 2-3 minutes — pick the assessment once, fill in scores, save.
 
 **Why enrollment exists:** Without it, attendance and grade forms would show every student in the database for every subject. Enrollment scopes the data — only enrolled students appear in `AttendanceForm` and `GradeForm`.
 

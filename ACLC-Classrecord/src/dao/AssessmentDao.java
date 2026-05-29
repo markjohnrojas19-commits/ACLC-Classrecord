@@ -80,6 +80,32 @@ public class AssessmentDao {
         return results;
     }
 
+    public boolean saveOrUpdate(Assessment assessment) {
+        String checkSql = "SELECT assessment_id FROM assessments "
+                        + "WHERE student_id = ? AND subject_id = ? AND season = ? AND assessment_name = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement check = connection.prepareStatement(checkSql)) {
+
+            check.setString(1, assessment.getStudentId());
+            check.setInt(2, assessment.getSubjectId());
+            check.setString(3, assessment.getSeason().toDbValue());
+            check.setString(4, assessment.getAssessmentName());
+
+            try (ResultSet result = check.executeQuery()) {
+                if (result.next()) {
+                    assessment.setAssessmentId(result.getInt("assessment_id"));
+                    return update(assessment);
+                }
+                return add(assessment);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Save or update assessment error: " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean update(Assessment assessment) {
         String sql = "UPDATE assessments SET student_id = ?, subject_id = ?, season = ?, "
                    + "assessment_name = ?, score = ? WHERE assessment_id = ?";

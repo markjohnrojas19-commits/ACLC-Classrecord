@@ -127,6 +127,8 @@ ACLC-Classrecord/
       GradeForm.java        — assessment management (CRUD + JTabbedPane by season)
       GradeFilterPanel.java    — section filter + search field (extracted atom)
       AssessmentInputPanel.java — assessment input fields + dropdowns (extracted atom)
+      BatchScoreEntryForm.java  — batch score entry (subject + section + assessment → editable score table)
+      BatchScoreFilterPanel.java — subject + section + season + assessment name filters
       StudentGradeSummaryForm.java — per-student report card (all subjects x all seasons)
     util/                 — Shared utilities
       GradeConstants.java   — passing grade threshold + score bounds
