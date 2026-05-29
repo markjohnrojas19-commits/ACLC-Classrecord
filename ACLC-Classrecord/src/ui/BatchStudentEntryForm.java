@@ -34,10 +34,9 @@ public class BatchStudentEntryForm extends JDialog {
 
     private JTextField defaultCourseField;
     private JComboBox<String> defaultYearBox;
-    private JComboBox<String> defaultSectionBox;
+    private JTextField defaultSectionField;
 
     private static final int INITIAL_ROWS = 10;
-    private static final String[] SECTION_OPTIONS = {"", "A", "B", "C", "D", "E"};
     private static final int COURSE_COL = 3;
     private static final int YEAR_COL = 4;
     private static final int SECTION_COL = 5;
@@ -74,8 +73,7 @@ public class BatchStudentEntryForm extends JDialog {
 
         defaultCourseField = new JTextField(10);
         defaultYearBox = new JComboBox<>(new String[]{"", "1", "2", "3", "4"});
-        defaultSectionBox = new JComboBox<>(SECTION_OPTIONS);
-        defaultSectionBox.setEditable(true);
+        defaultSectionField = new JTextField(5);
 
         JButton applyButton = new JButton("Apply to All Rows");
         applyButton.addActionListener(e -> applyDefaultsToAllRows());
@@ -85,7 +83,7 @@ public class BatchStudentEntryForm extends JDialog {
         panel.add(new JLabel("Year Level:"));
         panel.add(defaultYearBox);
         panel.add(new JLabel("Section:"));
-        panel.add(defaultSectionBox);
+        panel.add(defaultSectionField);
         panel.add(applyButton);
 
         return panel;
@@ -100,8 +98,7 @@ public class BatchStudentEntryForm extends JDialog {
     private void fillRowWithDefaults(int row) {
         String course = defaultCourseField.getText().trim();
         String year = (String) defaultYearBox.getSelectedItem();
-        Object sectionItem = defaultSectionBox.getSelectedItem();
-        String section = sectionItem != null ? sectionItem.toString().trim() : "";
+        String section = defaultSectionField.getText().trim();
 
         if (!course.isEmpty()) {
             tableModel.setValueAt(course, row, COURSE_COL);
@@ -125,17 +122,12 @@ public class BatchStudentEntryForm extends JDialog {
         table.setGridColor(StyleConstants.BORDER_COLOR);
         table.setDefaultRenderer(Object.class, createAlternatingRenderer());
         styleTableHeader(table);
-        setupColumnEditors();
+        setupGenderColumn();
 
         return new JScrollPane(table);
     }
 
-    private void setupColumnEditors() {
-        JComboBox<String> sectionBox = new JComboBox<>(SECTION_OPTIONS);
-        sectionBox.setEditable(true);
-        TableColumn sectionColumn = table.getColumnModel().getColumn(SECTION_COL);
-        sectionColumn.setCellEditor(new DefaultCellEditor(sectionBox));
-
+    private void setupGenderColumn() {
         JComboBox<String> genderBox = new JComboBox<>(
             new String[]{"", "Male", "Female"});
         TableColumn genderColumn = table.getColumnModel().getColumn(6);

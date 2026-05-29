@@ -17,10 +17,8 @@ public class StudentInputPanel extends JPanel {
     private JTextField lastnameField;
     private JTextField courseField;
     private JTextField yearLevelField;
-    private JComboBox<String> sectionBox;
+    private JTextField sectionField;
     private JComboBox<String> genderBox;
-
-    private static final String[] SECTION_OPTIONS = {"", "A", "B", "C", "D", "E"};
 
     public StudentInputPanel() {
         setLayout(new GridLayout(4, 4, StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
@@ -36,7 +34,7 @@ public class StudentInputPanel extends JPanel {
             lastnameField.getText().trim(),
             courseField.getText().trim(),
             parseYearLevel(),
-            getSelectedSection(),
+            sectionField.getText().trim(),
             (String) genderBox.getSelectedItem()
         );
     }
@@ -47,7 +45,7 @@ public class StudentInputPanel extends JPanel {
         lastnameField.setText(student.getLastname());
         courseField.setText(student.getCourse());
         yearLevelField.setText(String.valueOf(student.getYearLevel()));
-        sectionBox.setSelectedItem(student.getSection());
+        sectionField.setText(student.getSection());
         genderBox.setSelectedItem(student.getGender());
     }
 
@@ -57,7 +55,7 @@ public class StudentInputPanel extends JPanel {
         lastnameField.setText("");
         courseField.setText("");
         yearLevelField.setText("");
-        sectionBox.setSelectedIndex(0);
+        sectionField.setText("");
         genderBox.setSelectedIndex(0);
         studentIdField.setEditable(true);
     }
@@ -72,7 +70,7 @@ public class StudentInputPanel extends JPanel {
             || !lastnameField.getText().trim().isEmpty()
             || !courseField.getText().trim().isEmpty()
             || !yearLevelField.getText().trim().isEmpty()
-            || !getSelectedSection().isEmpty();
+            || !sectionField.getText().trim().isEmpty();
     }
 
     public boolean hasEmptyFields() {
@@ -81,7 +79,7 @@ public class StudentInputPanel extends JPanel {
             || lastnameField.getText().trim().isEmpty()
             || courseField.getText().trim().isEmpty()
             || yearLevelField.getText().trim().isEmpty()
-            || getSelectedSection().isEmpty();
+            || sectionField.getText().trim().isEmpty();
     }
 
     public boolean hasInvalidYearLevel() {
@@ -95,8 +93,7 @@ public class StudentInputPanel extends JPanel {
         lastnameField = new JTextField();
         courseField = new JTextField();
         yearLevelField = new JTextField();
-        sectionBox = new JComboBox<>(SECTION_OPTIONS);
-        sectionBox.setEditable(true);
+        sectionField = new JTextField();
         genderBox = new JComboBox<>(new String[]{"Male", "Female"});
     }
 
@@ -114,17 +111,12 @@ public class StudentInputPanel extends JPanel {
         add(new JLabel("Year Level:"));
         add(yearLevelField);
         add(new JLabel("Section:"));
-        add(sectionBox);
+        add(sectionField);
 
         add(new JLabel("Gender:"));
         add(genderBox);
         add(new JLabel());
         add(new JLabel());
-    }
-
-    private String getSelectedSection() {
-        Object item = sectionBox.getSelectedItem();
-        return item != null ? item.toString().trim() : "";
     }
 
     private int parseYearLevel() {
