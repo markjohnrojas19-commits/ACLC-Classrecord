@@ -5,6 +5,7 @@ public final class GradeConstants {
     public static final double PASSING_GRADE = 75.0;
     public static final double MIN_SCORE = 0.0;
     public static final double MAX_SCORE = 100.0;
+    public static final double DEFAULT_TOTAL_ITEMS = 100.0;
 
     public static final double PRELIM_WEIGHT = 0.20;
     public static final double MIDTERM_WEIGHT = 0.20;

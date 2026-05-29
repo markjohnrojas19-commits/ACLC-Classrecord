@@ -46,7 +46,7 @@ public class GradeComputer {
 
         double total = 0.0;
         for (Assessment assessment : assessments) {
-            total += assessment.getScore();
+            total += assessment.getPercentage();
         }
         return total / assessments.size();
     }

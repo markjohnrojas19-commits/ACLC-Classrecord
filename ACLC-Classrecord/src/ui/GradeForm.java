@@ -40,6 +40,7 @@ import model.Student;
 import model.Subject;
 import model.User;
 import service.GradeComputer;
+import util.GradeConstants;
 import util.StyleConstants;
 
 public class GradeForm extends JFrame {
@@ -178,7 +179,7 @@ public class GradeForm extends JFrame {
     }
 
     private JTable createAssessmentTable() {
-        String[] columns = {"ID", "Student", "Subject", "Assessment", "Score"};
+        String[] columns = {"ID", "Student", "Subject", "Assessment", "Score", "Date"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -380,7 +381,8 @@ public class GradeForm extends JFrame {
                 studentDisplay,
                 subjectDisplay,
                 assessment.getAssessmentName(),
-                assessment.getScore()
+                formatScoreDisplay(assessment),
+                assessment.getDate() != null ? assessment.getDate().toString() : ""
             });
         }
 
@@ -452,6 +454,14 @@ public class GradeForm extends JFrame {
                                        GradingSeason season) {
         ScoreResult result = gradeComputer.computeAverage(seasonMap.get(season));
         return String.format("%.2f", result.getFinalGrade());
+    }
+
+    private String formatScoreDisplay(Assessment assessment) {
+        if (assessment.getTotalItems() == GradeConstants.DEFAULT_TOTAL_ITEMS) {
+            return String.format("%.1f", assessment.getScore());
+        }
+        return String.format("%.1f/%.0f (%.1f%%)",
+            assessment.getScore(), assessment.getTotalItems(), assessment.getPercentage());
     }
 
     private Map<String, Map<GradingSeason, List<Assessment>>> groupByStudentSubject(

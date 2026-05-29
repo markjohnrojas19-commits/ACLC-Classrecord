@@ -2,6 +2,8 @@ package ui;
 
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -12,6 +14,7 @@ import javax.swing.JTextField;
 
 import model.GradingSeason;
 import model.Subject;
+import util.GradeConstants;
 import util.StyleConstants;
 
 public class BatchScoreFilterPanel extends JPanel {
@@ -20,16 +23,20 @@ public class BatchScoreFilterPanel extends JPanel {
     private JComboBox<String> sectionBox;
     private JComboBox<String> seasonBox;
     private JTextField assessmentNameField;
+    private JTextField totalItemsField;
+    private JTextField dateField;
     private JButton loadButton;
 
     public BatchScoreFilterPanel() {
-        setLayout(new GridLayout(2, 6, StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
+        setLayout(new GridLayout(3, 6, StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
         setBorder(StyleConstants.INPUT_BORDER);
 
         subjectBox = new JComboBox<>();
         sectionBox = new JComboBox<>();
         seasonBox = createSeasonBox();
         assessmentNameField = new JTextField();
+        totalItemsField = new JTextField("100");
+        dateField = new JTextField(LocalDate.now().toString());
         loadButton = new JButton("Load Students");
 
         add(new JLabel("Subject:"));
@@ -43,6 +50,13 @@ public class BatchScoreFilterPanel extends JPanel {
         add(seasonBox);
         add(new JLabel("Assessment:"));
         add(assessmentNameField);
+        add(new JLabel(""));
+        add(new JLabel(""));
+
+        add(new JLabel("Total Items:"));
+        add(totalItemsField);
+        add(new JLabel("Date (yyyy-mm-dd):"));
+        add(dateField);
         add(new JLabel(""));
         add(loadButton);
     }
@@ -62,6 +76,27 @@ public class BatchScoreFilterPanel extends JPanel {
 
     public String getAssessmentName() {
         return assessmentNameField.getText().trim();
+    }
+
+    public double getTotalItems() {
+        try {
+            double value = Double.parseDouble(totalItemsField.getText().trim());
+            return value > 0 ? value : GradeConstants.DEFAULT_TOTAL_ITEMS;
+        } catch (NumberFormatException e) {
+            return GradeConstants.DEFAULT_TOTAL_ITEMS;
+        }
+    }
+
+    public LocalDate getDate() {
+        try {
+            String text = dateField.getText().trim();
+            if (text.isEmpty()) {
+                return null;
+            }
+            return LocalDate.parse(text);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     public void populateSubjects(List<Subject> subjects) {

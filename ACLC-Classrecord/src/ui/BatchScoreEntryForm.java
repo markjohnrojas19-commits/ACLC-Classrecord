@@ -23,6 +23,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
+import java.time.LocalDate;
+
 import dao.AssessmentDao;
 import dao.EnrollmentDao;
 import dao.SubjectDao;
@@ -199,6 +201,8 @@ public class BatchScoreEntryForm extends JFrame {
         Subject subject = filterPanel.getSelectedSubject();
         String assessmentName = filterPanel.getAssessmentName();
         GradingSeason season = filterPanel.getSelectedSeason();
+        double totalItems = filterPanel.getTotalItems();
+        LocalDate date = filterPanel.getDate();
 
         if (subject == null) {
             showError("Please select a subject.");
@@ -226,9 +230,9 @@ public class BatchScoreEntryForm extends JFrame {
                 continue;
             }
 
-            if (!isValidScore(scoreText)) {
+            if (!isValidScore(scoreText, totalItems)) {
                 showError("Invalid score at row " + (row + 1)
-                    + ". Score must be a number between 0 and 100.");
+                    + ". Score must be a number between 0 and " + (int) totalItems + ".");
                 return;
             }
 
@@ -236,7 +240,8 @@ public class BatchScoreEntryForm extends JFrame {
             String studentId = currentStudents.get(row).getStudentId();
 
             Assessment assessment = new Assessment(
-                0, studentId, subject.getSubjectId(), season, assessmentName, score);
+                0, studentId, subject.getSubjectId(), season, assessmentName, score,
+                totalItems, date);
 
             if (assessmentDao.saveOrUpdate(assessment)) {
                 saved++;
@@ -295,10 +300,10 @@ public class BatchScoreEntryForm extends JFrame {
         return -1;
     }
 
-    private boolean isValidScore(String text) {
+    private boolean isValidScore(String text, double totalItems) {
         try {
             double value = Double.parseDouble(text);
-            return value >= GradeConstants.MIN_SCORE && value <= GradeConstants.MAX_SCORE;
+            return value >= GradeConstants.MIN_SCORE && value <= totalItems;
         } catch (NumberFormatException e) {
             return false;
         }

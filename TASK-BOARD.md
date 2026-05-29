@@ -27,7 +27,9 @@
 
 ---
 
-## T2. Rethink Grade Entry — GradeForm vs. Batch Score Entry
+## ~~T2. Rethink Grade Entry — GradeForm vs. Batch Score Entry~~ DONE
+
+**Resolution:** Implemented Option B. GradeForm became a view-only grade dashboard (view, filter, print, export). BatchScoreEntryForm handles all new score entry + delete. Navigation: Dashboard → Grades → Enter Scores → Back to Grades. "Batch Score Entry" button removed from dashboard.
 
 **The problem:** We now have two ways to enter scores:
 1. **GradeForm** — Select one student, one subject, one season, type assessment name, type score. Click Add. Repeat 40 times.
@@ -55,7 +57,9 @@
 
 ---
 
-## T3. Adjustable Score (Total Items / Max Score per Assessment)
+## ~~T3. Adjustable Score (Total Items / Max Score per Assessment)~~ DONE
+
+**Resolution:** Added `totalItems` (default 100) and `date` fields to Assessment model, database, DAO, and all UI forms. Scores normalized to percentages via `getPercentage()`. GradeForm shows "8.0/10 (80.0%)" for non-100 totals. Backward compatible — existing data defaults to totalItems=100.
 
 **The problem:** Every score is currently 0-100. But in reality:
 - A 10-item quiz has a max score of 10 (or 20, or 50)
@@ -118,11 +122,43 @@ Right now, if a quiz has 10 items and a student got 8, the instructor has to men
 
 ---
 
+## T5. Lacking Assessments View — See Who's Missing Scores
+
+**The problem:** An instructor gives 5 quizzes and 2 exams during Prelim season. Some students were absent or missed submissions. Right now, there's no easy way to see which students are **missing** scores for a specific assessment. The instructor has to mentally cross-reference the student list against the scores list — tedious and error-prone with 40+ students.
+
+**What the instructor wants:**
+- Pick a subject, section, and season
+- See a list of assessments given (e.g., "Quiz 1", "Quiz 2", "Unit Test A")
+- For each assessment, see which students **don't** have a score (lacking/incomplete)
+- Alternatively: see a per-student view showing which assessments they're missing
+
+**Use cases:**
+- "Who hasn't taken Quiz 3 yet?" — to schedule make-up tests
+- "Does anyone have incomplete grades before I submit final marks?"
+- "Which students are missing more than 2 assessments?" — early warning for at-risk students
+
+---
+
+## T6. Section Filter in Student Grade Summary
+
+**The problem:** The Student Grade Summary form shows a dropdown of **all students** in the system. If the instructor has 6 sections × 40 students = 240 students, scrolling through a single dropdown to find one student is painful. There's no way to narrow it down by section.
+
+**What the instructor wants:**
+- A section dropdown (or subject dropdown) that filters the student list
+- Select "Section A" → student dropdown shows only Section A students
+- Makes it fast to browse through one class at a time instead of the entire school
+
+**Scope:** Small change — add a filter dropdown above the student dropdown in `StudentGradeSummaryForm`.
+
+---
+
 ## Summary
 
 | ID | Task | Core Issue |
 |----|------|------------|
 | T1 | UI Overhaul | Looks dated, needs modern styling |
-| T2 | Rethink Grade Entry | GradeForm and Batch Entry overlap — clarify roles |
-| T3 | Adjustable Score | Scores locked to 0-100, need per-assessment max score |
+| ~~T2~~ | ~~Rethink Grade Entry~~ | ~~DONE — GradeForm is view-only, Batch Entry handles input~~ |
+| ~~T3~~ | ~~Adjustable Score~~ | ~~DONE — totalItems + date per assessment, percentage-based averaging~~ |
 | T4 | Bulk Student Import | Adding students one-by-one is too slow |
+| T5 | Lacking Assessments View | No way to see who's missing scores |
+| T6 | Section Filter in Student Summary | Student dropdown has all 240 students, no way to filter by section |

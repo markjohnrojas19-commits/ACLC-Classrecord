@@ -75,9 +75,14 @@ This is the core workflow of the system.
 8. The average label is color-coded: green for PASSED, red for FAILED.
 
 **Assessment examples:**
-- Student STU001, Subject CS101, Midterm season: "Quiz 1" = 85, "Unit Test A" = 90, "Project" = 92
-- Each is a separate row in the `assessments` table
-- The Midterm tab shows all three with a season average of 89.00 — PASSED
+- Student STU001, Subject CS101, Midterm season: "Quiz 1" = 8/10 (80.0%), "Unit Test A" = 45/50 (90.0%), "Project" = 92/100 (92.0%)
+- Each is a separate row in the `assessments` table with its own `total_items` and `date`
+- The Midterm tab shows all three with a season average of 87.33 — PASSED
+- Scores are displayed as "8.0/10 (80.0%)" when totalItems != 100, or plain "92.0" when totalItems is 100
+
+**Score normalization:** Each assessment has a `totalItems` field (default 100). `Assessment.getPercentage()` returns `(score / totalItems) * 100`. `GradeComputer.calculateAverage()` averages percentages, not raw scores. This means a quiz out of 10 and an exam out of 100 are weighted equally by their percentage scores.
+
+**Assessment date:** Each assessment has an optional `date` field (when the assessment happened). Displayed in the GradeForm season tabs. Defaults to null for backward compatibility with existing data.
 
 **Why Assessment replaces Grade:** The old model had fixed columns (quiz, assignment, exam) — rigid and couldn't represent arbitrary assessment types. The new model stores one row per assessment with a name and score, allowing unlimited assessment types per season.
 
@@ -146,7 +151,7 @@ In this project, the service layer is thin (mainly `GradeComputer`), because the
 `GradeForm` uses a `JTabbedPane` with 4 fixed tabs — one per `GradingSeason` enum value (Prelim, Midterm, Pre-Final, Final).
 
 1. On load, `GradeForm` calls `AssessmentDao.getAll()` and filters assessments by season.
-2. Each tab shows a JTable with columns: ID, Student, Subject, Assessment Name, Score.
+2. Each tab shows a JTable with columns: ID, Student, Subject, Assessment Name, Score, Date.
 3. Below each table, a label shows the season average computed by `GradeComputer.computeAverage()`.
 4. The average label is color-coded: green (PASSED) if >= 75, red (FAILED) if < 75.
 5. Selecting a row in any tab populates the `AssessmentInputPanel` (student, subject, season, assessment name, score).
@@ -197,11 +202,12 @@ Enrollment is the bridge between students and subjects. Before a student can hav
 Batch Score Entry is the fastest way to enter grades for a whole class at once — instead of adding one assessment at a time in GradeForm.
 
 1. User navigates to `BatchScoreEntryForm` from the dashboard.
-2. `BatchScoreFilterPanel` shows four controls: Subject, Section (populated from enrolled sections), Season, and Assessment Name. A "Load Students" button triggers the table refresh.
+2. `BatchScoreFilterPanel` shows six controls: Subject, Section (populated from enrolled sections), Season, Assessment Name, Total Items (default 100), and Date (default today). A "Load Students" button triggers the table refresh.
 3. User selects subject, section, season, types an assessment name (e.g., "Quiz 1"), and clicks "Load Students."
 4. `BatchScoreEntryForm` loads all enrolled students for that subject+section via `EnrollmentDao.getStudentsBySubjectAndSection()`. If scores already exist for this assessment (same student + subject + season + name), they are pre-populated via `AssessmentDao.getBySeason()`.
-5. The table shows Student ID, Name, and an editable Score column. The instructor types scores for each student.
-6. "Save All" iterates every row. Empty scores are skipped. Each non-empty score is saved via `AssessmentDao.saveOrUpdate()` — which checks if the assessment already exists (by student + subject + season + name) and updates it, otherwise inserts a new record.
+5. The table shows Student ID, Name, and an editable Score column. The instructor types scores for each student. Score validation uses the Total Items value (e.g., 0-10 for a quiz out of 10).
+6. "Save All" iterates every row. Empty scores are skipped. Each non-empty score is saved via `AssessmentDao.saveOrUpdate()` — which checks if the assessment already exists (by student + subject + season + name) and updates it, otherwise inserts a new record. The Total Items and Date values from the filter panel are saved with each assessment.
+7. "Delete Selected" removes a single student's score for the current assessment via `AssessmentDao.delete()`.
 7. A summary dialog shows how many were saved and how many were skipped.
 
 **Why this exists:** Entering 40 individual assessments through GradeForm takes 20-30 minutes. Batch entry reduces it to 2-3 minutes — pick the assessment once, fill in scores, save.

@@ -92,7 +92,7 @@ ACLC-Classrecord/
     model/                — Plain Java classes (domain objects)
       Student.java          — student data (id, name, course, year, section, gender)
       Subject.java          — subject data (code, name)
-      Assessment.java       — assessment data (studentId, subjectId, season, name, score)
+      Assessment.java       — assessment data (studentId, subjectId, season, name, score, totalItems, date)
       GradingSeason.java    — enum: PRELIM, MIDTERM, PRE_FINAL, FINAL
       ScoreResult.java      — computed grade result (finalGrade, remarks)
       User.java             — login credentials and role
@@ -131,7 +131,7 @@ ACLC-Classrecord/
       BatchScoreFilterPanel.java — subject + section + season + assessment name filters
       StudentGradeSummaryForm.java — per-student report card (all subjects x all seasons)
     util/                 — Shared utilities
-      GradeConstants.java   — passing grade threshold + score bounds
+      GradeConstants.java   — passing grade threshold + score bounds + default total items
       StyleConstants.java   — shared UI styling (fonts, borders, gaps, colors)
   sql/
     schema.sql            — database creation script (assessments table)
@@ -194,6 +194,8 @@ Table: assessments
   season           ENUM('Prelim', 'Midterm', 'Pre-Final', 'Final') NOT NULL
   assessment_name  VARCHAR(50) NOT NULL
   score            DOUBLE NOT NULL DEFAULT 0
+  total_items      DOUBLE NOT NULL DEFAULT 100
+  date             DATE DEFAULT NULL
   UNIQUE(student_id, subject_id, season, assessment_name)
 ```
 

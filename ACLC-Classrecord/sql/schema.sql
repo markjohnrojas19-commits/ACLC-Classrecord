@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS assessments (
     season           ENUM('Prelim', 'Midterm', 'Pre-Final', 'Final') NOT NULL,
     assessment_name  VARCHAR(50) NOT NULL,
     score            DOUBLE NOT NULL DEFAULT 0,
+    total_items      DOUBLE NOT NULL DEFAULT 100,
+    date             DATE DEFAULT NULL,
     UNIQUE (student_id, subject_id, season, assessment_name),
     FOREIGN KEY (student_id) REFERENCES students(student_id),
     FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)

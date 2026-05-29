@@ -1,20 +1,23 @@
 package dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import model.Assessment;
 import model.GradingSeason;
+import util.GradeConstants;
 
 public class AssessmentDao {
 
     public boolean add(Assessment assessment) {
-        String sql = "INSERT INTO assessments (student_id, subject_id, season, assessment_name, score) "
-                   + "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO assessments (student_id, subject_id, season, assessment_name, score, total_items, date) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -108,13 +111,13 @@ public class AssessmentDao {
 
     public boolean update(Assessment assessment) {
         String sql = "UPDATE assessments SET student_id = ?, subject_id = ?, season = ?, "
-                   + "assessment_name = ?, score = ? WHERE assessment_id = ?";
+                   + "assessment_name = ?, score = ?, total_items = ?, date = ? WHERE assessment_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             setParameters(statement, assessment);
-            statement.setInt(6, assessment.getAssessmentId());
+            statement.setInt(8, assessment.getAssessmentId());
             statement.executeUpdate();
             return true;
 
@@ -189,16 +192,31 @@ public class AssessmentDao {
         statement.setString(3, assessment.getSeason().toDbValue());
         statement.setString(4, assessment.getAssessmentName());
         statement.setDouble(5, assessment.getScore());
+        statement.setDouble(6, assessment.getTotalItems());
+        if (assessment.getDate() != null) {
+            statement.setDate(7, Date.valueOf(assessment.getDate()));
+        } else {
+            statement.setNull(7, java.sql.Types.DATE);
+        }
     }
 
     private Assessment extractAssessment(ResultSet result) throws SQLException {
+        double totalItems = result.getDouble("total_items");
+        if (totalItems == 0) {
+            totalItems = GradeConstants.DEFAULT_TOTAL_ITEMS;
+        }
+        Date sqlDate = result.getDate("date");
+        LocalDate date = (sqlDate != null) ? sqlDate.toLocalDate() : null;
+
         return new Assessment(
             result.getInt("assessment_id"),
             result.getString("student_id"),
             result.getInt("subject_id"),
             GradingSeason.fromDbValue(result.getString("season")),
             result.getString("assessment_name"),
-            result.getDouble("score")
+            result.getDouble("score"),
+            totalItems,
+            date
         );
     }
 }
