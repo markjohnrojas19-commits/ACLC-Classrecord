@@ -2,17 +2,20 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import dao.EnrollmentDao;
 import dao.StudentDao;
@@ -20,6 +23,7 @@ import dao.SubjectDao;
 import model.Student;
 import model.Subject;
 import model.User;
+import util.StudentCsvParser;
 import util.StyleConstants;
 
 public class StudentForm extends JFrame {
@@ -107,12 +111,16 @@ public class StudentForm extends JFrame {
         JButton deleteButton = new JButton("Delete");
         JButton clearButton = new JButton("Clear");
         JButton viewGradesButton = new JButton("View Grades");
+        JButton importCsvButton = new JButton("Import CSV");
+        JButton addMultipleButton = new JButton("Add Multiple");
 
         addButton.addActionListener(e -> handleAdd());
         editButton.addActionListener(e -> handleEdit());
         deleteButton.addActionListener(e -> handleDelete());
         clearButton.addActionListener(e -> inputPanel.clear());
         viewGradesButton.addActionListener(e -> handleViewGrades());
+        importCsvButton.addActionListener(e -> handleImportCsv());
+        addMultipleButton.addActionListener(e -> handleAddMultiple());
 
         JButton searchButton = new JButton("Search");
         searchButton.addActionListener(e -> handleSearch());
@@ -123,6 +131,8 @@ public class StudentForm extends JFrame {
         panel.add(clearButton);
         panel.add(viewGradesButton);
         panel.add(searchButton);
+        panel.add(importCsvButton);
+        panel.add(addMultipleButton);
 
         return panel;
     }
@@ -322,6 +332,35 @@ public class StudentForm extends JFrame {
         Student student = extractStudentFromRow(activePanel, activePanel.getSelectedRow());
         new StudentGradeSummaryForm(currentUser, student).setVisible(true);
         dispose();
+    }
+
+    private void handleImportCsv() {
+        File file = chooseCsvFile();
+        if (file == null) {
+            return;
+        }
+
+        StudentCsvParser parser = new StudentCsvParser();
+        parser.parse(file);
+
+        new StudentImportPreviewForm(this, parser.getValidStudents(),
+            parser.getErrorMessages(), () -> refreshTabs()).setVisible(true);
+    }
+
+    private File chooseCsvFile() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select CSV File");
+        chooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
+
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile();
+        }
+        return null;
+    }
+
+    private void handleAddMultiple() {
+        new BatchStudentEntryForm(this, () -> refreshTabs()).setVisible(true);
     }
 
     private void handleBack(User currentUser) {

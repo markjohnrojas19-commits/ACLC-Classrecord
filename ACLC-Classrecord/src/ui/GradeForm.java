@@ -15,6 +15,7 @@ import java.util.Map;
 
 import java.text.MessageFormat;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -26,6 +27,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -188,12 +190,11 @@ public class GradeForm extends JFrame {
         };
 
         JTable table = new JTable(model);
-        table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);
-        table.setDefaultRenderer(Object.class, createAlternatingRenderer());
+        table.setDefaultRenderer(Object.class, createGroupedRenderer());
         styleTableHeader(table);
 
         return table;
@@ -370,11 +371,29 @@ public class GradeForm extends JFrame {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
 
-        for (Assessment assessment : assessments) {
-            String studentDisplay = studentNames.getOrDefault(
-                assessment.getStudentId(), assessment.getStudentId());
-            String subjectDisplay = subjectNames.getOrDefault(
-                assessment.getSubjectId(), String.valueOf(assessment.getSubjectId()));
+        Map<String, List<Assessment>> grouped = groupByStudentSubjectFlat(assessments);
+
+        for (List<Assessment> group : grouped.values()) {
+            addGroupRows(model, group, studentNames, subjectNames);
+        }
+
+        updateSeasonAverage(tabIndex, assessments);
+    }
+
+    private void addGroupRows(DefaultTableModel model, List<Assessment> group,
+                              Map<String, String> studentNames,
+                              Map<Integer, String> subjectNames) {
+        for (int i = 0; i < group.size(); i++) {
+            Assessment assessment = group.get(i);
+            boolean isFirstRow = (i == 0);
+
+            String studentDisplay = isFirstRow
+                ? studentNames.getOrDefault(assessment.getStudentId(), assessment.getStudentId())
+                : "";
+            String subjectDisplay = isFirstRow
+                ? subjectNames.getOrDefault(assessment.getSubjectId(),
+                    String.valueOf(assessment.getSubjectId()))
+                : "";
 
             model.addRow(new Object[]{
                 assessment.getAssessmentId(),
@@ -385,8 +404,6 @@ public class GradeForm extends JFrame {
                 assessment.getDate() != null ? assessment.getDate().toString() : ""
             });
         }
-
-        updateSeasonAverage(tabIndex, assessments);
     }
 
     private void updateSeasonAverage(int tabIndex, List<Assessment> assessments) {
@@ -643,8 +660,12 @@ public class GradeForm extends JFrame {
         };
     }
 
-    private DefaultTableCellRenderer createAlternatingRenderer() {
+    private DefaultTableCellRenderer createGroupedRenderer() {
         return new DefaultTableCellRenderer() {
+            private final Border groupTopBorder = BorderFactory.createMatteBorder(
+                2, 0, 0, 0, StyleConstants.BORDER_COLOR);
+            private final Border noBorder = BorderFactory.createEmptyBorder();
+
             @Override
             public Component getTableCellRendererComponent(JTable t, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column) {
@@ -652,10 +673,19 @@ public class GradeForm extends JFrame {
                     t, value, isSelected, hasFocus, row, column);
 
                 if (!isSelected) {
-                    cell.setBackground(row % 2 == 0
+                    cell.setBackground(isGroupFirstRow(t, row)
                         ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
                 }
+
+                setBorder(isGroupFirstRow(t, row) && row > 0
+                    ? groupTopBorder : noBorder);
+
                 return cell;
+            }
+
+            private boolean isGroupFirstRow(JTable t, int row) {
+                Object student = t.getModel().getValueAt(row, 1);
+                return student != null && !student.toString().isEmpty();
             }
         };
     }
