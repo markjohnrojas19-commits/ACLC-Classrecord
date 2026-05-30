@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -14,6 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 import dao.SubjectDao;
@@ -115,8 +117,17 @@ public class SubjectForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
+
+        panel.add(createButtonGroup("Record", createRecordButtons()));
+        panel.add(createButtonGroup("Tools", createToolButtons()));
+
+        return panel;
+    }
+
+    private JPanel createRecordButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
@@ -128,17 +139,39 @@ public class SubjectForm extends JFrame {
         deleteButton.addActionListener(e -> handleDelete());
         clearButton.addActionListener(e -> clearFields());
 
-        searchField = new JTextField(15);
-        JButton searchButton = new JButton("Search");
-        searchButton.addActionListener(e -> handleSearch());
-
         panel.add(addButton);
         panel.add(editButton);
         panel.add(deleteButton);
         panel.add(clearButton);
+
+        return panel;
+    }
+
+    private JPanel createToolButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+        searchField = new JTextField(15);
+        JButton searchButton = new JButton("Search");
+        searchButton.addActionListener(e -> handleSearch());
+
         panel.add(searchField);
         panel.add(searchButton);
 
+        return panel;
+    }
+
+    private JPanel createButtonGroup(String title, JPanel buttons) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder, BorderFactory.createEmptyBorder(5, 5, 8, 5)));
+
+        panel.add(buttons, BorderLayout.CENTER);
         return panel;
     }
 

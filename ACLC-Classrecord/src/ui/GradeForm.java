@@ -28,6 +28,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -201,25 +202,57 @@ public class GradeForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
-            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new java.awt.GridLayout(1, 2, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
+
+        panel.add(createButtonGroup("Record", createRecordButtons()));
+        panel.add(createButtonGroup("Export", createExportButtons()));
+
+        return panel;
+    }
+
+    private JPanel createRecordButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
         JButton enterScoresButton = new JButton("Enter Scores");
         JButton editScoreButton = new JButton("Edit Score");
-        JButton printButton = new JButton("Print");
-        JButton exportButton = new JButton("Export CSV");
 
         enterScoresButton.addActionListener(e -> openBatchScoreEntry());
         editScoreButton.addActionListener(e -> handleEditScore());
-        printButton.addActionListener(e -> handlePrint());
-        exportButton.addActionListener(e -> handleExportCsv());
 
         panel.add(enterScoresButton);
         panel.add(editScoreButton);
+
+        return panel;
+    }
+
+    private JPanel createExportButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+        JButton printButton = new JButton("Print");
+        JButton exportButton = new JButton("Export CSV");
+
+        printButton.addActionListener(e -> handlePrint());
+        exportButton.addActionListener(e -> handleExportCsv());
+
         panel.add(printButton);
         panel.add(exportButton);
 
+        return panel;
+    }
+
+    private JPanel createButtonGroup(String title, JPanel buttons) {
+        JPanel panel = new JPanel(new java.awt.BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder, BorderFactory.createEmptyBorder(5, 5, 8, 5)));
+
+        panel.add(buttons, java.awt.BorderLayout.CENTER);
         return panel;
     }
 

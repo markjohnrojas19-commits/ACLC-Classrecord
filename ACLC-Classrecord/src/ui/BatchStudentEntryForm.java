@@ -6,6 +6,9 @@ import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.awt.GridLayout;
+
+import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -18,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -138,27 +142,59 @@ public class BatchStudentEntryForm extends JDialog {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
-            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
+
+        panel.add(createButtonGroup("Rows", createRowButtons()));
+        panel.add(createButtonGroup("Actions", createActionButtons()));
+
+        return panel;
+    }
+
+    private JPanel createRowButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
         rowCountSpinner = new JSpinner(new SpinnerNumberModel(5, 1, 100, 1));
         JButton addRowButton = new JButton("Add Rows");
         JButton deleteRowButton = new JButton("Delete Row");
-        JButton saveButton = new JButton("Save All");
-        JButton cancelButton = new JButton("Cancel");
 
         addRowButton.addActionListener(e -> addEmptyRows());
         deleteRowButton.addActionListener(e -> deleteSelectedRows());
-        saveButton.addActionListener(e -> handleSaveAll());
-        cancelButton.addActionListener(e -> dispose());
 
         panel.add(rowCountSpinner);
         panel.add(addRowButton);
         panel.add(deleteRowButton);
+
+        return panel;
+    }
+
+    private JPanel createActionButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+        JButton saveButton = new JButton("Save All");
+        JButton cancelButton = new JButton("Cancel");
+
+        saveButton.addActionListener(e -> handleSaveAll());
+        cancelButton.addActionListener(e -> dispose());
+
         panel.add(saveButton);
         panel.add(cancelButton);
 
+        return panel;
+    }
+
+    private JPanel createButtonGroup(String title, JPanel buttons) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder, BorderFactory.createEmptyBorder(5, 5, 8, 5)));
+
+        panel.add(buttons, BorderLayout.CENTER);
         return panel;
     }
 
