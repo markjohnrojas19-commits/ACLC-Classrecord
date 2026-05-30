@@ -232,13 +232,12 @@ Batch Score Entry is the fastest way to enter grades for a whole class at once �
 
 ## How does the dashboard show enrollment and attendance?
 
-The dashboard stats panel (`DashboardStatsPanel`) shows 6 statistics in a 3x2 grid:
+The dashboard stats panel (`DashboardStatsPanel`) shows 3 stat cards in a 1x3 grid, each with a Material Design PNG icon (48x48), a bold value, and a gray label:
 
-1. **Total Students** — `DashboardDao.countStudents()`
-2. **Total Subjects** — `DashboardDao.countSubjects()`
-3. **Enrolled** — `DashboardDao.countEnrolled()` (total enrollment records)
-4. **Passed** — `DashboardDao.countPassed()` (student-subject pairs with AVG score >= 75)
-5. **Failed** — `DashboardDao.countFailed()` (student-subject pairs with AVG score < 75)
-6. **Today's Attendance** — displayed as "Today: 3/5 sections (15/20 present)". The first part (`countTodaySectionsMarked()` / `countTotalEnrolledSections()`) shows how many subject-section combos have attendance marked today vs. how many exist. The second part (`countTodayPresent()` / `countTodayTotal()`) shows overall present count. Label turns green when all sections are done, blue when partially done.
+1. **Total Students** (👥 people icon) — `DashboardDao.countStudents()`
+2. **Total Subjects** (📚 book icon) — `DashboardDao.countSubjects()`
+3. **Today's Attendance** (📋 clipboard icon) — displayed as "3/5 sections (20/20 present)". Shows how many subject-section combos have attendance marked today vs. how many exist, plus overall present count. Value turns green when all sections are done, blue when partially done.
+
+Icons are loaded from `src/icons/` as `ImageIcon` resources. Each card uses `BoxLayout` (vertical) with `VerticalGlue` for centering. The attendance card uses a smaller font (`BODY_FONT`) since its text is longer than the numeric values.
 
 All counts refresh when the dashboard opens via `statsPanel.refresh()`.

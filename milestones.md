@@ -130,6 +130,10 @@ ACLC-Classrecord/
       BatchScoreEntryForm.java  — batch score entry (subject + section + assessment → editable score table)
       BatchScoreFilterPanel.java — subject + course/section + season + assessment name filters
       StudentGradeSummaryForm.java — per-student report card with section filter + student list sidebar
+    icons/                — Material Design PNG icons (48x48, Apache 2.0)
+      students.png          — people icon (dashboard stat card)
+      subjects.png          — book icon (dashboard stat card)
+      attendance.png        — clipboard checkmark icon (dashboard stat card)
     util/                 — Shared utilities
       GradeConstants.java   — passing grade threshold + score bounds + default total items
       StyleConstants.java   — shared UI styling (fonts, borders, gaps, colors)
