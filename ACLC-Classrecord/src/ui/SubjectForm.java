@@ -16,7 +16,9 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import dao.SubjectDao;
 import model.Subject;
@@ -55,9 +57,11 @@ public class SubjectForm extends JFrame {
     private JPanel createHeaderPanel(User currentUser) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(StyleConstants.HEADER_BORDER);
+        panel.setBackground(StyleConstants.WHITE);
 
         JLabel titleLabel = new JLabel("Subject Management");
         titleLabel.setFont(StyleConstants.TITLE_FONT);
+        titleLabel.setForeground(StyleConstants.PRIMARY);
 
         JButton backButton = new JButton("Back to Dashboard");
         backButton.addActionListener(e -> handleBack(currentUser));
@@ -111,9 +115,38 @@ public class SubjectForm extends JFrame {
         JTable table = new JTable(model);
         table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
+        table.setFont(StyleConstants.BODY_FONT);
+        table.setGridColor(StyleConstants.BORDER_COLOR);
+        table.setDefaultRenderer(Object.class, createRowRenderer());
         table.getSelectionModel().addListSelectionListener(e -> loadSelectedSubject());
+        styleTableHeader(table);
 
         return table;
+    }
+
+    private void styleTableHeader(JTable table) {
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(StyleConstants.TABLE_HEADER_BG);
+        header.setForeground(StyleConstants.TABLE_HEADER_FG);
+        header.setFont(StyleConstants.TABLE_HEADER_FONT);
+    }
+
+    private DefaultTableCellRenderer createRowRenderer() {
+        return new DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable t, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                java.awt.Component cell = super.getTableCellRendererComponent(
+                    t, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    cell.setBackground(row % 2 == 0
+                        ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+                    cell.setForeground(StyleConstants.TEXT_PRIMARY);
+                }
+                return cell;
+            }
+        };
     }
 
     private JPanel createButtonPanel() {
