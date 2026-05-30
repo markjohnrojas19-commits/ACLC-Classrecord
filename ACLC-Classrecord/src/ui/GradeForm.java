@@ -474,10 +474,7 @@ public class GradeForm extends JFrame {
     }
 
     private String formatScoreDisplay(Assessment assessment) {
-        if (assessment.getTotalItems() == GradeConstants.DEFAULT_TOTAL_ITEMS) {
-            return String.format("%.1f", assessment.getScore());
-        }
-        return String.format("%.1f/%.0f (%.1f%%)",
+        return String.format("%.0f/%.0f (%.1f%%)",
             assessment.getScore(), assessment.getTotalItems(), assessment.getPercentage());
     }
 

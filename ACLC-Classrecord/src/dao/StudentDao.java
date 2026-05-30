@@ -50,7 +50,7 @@ public class StudentDao {
     }
 
     public List<Student> getAll() {
-        String sql = "SELECT * FROM students ORDER BY lastname, firstname";
+        String sql = "SELECT * FROM students ORDER BY course, year_level, section, lastname, firstname";
         List<Student> students = new ArrayList<>();
 
         try (Connection connection = DatabaseConnection.getConnection();
@@ -132,7 +132,7 @@ public class StudentDao {
     }
 
     public List<String> getAllSections() {
-        String sql = "SELECT DISTINCT CONCAT(course, '-', year_level, section) AS course_section "
+        String sql = "SELECT DISTINCT CONCAT(course, ' ', section) AS course_section "
                    + "FROM students ORDER BY course_section";
         List<String> sections = new ArrayList<>();
 
@@ -153,7 +153,7 @@ public class StudentDao {
 
     public List<Student> search(String keyword) {
         String sql = "SELECT * FROM students WHERE student_id LIKE ? OR firstname LIKE ? OR lastname LIKE ? "
-                   + "ORDER BY lastname, firstname";
+                   + "ORDER BY course, year_level, section, lastname, firstname";
         List<Student> students = new ArrayList<>();
         String pattern = "%" + keyword + "%";
 

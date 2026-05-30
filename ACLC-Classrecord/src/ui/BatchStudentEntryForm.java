@@ -15,8 +15,10 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -35,8 +37,9 @@ public class BatchStudentEntryForm extends JDialog {
     private JTextField defaultCourseField;
     private JComboBox<String> defaultYearBox;
     private JTextField defaultSectionField;
+    private JSpinner rowCountSpinner;
 
-    private static final int INITIAL_ROWS = 10;
+    private static final int INITIAL_ROWS = 1;
     private static final int COURSE_COL = 3;
     private static final int YEAR_COL = 4;
     private static final int SECTION_COL = 5;
@@ -139,24 +142,42 @@ public class BatchStudentEntryForm extends JDialog {
             StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
-        JButton addRowButton = new JButton("Add 5 Rows");
+        rowCountSpinner = new JSpinner(new SpinnerNumberModel(5, 1, 100, 1));
+        JButton addRowButton = new JButton("Add Rows");
+        JButton deleteRowButton = new JButton("Delete Row");
         JButton saveButton = new JButton("Save All");
         JButton cancelButton = new JButton("Cancel");
 
         addRowButton.addActionListener(e -> addEmptyRows());
+        deleteRowButton.addActionListener(e -> deleteSelectedRows());
         saveButton.addActionListener(e -> handleSaveAll());
         cancelButton.addActionListener(e -> dispose());
 
+        panel.add(rowCountSpinner);
         panel.add(addRowButton);
+        panel.add(deleteRowButton);
         panel.add(saveButton);
         panel.add(cancelButton);
 
         return panel;
     }
 
+    private void deleteSelectedRows() {
+        stopCellEditing();
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length == 0) {
+            showError("Select one or more rows to delete.");
+            return;
+        }
+        for (int i = selectedRows.length - 1; i >= 0; i--) {
+            tableModel.removeRow(selectedRows[i]);
+        }
+    }
+
     private void addEmptyRows() {
+        int count = (int) rowCountSpinner.getValue();
         int firstNewRow = tableModel.getRowCount();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < count; i++) {
             tableModel.addRow(new Object[]{"", "", "", "", "", "", ""});
         }
         for (int row = firstNewRow; row < tableModel.getRowCount(); row++) {

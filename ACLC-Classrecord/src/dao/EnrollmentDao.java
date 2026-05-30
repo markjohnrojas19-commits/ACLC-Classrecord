@@ -118,7 +118,7 @@ public class EnrollmentDao {
     public List<Student> getStudentsBySubjectAndSection(int subjectId, String courseSection) {
         String sql = "SELECT s.* FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
-                   + "WHERE e.subject_id = ? AND CONCAT(s.course, '-', s.year_level, s.section) = ? "
+                   + "WHERE e.subject_id = ? AND CONCAT(s.course, ' ', s.section) = ? "
                    + "ORDER BY s.lastname, s.firstname";
         List<Student> students = new ArrayList<>();
 
@@ -142,7 +142,7 @@ public class EnrollmentDao {
     }
 
     public List<String> getSectionsBySubject(int subjectId) {
-        String sql = "SELECT DISTINCT CONCAT(s.course, '-', s.year_level, s.section) AS course_section "
+        String sql = "SELECT DISTINCT CONCAT(s.course, ' ', s.section) AS course_section "
                    + "FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
                    + "WHERE e.subject_id = ? "

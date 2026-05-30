@@ -70,7 +70,7 @@ public class Student {
     }
 
     public String getCourseSection() {
-        return course + "-" + yearLevel + section;
+        return course + " " + section;
     }
 
     public String getGender() {

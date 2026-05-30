@@ -61,7 +61,7 @@ public class AttendanceDao {
     public List<LocalDate> getDatesBySubjectAndSection(int subjectId, String courseSection) {
         String sql = "SELECT DISTINCT a.date FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
-                   + "WHERE a.subject_id = ? AND CONCAT(s.course, '-', s.year_level, s.section) = ? "
+                   + "WHERE a.subject_id = ? AND CONCAT(s.course, ' ', s.section) = ? "
                    + "ORDER BY a.date DESC";
         List<LocalDate> dates = new ArrayList<>();
 
@@ -112,7 +112,7 @@ public class AttendanceDao {
             String courseSection, LocalDate startDate, LocalDate endDate) {
         String sql = "SELECT a.* FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
-                   + "WHERE a.subject_id = ? AND CONCAT(s.course, '-', s.year_level, s.section) = ? "
+                   + "WHERE a.subject_id = ? AND CONCAT(s.course, ' ', s.section) = ? "
                    + "AND a.date BETWEEN ? AND ? "
                    + "ORDER BY a.date, s.lastname, s.firstname";
         List<Attendance> results = new ArrayList<>();

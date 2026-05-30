@@ -534,6 +534,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 14 — UX Improvements (P2)
 * [x] Milestone 15 — Advanced Filtering (P2)
 * [x] Milestone 16 — Batch Score Entry & Enrollment UX (P2)
+* [x] T5-T7 — Batch defaults, section combobox, course-section labels
 * [ ] Milestone 17 — Security Hardening (P3)
 * [ ] Milestone 18 — Instructor-Section-Subject Linking (P3)
 
