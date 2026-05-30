@@ -9,17 +9,19 @@ import java.util.List;
 
 import model.Enrollment;
 import model.Student;
+import util.ActiveSemester;
 
 public class EnrollmentDao {
 
     public boolean enroll(String studentId, int subjectId) {
-        String sql = "INSERT INTO enrollments (student_id, subject_id) VALUES (?, ?)";
+        String sql = "INSERT INTO enrollments (student_id, subject_id, semester_id) VALUES (?, ?, ?)";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, studentId);
             statement.setInt(2, subjectId);
+            statement.setInt(3, ActiveSemester.getId());
             statement.executeUpdate();
             return true;
 
@@ -46,13 +48,14 @@ public class EnrollmentDao {
     }
 
     public boolean unenrollByStudentAndSubject(String studentId, int subjectId) {
-        String sql = "DELETE FROM enrollments WHERE student_id = ? AND subject_id = ?";
+        String sql = "DELETE FROM enrollments WHERE student_id = ? AND subject_id = ? AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, studentId);
             statement.setInt(2, subjectId);
+            statement.setInt(3, ActiveSemester.getId());
             statement.executeUpdate();
             return true;
 
@@ -63,13 +66,14 @@ public class EnrollmentDao {
     }
 
     public boolean isEnrolled(String studentId, int subjectId) {
-        String sql = "SELECT COUNT(*) FROM enrollments WHERE student_id = ? AND subject_id = ?";
+        String sql = "SELECT COUNT(*) FROM enrollments WHERE student_id = ? AND subject_id = ? AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, studentId);
             statement.setInt(2, subjectId);
+            statement.setInt(3, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) {
@@ -85,15 +89,32 @@ public class EnrollmentDao {
     }
 
     public List<Enrollment> getBySubject(int subjectId) {
-        String sql = "SELECT * FROM enrollments WHERE subject_id = ? ORDER BY student_id";
+        String sql = "SELECT * FROM enrollments WHERE subject_id = ? AND semester_id = ? ORDER BY student_id";
+        List<Enrollment> results = new ArrayList<>();
 
-        return executeQueryWithSubject(sql, subjectId);
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, subjectId);
+            statement.setInt(2, ActiveSemester.getId());
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    results.add(extractEnrollment(result));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Query enrollments error: " + e.getMessage());
+        }
+
+        return results;
     }
 
     public List<Student> getStudentsBySubject(int subjectId) {
         String sql = "SELECT s.* FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
-                   + "WHERE e.subject_id = ? "
+                   + "WHERE e.subject_id = ? AND e.semester_id = ? "
                    + "ORDER BY s.lastname, s.firstname";
         List<Student> students = new ArrayList<>();
 
@@ -101,6 +122,7 @@ public class EnrollmentDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, subjectId);
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -119,6 +141,7 @@ public class EnrollmentDao {
         String sql = "SELECT s.* FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
                    + "WHERE e.subject_id = ? AND CONCAT(s.course, ' ', s.section) = ? "
+                   + "AND e.semester_id = ? "
                    + "ORDER BY s.lastname, s.firstname";
         List<Student> students = new ArrayList<>();
 
@@ -127,6 +150,7 @@ public class EnrollmentDao {
 
             statement.setInt(1, subjectId);
             statement.setString(2, courseSection);
+            statement.setInt(3, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -145,7 +169,7 @@ public class EnrollmentDao {
         String sql = "SELECT DISTINCT CONCAT(s.course, ' ', s.section) AS course_section "
                    + "FROM students s "
                    + "JOIN enrollments e ON s.student_id = e.student_id "
-                   + "WHERE e.subject_id = ? "
+                   + "WHERE e.subject_id = ? AND e.semester_id = ? "
                    + "ORDER BY course_section";
         List<String> sections = new ArrayList<>();
 
@@ -153,6 +177,7 @@ public class EnrollmentDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, subjectId);
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -165,27 +190,6 @@ public class EnrollmentDao {
         }
 
         return sections;
-    }
-
-    private List<Enrollment> executeQueryWithSubject(String sql, int subjectId) {
-        List<Enrollment> results = new ArrayList<>();
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setInt(1, subjectId);
-
-            try (ResultSet result = statement.executeQuery()) {
-                while (result.next()) {
-                    results.add(extractEnrollment(result));
-                }
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Query enrollments error: " + e.getMessage());
-        }
-
-        return results;
     }
 
     private Enrollment extractEnrollment(ResultSet result) throws SQLException {

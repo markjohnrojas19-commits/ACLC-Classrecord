@@ -99,14 +99,16 @@ ACLC-Classrecord/
       Attendance.java        — attendance data (studentId, subjectId, date, status)
       AttendanceStatus.java  — enum: PRESENT, ABSENT, LATE, EXCUSED
       Enrollment.java        — enrollment data (studentId, subjectId)
+      Semester.java          — semester data (semesterId, schoolYear, semester)
       Role.java             — enum: ADMIN, INSTRUCTOR
     dao/                  — Data Access Objects (JDBC operations)
       DatabaseConnection.java — MySQL connection utility
       StudentDao.java       — student CRUD queries
       SubjectDao.java       — subject CRUD queries
-      AssessmentDao.java    — assessment CRUD queries (by season)
-      AttendanceDao.java     — attendance queries (saveOrUpdate, getBySubjectAndDate, counts)
-      EnrollmentDao.java     — enrollment queries (enroll, unenroll, getBySubjectAndSection)
+      AssessmentDao.java    — assessment CRUD queries (by season, scoped to ActiveSemester)
+      AttendanceDao.java     — attendance queries (saveOrUpdate, getBySubjectAndDate, scoped to ActiveSemester)
+      EnrollmentDao.java     — enrollment queries (enroll, unenroll, scoped to ActiveSemester)
+      SemesterDao.java       — semester CRUD + getActive/setActive
       UserDao.java          — user authentication queries
       DashboardDao.java     — dashboard summary count queries (uses AVG aggregation)
     service/              — Business logic
@@ -137,8 +139,10 @@ ACLC-Classrecord/
     util/                 — Shared utilities
       GradeConstants.java   — passing grade threshold + score bounds + default total items
       StyleConstants.java   — shared UI styling (fonts, borders, gaps, colors)
+      ActiveSemester.java   — static holder for the currently selected semester ID
   sql/
-    schema.sql            — database creation script (assessments table)
+    schema.sql            — database creation script (assessments, semesters tables)
+    migrate_add_semesters.sql — migration script for existing databases
   README.md
   CLAUDE.md
   milestones.md
@@ -177,11 +181,19 @@ Table: subjects
   subject_code  VARCHAR(20) UNIQUE NOT NULL
   subject_name  VARCHAR(100) NOT NULL
 
+Table: semesters
+  semester_id   INT AUTO_INCREMENT PRIMARY KEY
+  school_year   VARCHAR(20) NOT NULL
+  semester      INT NOT NULL
+  is_active     BOOLEAN NOT NULL DEFAULT FALSE
+  UNIQUE(school_year, semester)
+
 Table: enrollments
   enrollment_id  INT AUTO_INCREMENT PRIMARY KEY
   student_id     VARCHAR(20) NOT NULL  (FK -> students)
   subject_id     INT NOT NULL          (FK -> subjects)
-  UNIQUE(student_id, subject_id)
+  semester_id    INT NOT NULL           (FK -> semesters)
+  UNIQUE(student_id, subject_id, semester_id)
 
 Table: attendance
   attendance_id  INT AUTO_INCREMENT PRIMARY KEY
@@ -189,7 +201,8 @@ Table: attendance
   subject_id     INT NOT NULL          (FK -> subjects)
   date           DATE NOT NULL
   status         ENUM('Present', 'Absent', 'Late', 'Excused') NOT NULL
-  UNIQUE(student_id, subject_id, date)
+  semester_id    INT NOT NULL           (FK -> semesters)
+  UNIQUE(student_id, subject_id, date, semester_id)
 
 Table: assessments
   assessment_id    INT AUTO_INCREMENT PRIMARY KEY
@@ -200,7 +213,8 @@ Table: assessments
   score            DOUBLE NOT NULL DEFAULT 0
   total_items      DOUBLE NOT NULL DEFAULT 100
   date             DATE DEFAULT NULL
-  UNIQUE(student_id, subject_id, season, assessment_name)
+  semester_id      INT NOT NULL           (FK -> semesters)
+  UNIQUE(student_id, subject_id, season, assessment_name, semester_id)
 ```
 
 ---
@@ -539,6 +553,7 @@ Manual grades    ->   Auto-compute           ->   Import from CSV/Excel
 * [x] Milestone 15 — Advanced Filtering (P2)
 * [x] Milestone 16 — Batch Score Entry & Enrollment UX (P2)
 * [x] T5-T7 — Batch defaults, section combobox, course-section labels
+* [x] R1-R3 — Semester scoping, attendance export/print, student dropdown filter (already solved)
 * [ ] Milestone 17 — Security Hardening (P3)
 * [ ] Milestone 18 — Instructor-Section-Subject Linking (P3)
 

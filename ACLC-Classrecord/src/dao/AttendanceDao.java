@@ -11,17 +11,19 @@ import java.util.List;
 
 import model.Attendance;
 import model.AttendanceStatus;
+import util.ActiveSemester;
 
 public class AttendanceDao {
 
     public boolean add(Attendance attendance) {
-        String sql = "INSERT INTO attendance (student_id, subject_id, date, status) "
-                   + "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO attendance (student_id, subject_id, date, status, semester_id) "
+                   + "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             setParameters(statement, attendance);
+            statement.setInt(5, ActiveSemester.getId());
             statement.executeUpdate();
             return true;
 
@@ -33,7 +35,7 @@ public class AttendanceDao {
 
     public boolean update(Attendance attendance) {
         String sql = "UPDATE attendance SET status = ? "
-                   + "WHERE student_id = ? AND subject_id = ? AND date = ?";
+                   + "WHERE student_id = ? AND subject_id = ? AND date = ? AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -42,6 +44,7 @@ public class AttendanceDao {
             statement.setString(2, attendance.getStudentId());
             statement.setInt(3, attendance.getSubjectId());
             statement.setDate(4, Date.valueOf(attendance.getDate()));
+            statement.setInt(5, ActiveSemester.getId());
             statement.executeUpdate();
             return true;
 
@@ -62,6 +65,7 @@ public class AttendanceDao {
         String sql = "SELECT DISTINCT a.date FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
                    + "WHERE a.subject_id = ? AND CONCAT(s.course, ' ', s.section) = ? "
+                   + "AND a.semester_id = ? "
                    + "ORDER BY a.date DESC";
         List<LocalDate> dates = new ArrayList<>();
 
@@ -70,6 +74,7 @@ public class AttendanceDao {
 
             statement.setInt(1, subjectId);
             statement.setString(2, courseSection);
+            statement.setInt(3, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -85,7 +90,7 @@ public class AttendanceDao {
     }
 
     public List<Attendance> getBySubjectAndDate(int subjectId, LocalDate date) {
-        String sql = "SELECT * FROM attendance WHERE subject_id = ? AND date = ? "
+        String sql = "SELECT * FROM attendance WHERE subject_id = ? AND date = ? AND semester_id = ? "
                    + "ORDER BY student_id";
         List<Attendance> results = new ArrayList<>();
 
@@ -94,6 +99,7 @@ public class AttendanceDao {
 
             statement.setInt(1, subjectId);
             statement.setDate(2, Date.valueOf(date));
+            statement.setInt(3, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -113,7 +119,7 @@ public class AttendanceDao {
         String sql = "SELECT a.* FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
                    + "WHERE a.subject_id = ? AND CONCAT(s.course, ' ', s.section) = ? "
-                   + "AND a.date BETWEEN ? AND ? "
+                   + "AND a.date BETWEEN ? AND ? AND a.semester_id = ? "
                    + "ORDER BY a.date, s.lastname, s.firstname";
         List<Attendance> results = new ArrayList<>();
 
@@ -124,6 +130,7 @@ public class AttendanceDao {
             statement.setString(2, courseSection);
             statement.setDate(3, Date.valueOf(startDate));
             statement.setDate(4, Date.valueOf(endDate));
+            statement.setInt(5, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -139,7 +146,7 @@ public class AttendanceDao {
     }
 
     public List<Attendance> getByStudent(String studentId) {
-        String sql = "SELECT * FROM attendance WHERE student_id = ? "
+        String sql = "SELECT * FROM attendance WHERE student_id = ? AND semester_id = ? "
                    + "ORDER BY date DESC, subject_id";
         List<Attendance> results = new ArrayList<>();
 
@@ -147,6 +154,7 @@ public class AttendanceDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, studentId);
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -227,7 +235,7 @@ public class AttendanceDao {
 
     private boolean exists(String studentId, int subjectId, LocalDate date) {
         String sql = "SELECT COUNT(*) FROM attendance "
-                   + "WHERE student_id = ? AND subject_id = ? AND date = ?";
+                   + "WHERE student_id = ? AND subject_id = ? AND date = ? AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -235,6 +243,7 @@ public class AttendanceDao {
             statement.setString(1, studentId);
             statement.setInt(2, subjectId);
             statement.setDate(3, Date.valueOf(date));
+            statement.setInt(4, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) {

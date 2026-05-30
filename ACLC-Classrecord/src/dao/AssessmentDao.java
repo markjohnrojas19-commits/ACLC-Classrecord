@@ -11,18 +11,20 @@ import java.util.List;
 
 import model.Assessment;
 import model.GradingSeason;
+import util.ActiveSemester;
 import util.GradeConstants;
 
 public class AssessmentDao {
 
     public boolean add(Assessment assessment) {
-        String sql = "INSERT INTO assessments (student_id, subject_id, season, assessment_name, score, total_items, date) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO assessments (student_id, subject_id, season, assessment_name, score, total_items, date, semester_id) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             setParameters(statement, assessment);
+            statement.setInt(8, ActiveSemester.getId());
             statement.executeUpdate();
             return true;
 
@@ -33,12 +35,30 @@ public class AssessmentDao {
     }
 
     public List<Assessment> getAll() {
-        String sql = "SELECT * FROM assessments ORDER BY student_id, subject_id, season, assessment_name";
-        return executeQuery(sql);
+        String sql = "SELECT * FROM assessments WHERE semester_id = ? "
+                   + "ORDER BY student_id, subject_id, season, assessment_name";
+        List<Assessment> results = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, ActiveSemester.getId());
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    results.add(extractAssessment(result));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Get all assessments error: " + e.getMessage());
+        }
+
+        return results;
     }
 
     public List<Assessment> getBySeason(GradingSeason season) {
-        String sql = "SELECT * FROM assessments WHERE season = ? "
+        String sql = "SELECT * FROM assessments WHERE season = ? AND semester_id = ? "
                    + "ORDER BY student_id, subject_id, assessment_name";
         List<Assessment> results = new ArrayList<>();
 
@@ -46,6 +66,7 @@ public class AssessmentDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, season.toDbValue());
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -61,7 +82,7 @@ public class AssessmentDao {
     }
 
     public List<Assessment> getByStudent(String studentId) {
-        String sql = "SELECT * FROM assessments WHERE student_id = ? "
+        String sql = "SELECT * FROM assessments WHERE student_id = ? AND semester_id = ? "
                    + "ORDER BY subject_id, season, assessment_name";
         List<Assessment> results = new ArrayList<>();
 
@@ -69,6 +90,7 @@ public class AssessmentDao {
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, studentId);
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -85,7 +107,8 @@ public class AssessmentDao {
 
     public boolean saveOrUpdate(Assessment assessment) {
         String checkSql = "SELECT assessment_id FROM assessments "
-                        + "WHERE student_id = ? AND subject_id = ? AND season = ? AND assessment_name = ?";
+                        + "WHERE student_id = ? AND subject_id = ? AND season = ? AND assessment_name = ? "
+                        + "AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement check = connection.prepareStatement(checkSql)) {
@@ -94,6 +117,7 @@ public class AssessmentDao {
             check.setInt(2, assessment.getSubjectId());
             check.setString(3, assessment.getSeason().toDbValue());
             check.setString(4, assessment.getAssessmentName());
+            check.setInt(5, ActiveSemester.getId());
 
             try (ResultSet result = check.executeQuery()) {
                 if (result.next()) {
@@ -144,7 +168,8 @@ public class AssessmentDao {
     }
 
     public List<Assessment> search(String keyword) {
-        String sql = "SELECT * FROM assessments WHERE student_id LIKE ? OR assessment_name LIKE ? "
+        String sql = "SELECT * FROM assessments WHERE semester_id = ? "
+                   + "AND (student_id LIKE ? OR assessment_name LIKE ?) "
                    + "ORDER BY student_id, subject_id, season, assessment_name";
         List<Assessment> results = new ArrayList<>();
         String pattern = "%" + keyword + "%";
@@ -152,8 +177,9 @@ public class AssessmentDao {
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setString(1, pattern);
+            statement.setInt(1, ActiveSemester.getId());
             statement.setString(2, pattern);
+            statement.setString(3, pattern);
 
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
@@ -163,24 +189,6 @@ public class AssessmentDao {
 
         } catch (SQLException e) {
             System.out.println("Search assessments error: " + e.getMessage());
-        }
-
-        return results;
-    }
-
-    private List<Assessment> executeQuery(String sql) {
-        List<Assessment> results = new ArrayList<>();
-
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet result = statement.executeQuery()) {
-
-            while (result.next()) {
-                results.add(extractAssessment(result));
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Query assessments error: " + e.getMessage());
         }
 
         return results;

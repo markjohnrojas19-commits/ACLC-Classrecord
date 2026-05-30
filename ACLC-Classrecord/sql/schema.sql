@@ -30,6 +30,22 @@ CREATE TABLE IF NOT EXISTS subjects (
     subject_name  VARCHAR(100) NOT NULL
 );
 
+-- Semesters table
+-- Each row is one semester (e.g., "2025-2026 / 1st Semester").
+-- is_active marks which semester is currently selected in the app.
+CREATE TABLE IF NOT EXISTS semesters (
+    semester_id   INT AUTO_INCREMENT PRIMARY KEY,
+    school_year   VARCHAR(20) NOT NULL,
+    semester      INT NOT NULL,
+    is_active     BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE (school_year, semester)
+);
+
+-- Insert default semester
+INSERT INTO semesters (school_year, semester, is_active)
+VALUES ('2025-2026', 1, TRUE)
+ON DUPLICATE KEY UPDATE school_year = school_year;
+
 -- Assessments table (replaces old grades table)
 -- Each row is one assessment score for a student in a subject during a grading season.
 -- Examples: "Quiz 1" under Midterm, "Unit Test A" under Prelim, "Project" under Final.
@@ -42,9 +58,11 @@ CREATE TABLE IF NOT EXISTS assessments (
     score            DOUBLE NOT NULL DEFAULT 0,
     total_items      DOUBLE NOT NULL DEFAULT 100,
     date             DATE DEFAULT NULL,
-    UNIQUE (student_id, subject_id, season, assessment_name),
+    semester_id      INT NOT NULL DEFAULT 1,
+    UNIQUE (student_id, subject_id, season, assessment_name, semester_id),
     FOREIGN KEY (student_id) REFERENCES students(student_id),
-    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
+    FOREIGN KEY (semester_id) REFERENCES semesters(semester_id)
 );
 
 -- Enrollments table
@@ -54,9 +72,11 @@ CREATE TABLE IF NOT EXISTS enrollments (
     enrollment_id  INT AUTO_INCREMENT PRIMARY KEY,
     student_id     VARCHAR(20) NOT NULL,
     subject_id     INT NOT NULL,
-    UNIQUE (student_id, subject_id),
+    semester_id    INT NOT NULL DEFAULT 1,
+    UNIQUE (student_id, subject_id, semester_id),
     FOREIGN KEY (student_id) REFERENCES students(student_id),
-    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
+    FOREIGN KEY (semester_id) REFERENCES semesters(semester_id)
 );
 
 -- Attendance table
@@ -68,9 +88,11 @@ CREATE TABLE IF NOT EXISTS attendance (
     subject_id     INT NOT NULL,
     date           DATE NOT NULL,
     status         ENUM('Present', 'Absent', 'Late', 'Excused') NOT NULL,
-    UNIQUE (student_id, subject_id, date),
+    semester_id    INT NOT NULL DEFAULT 1,
+    UNIQUE (student_id, subject_id, date, semester_id),
     FOREIGN KEY (student_id) REFERENCES students(student_id),
-    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
+    FOREIGN KEY (semester_id) REFERENCES semesters(semester_id)
 );
 
 -- Insert a default admin user for testing (password: admin123)

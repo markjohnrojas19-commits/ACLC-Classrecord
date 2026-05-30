@@ -241,3 +241,41 @@ The dashboard stats panel (`DashboardStatsPanel`) shows 3 stat cards in a 1x3 gr
 Icons are loaded from `src/icons/` as `ImageIcon` resources. Each card uses `BoxLayout` (vertical) with `VerticalGlue` for centering. The attendance card uses a smaller font (`BODY_FONT`) since its text is longer than the numeric values.
 
 All counts refresh when the dashboard opens via `statsPanel.refresh()`.
+
+---
+
+## How does semester scoping work?
+
+All enrollment, assessment, and attendance data is scoped to a semester. This allows the system to support multiple semesters without deleting old data.
+
+**Database design:**
+- `semesters` table stores each semester: `semester_id`, `school_year` (e.g., "2025-2026"), `semester` (1 or 2), `is_active` (boolean).
+- `enrollments`, `assessments`, and `attendance` tables each have a `semester_id` foreign key column.
+- UNIQUE constraints include `semester_id`, so the same student can be enrolled in the same subject across different semesters.
+
+**Runtime scoping via `ActiveSemester`:**
+- `util/ActiveSemester` is a static utility that holds the currently selected semester ID.
+- On first access, it lazy-loads from `SemesterDao.getActiveId()` (reads the `is_active = TRUE` row).
+- All DAO methods (EnrollmentDao, AssessmentDao, AttendanceDao, DashboardDao) call `ActiveSemester.getId()` and add `WHERE semester_id = ?` to their SQL queries.
+- INSERT operations include `ActiveSemester.getId()` in the semester_id column.
+
+**The test:** *"If I switch semesters on the dashboard, does any form code change?"* No. The forms call the same DAO methods. The DAOs internally filter by `ActiveSemester.getId()`. The forms are unaware of semesters.
+
+**Semester switching on the Dashboard:**
+- `DashboardForm` shows a semester dropdown populated by `SemesterDao.getAll()`.
+- Switching semesters calls `ActiveSemester.setId()` and `SemesterDao.setActive()` (persists to DB).
+- Dashboard stats refresh immediately to show the new semester's data.
+- A "New Semester" button opens input dialogs for school year and semester number, then calls `SemesterDao.add()`.
+
+**Model classes don't change.** The `Assessment`, `Enrollment`, and `Attendance` models have no `semesterId` field. Semester scoping is an external concern handled entirely by the DAOs — consistent with the Universal Principle (atoms don't know about external scoping).
+
+---
+
+## How does attendance export/print work?
+
+`AttendanceForm` has Print and Export CSV buttons in an "Export" button group, following the same pattern as `GradeForm`.
+
+- **Print:** Uses `JTable.print(FIT_WIDTH, header, footer)`. Header shows "ACLC Class Record — Attendance (Single Date)" or "(Date Range)". Footer shows page number.
+- **Export CSV:** Opens a `JFileChooser` save dialog with default filename `attendance_YYYY-MM-DD.csv`. Exports all columns and rows from the current table view. CSV values are properly escaped (commas, quotes, newlines). Works in both single-date and date-range modes — whatever the table currently shows gets exported.
+
+Both buttons work regardless of the current table mode (single date entry or date range read-only view).

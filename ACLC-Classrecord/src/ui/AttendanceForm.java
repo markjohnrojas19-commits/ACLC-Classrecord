@@ -3,21 +3,29 @@ package ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.print.PrinterException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -124,6 +132,15 @@ public class AttendanceForm extends JFrame {
             StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
+        panel.add(createRecordButtons());
+        panel.add(createExportButtons());
+
+        return panel;
+    }
+
+    private JPanel createRecordButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
         JButton saveButton = new JButton("Save");
         JButton markAllPresentButton = new JButton("Mark All Present");
 
@@ -133,7 +150,38 @@ public class AttendanceForm extends JFrame {
         panel.add(saveButton);
         panel.add(markAllPresentButton);
 
-        return panel;
+        return createButtonGroup("Record", panel);
+    }
+
+    private JPanel createExportButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+        JButton printButton = new JButton("Print");
+        JButton exportCsvButton = new JButton("Export CSV");
+
+        printButton.addActionListener(e -> handlePrint());
+        exportCsvButton.addActionListener(e -> handleExportCsv());
+
+        panel.add(printButton);
+        panel.add(exportCsvButton);
+
+        return createButtonGroup("Export", panel);
+    }
+
+    private JPanel createButtonGroup(String title, JPanel content) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        wrapper.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder,
+            BorderFactory.createEmptyBorder(0, 5, 5, 5)));
+
+        wrapper.add(content, BorderLayout.CENTER);
+        return wrapper;
     }
 
     private void populateSubjects() {
@@ -361,6 +409,108 @@ public class AttendanceForm extends JFrame {
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             tableModel.setValueAt(AttendanceStatus.PRESENT.toDisplayName(), row, 2);
         }
+    }
+
+    private void handlePrint() {
+        if (table.getRowCount() == 0) {
+            showError("No data to print.");
+            return;
+        }
+
+        String tabTitle = filterPanel.isDateRangeMode() ? "Date Range" : "Single Date";
+        MessageFormat header = new MessageFormat("ACLC Class Record — Attendance (" + tabTitle + ")");
+        MessageFormat footer = new MessageFormat("Page {0}");
+
+        try {
+            table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+        } catch (PrinterException ex) {
+            showError("Printing failed: " + ex.getMessage());
+        }
+    }
+
+    private void handleExportCsv() {
+        if (table.getRowCount() == 0) {
+            showError("No data to export.");
+            return;
+        }
+
+        File file = chooseExportFile();
+        if (file == null) {
+            return;
+        }
+
+        writeTableToCsv(file);
+    }
+
+    private File chooseExportFile() {
+        String defaultName = "attendance_" + LocalDate.now() + ".csv";
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export Attendance to CSV");
+        chooser.setSelectedFile(new File(defaultName));
+
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+
+        File file = chooser.getSelectedFile();
+        if (!file.getName().endsWith(".csv")) {
+            file = new File(file.getAbsolutePath() + ".csv");
+        }
+        return file;
+    }
+
+    private void writeTableToCsv(File file) {
+        try (FileWriter writer = new FileWriter(file)) {
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+
+            writeCsvRow(writer, getColumnHeaders(model));
+
+            for (int row = 0; row < model.getRowCount(); row++) {
+                writeCsvRow(writer, getRowValues(model, row));
+            }
+
+            JOptionPane.showMessageDialog(this,
+                "Exported " + model.getRowCount() + " rows to:\n" + file.getAbsolutePath(),
+                "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            showError("Export failed: " + ex.getMessage());
+        }
+    }
+
+    private String[] getColumnHeaders(DefaultTableModel model) {
+        String[] headers = new String[model.getColumnCount()];
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            headers[col] = model.getColumnName(col);
+        }
+        return headers;
+    }
+
+    private String[] getRowValues(DefaultTableModel model, int row) {
+        String[] values = new String[model.getColumnCount()];
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            Object value = model.getValueAt(row, col);
+            values[col] = (value == null) ? "" : value.toString();
+        }
+        return values;
+    }
+
+    private void writeCsvRow(FileWriter writer, String[] values) throws IOException {
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                writer.write(",");
+            }
+            writer.write(escapeCsv(values[i]));
+        }
+        writer.write("\n");
+    }
+
+    private String escapeCsv(String value) {
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     private void handleBack(User currentUser) {

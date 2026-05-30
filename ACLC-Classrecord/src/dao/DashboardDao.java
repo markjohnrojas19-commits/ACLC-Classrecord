@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
+import util.ActiveSemester;
 import util.GradeConstants;
 
 public class DashboardDao {
@@ -20,20 +21,21 @@ public class DashboardDao {
     }
 
     public int countAssessments() {
-        return executeSimpleCount("SELECT COUNT(*) FROM assessments");
+        return executeCountWithSemester("SELECT COUNT(*) FROM assessments WHERE semester_id = ?");
     }
 
     public int countEnrolled() {
-        return executeSimpleCount("SELECT COUNT(*) FROM enrollments");
+        return executeCountWithSemester("SELECT COUNT(*) FROM enrollments WHERE semester_id = ?");
     }
 
     public int countTodayPresent() {
-        String sql = "SELECT COUNT(*) FROM attendance WHERE date = ? AND status = 'Present'";
+        String sql = "SELECT COUNT(*) FROM attendance WHERE date = ? AND status = 'Present' AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setDate(1, Date.valueOf(LocalDate.now()));
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -49,12 +51,13 @@ public class DashboardDao {
     }
 
     public int countTodayTotal() {
-        String sql = "SELECT COUNT(*) FROM attendance WHERE date = ?";
+        String sql = "SELECT COUNT(*) FROM attendance WHERE date = ? AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setDate(1, Date.valueOf(LocalDate.now()));
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -73,12 +76,13 @@ public class DashboardDao {
         String sql = "SELECT COUNT(DISTINCT CONCAT(a.subject_id, '|', s.course, ' ', s.section)) "
                    + "FROM attendance a "
                    + "JOIN students s ON a.student_id = s.student_id "
-                   + "WHERE a.date = ?";
+                   + "WHERE a.date = ? AND a.semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setDate(1, Date.valueOf(LocalDate.now()));
+            statement.setInt(2, ActiveSemester.getId());
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -96,9 +100,10 @@ public class DashboardDao {
     public int countTotalEnrolledSections() {
         String sql = "SELECT COUNT(DISTINCT CONCAT(e.subject_id, '|', s.course, ' ', s.section)) "
                    + "FROM enrollments e "
-                   + "JOIN students s ON e.student_id = s.student_id";
+                   + "JOIN students s ON e.student_id = s.student_id "
+                   + "WHERE e.semester_id = ?";
 
-        return executeSimpleCount(sql);
+        return executeCountWithSemester(sql);
     }
 
     public int countPassed() {
@@ -119,6 +124,7 @@ public class DashboardDao {
                    + "COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * ? "
                    + "AS weighted_grade "
                    + "FROM assessments "
+                   + "WHERE semester_id = ? "
                    + "GROUP BY student_id, subject_id "
                    + "HAVING weighted_grade " + comparison + " ?"
                    + ") AS result";
@@ -130,7 +136,8 @@ public class DashboardDao {
             statement.setDouble(2, GradeConstants.MIDTERM_WEIGHT);
             statement.setDouble(3, GradeConstants.PRE_FINAL_WEIGHT);
             statement.setDouble(4, GradeConstants.FINAL_WEIGHT);
-            statement.setDouble(5, GradeConstants.PASSING_GRADE);
+            statement.setInt(5, ActiveSemester.getId());
+            statement.setDouble(6, GradeConstants.PASSING_GRADE);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -141,6 +148,25 @@ public class DashboardDao {
 
         } catch (SQLException e) {
             System.out.println("Dashboard pass/fail count error: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    private int executeCountWithSemester(String sql) {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, ActiveSemester.getId());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Dashboard count error: " + e.getMessage());
             return -1;
         }
     }

@@ -68,9 +68,9 @@
 
 | ID | Recommendation | Priority | Complexity |
 |----|----------------|----------|------------|
-| R1 | Semester / School Year Selector | P1 | High — touches schema, all DAOs, all forms |
-| R2 | Filter student dropdown by subject | P1 | Low — filter logic in GradeForm + AssessmentInputPanel |
-| R3 | Attendance export / print | P1 | Low — reuse existing CSV/print pattern |
+| R1 | Semester / School Year Selector | P1 | **DONE** — semesters table, ActiveSemester, all DAOs scoped |
+| R2 | Filter student dropdown by subject | P1 | **DONE** — already solved by BatchScoreEntryForm refactor |
+| R3 | Attendance export / print | P1 | **DONE** — Print + Export CSV buttons on AttendanceForm |
 | R4 | Missing scores indicator | P2 | Low — UI highlight + count label |
 | R5 | Attendance in grade summary | P2 | Medium — new DAO queries + summary table columns |
 | R6 | Per-subject dashboard stats | P2 | Medium — new DAO query + table component |
