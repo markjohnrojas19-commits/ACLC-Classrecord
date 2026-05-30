@@ -4,10 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
 
 import model.User;
 import util.StyleConstants;
@@ -53,8 +55,18 @@ public class DashboardForm extends JFrame {
     }
 
     private JPanel createNavigationPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        panel.setBorder(StyleConstants.BUTTON_BORDER);
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            "Navigation", TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            StyleConstants.BUTTON_BORDER,
+            BorderFactory.createCompoundBorder(
+                titledBorder,
+                BorderFactory.createEmptyBorder(5, 5, 8, 5))));
 
         panel.add(createNavButton("Students", "Manage records", e -> openStudentForm()));
         panel.add(createNavButton("Subjects", "Manage courses", e -> openSubjectForm()));
@@ -72,7 +84,7 @@ public class DashboardForm extends JFrame {
             + "</center></html>";
 
         JButton button = new JButton(html);
-        button.setPreferredSize(new Dimension(135, 50));
+        button.setPreferredSize(new Dimension(125, 50));
         button.addActionListener(action);
 
         return button;
