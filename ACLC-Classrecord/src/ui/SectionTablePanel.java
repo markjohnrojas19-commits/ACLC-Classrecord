@@ -2,6 +2,8 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -75,8 +77,26 @@ public class SectionTablePanel extends JPanel {
         newTable.setGridColor(StyleConstants.BORDER_COLOR);
         newTable.setDefaultRenderer(Object.class, createAlternatingRenderer());
         styleTableHeader(newTable);
+        addToggleSelection(newTable);
 
         return newTable;
+    }
+
+    private void addToggleSelection(JTable targetTable) {
+        targetTable.addMouseListener(new MouseAdapter() {
+            private int lastSelectedRow = -1;
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                int clickedRow = targetTable.rowAtPoint(e.getPoint());
+                if (clickedRow == lastSelectedRow) {
+                    targetTable.clearSelection();
+                    lastSelectedRow = -1;
+                } else {
+                    lastSelectedRow = clickedRow;
+                }
+            }
+        });
     }
 
     private void styleTableHeader(JTable targetTable) {

@@ -93,6 +93,8 @@ public class StudentDao {
 
     public boolean delete(String studentId) {
         try (Connection connection = DatabaseConnection.getConnection()) {
+            deleteRelatedAttendance(connection, studentId);
+            deleteRelatedEnrollments(connection, studentId);
             deleteRelatedGrades(connection, studentId);
             deleteRelatedAssessments(connection, studentId);
             deleteStudent(connection, studentId);
@@ -101,6 +103,24 @@ public class StudentDao {
         } catch (SQLException e) {
             System.out.println("Delete student error: " + e.getMessage());
             return false;
+        }
+    }
+
+    private void deleteRelatedAttendance(Connection connection, String studentId) throws SQLException {
+        String sql = "DELETE FROM attendance WHERE student_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, studentId);
+            statement.executeUpdate();
+        }
+    }
+
+    private void deleteRelatedEnrollments(Connection connection, String studentId) throws SQLException {
+        String sql = "DELETE FROM enrollments WHERE student_id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, studentId);
+            statement.executeUpdate();
         }
     }
 

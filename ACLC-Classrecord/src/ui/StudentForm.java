@@ -305,11 +305,20 @@ public class StudentForm extends JFrame {
 
     private void handleDelete() {
         SectionTablePanel activePanel = getActivePanel();
-        if (activePanel == null || activePanel.getSelectedRow() == -1) {
-            showError("Please select a student to delete.");
+        if (activePanel == null) {
             return;
         }
 
+        if (activePanel.getSelectedRow() != -1) {
+            deleteSelectedStudent(activePanel);
+        } else if (isOnSectionTab()) {
+            deleteSection();
+        } else {
+            showError("Please select a student to delete.");
+        }
+    }
+
+    private void deleteSelectedStudent(SectionTablePanel activePanel) {
         String studentId = (String) activePanel.getValueAt(activePanel.getSelectedRow(), 0);
         int confirm = JOptionPane.showConfirmDialog(this,
             "Delete student " + studentId + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
@@ -319,6 +328,34 @@ public class StudentForm extends JFrame {
             refreshTabs();
             inputPanel.clear();
         }
+    }
+
+    private void deleteSection() {
+        String sectionName = sectionTabs.getTitleAt(sectionTabs.getSelectedIndex());
+        SectionTablePanel activePanel = getActivePanel();
+        int studentCount = activePanel.getTable().getRowCount();
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Delete all " + studentCount + " students in section \"" + sectionName + "\"?\n"
+            + "This will also remove their enrollments, attendance, and assessments.",
+            "Delete Section", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            deleteAllStudentsInSection(activePanel);
+            refreshTabs();
+            inputPanel.clear();
+        }
+    }
+
+    private void deleteAllStudentsInSection(SectionTablePanel panel) {
+        for (int row = 0; row < panel.getTable().getRowCount(); row++) {
+            String studentId = (String) panel.getValueAt(row, 0);
+            studentDao.delete(studentId);
+        }
+    }
+
+    private boolean isOnSectionTab() {
+        return sectionTabs.getSelectedIndex() > 0;
     }
 
     private void handleSearch() {
