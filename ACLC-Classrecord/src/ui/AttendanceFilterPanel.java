@@ -31,7 +31,7 @@ public class AttendanceFilterPanel extends JPanel {
 
         add(new JLabel("Subject:"));
         add(subjectBox);
-        add(new JLabel("Section:"));
+        add(new JLabel("Course/Section:"));
         add(sectionBox);
         add(new JLabel("From:"));
         add(startDateBox);

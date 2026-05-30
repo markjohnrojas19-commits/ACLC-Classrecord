@@ -25,7 +25,7 @@ public class GradeFilterPanel extends JPanel {
         statusBox = new JComboBox<>(new String[]{"All Results", "Passed Only", "Failed Only"});
         searchField = new JTextField();
 
-        add(new JLabel("Section:"));
+        add(new JLabel("Course/Section:"));
         add(sectionBox);
         add(new JLabel("Status:"));
         add(statusBox);

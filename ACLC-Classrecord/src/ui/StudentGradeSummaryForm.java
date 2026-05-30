@@ -42,6 +42,7 @@ import util.StyleConstants;
 
 public class StudentGradeSummaryForm extends JFrame {
 
+    private JComboBox<String> sectionBox;
     private JComboBox<Student> studentBox;
     private JTable summaryTable;
     private AssessmentDao assessmentDao;
@@ -101,14 +102,23 @@ public class StudentGradeSummaryForm extends JFrame {
         panel.setBorder(StyleConstants.INPUT_BORDER);
         panel.setBackground(StyleConstants.WHITE);
 
-        JLabel label = new JLabel("Student:");
-        label.setFont(StyleConstants.BODY_FONT);
+        JLabel sectionLabel = new JLabel("Course/Section:");
+        sectionLabel.setFont(StyleConstants.BODY_FONT);
+
+        sectionBox = new JComboBox<>();
+        sectionBox.setFont(StyleConstants.BODY_FONT);
+        sectionBox.addActionListener(e -> filterStudentsBySection());
+
+        JLabel studentLabel = new JLabel("Student:");
+        studentLabel.setFont(StyleConstants.BODY_FONT);
 
         studentBox = new JComboBox<>();
         studentBox.setFont(StyleConstants.BODY_FONT);
         studentBox.addActionListener(e -> refreshSummary());
 
-        panel.add(label);
+        panel.add(sectionLabel);
+        panel.add(sectionBox);
+        panel.add(studentLabel);
         panel.add(studentBox);
 
         return panel;
@@ -163,13 +173,29 @@ public class StudentGradeSummaryForm extends JFrame {
     }
 
     private void populateStudentDropdown() {
+        List<String> sections = new StudentDao().getAllSections();
+        sectionBox.addItem("All Sections");
+        for (String section : sections) {
+            sectionBox.addItem(section);
+        }
+        filterStudentsBySection();
+    }
+
+    private void filterStudentsBySection() {
+        studentBox.removeAllItems();
+        String selected = (String) sectionBox.getSelectedItem();
         List<Student> students = new StudentDao().getAll();
+
         for (Student student : students) {
-            studentBox.addItem(student);
+            if ("All Sections".equals(selected) || student.getCourseSection().equals(selected)) {
+                studentBox.addItem(student);
+            }
         }
     }
 
     private void selectStudent(Student preselected) {
+        sectionBox.setSelectedItem(preselected.getCourseSection());
+
         for (int i = 0; i < studentBox.getItemCount(); i++) {
             Student item = studentBox.getItemAt(i);
             if (item.getStudentId().equals(preselected.getStudentId())) {

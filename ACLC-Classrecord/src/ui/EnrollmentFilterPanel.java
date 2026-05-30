@@ -25,7 +25,7 @@ public class EnrollmentFilterPanel extends JPanel {
 
         add(new JLabel("Subject:"));
         add(subjectBox);
-        add(new JLabel("Section:"));
+        add(new JLabel("Course/Section:"));
         add(sectionBox);
     }
 

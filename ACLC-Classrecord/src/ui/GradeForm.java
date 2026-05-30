@@ -206,14 +206,17 @@ public class GradeForm extends JFrame {
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton enterScoresButton = new JButton("Enter Scores");
+        JButton editScoreButton = new JButton("Edit Score");
         JButton printButton = new JButton("Print");
         JButton exportButton = new JButton("Export CSV");
 
         enterScoresButton.addActionListener(e -> openBatchScoreEntry());
+        editScoreButton.addActionListener(e -> handleEditScore());
         printButton.addActionListener(e -> handlePrint());
         exportButton.addActionListener(e -> handleExportCsv());
 
         panel.add(enterScoresButton);
+        panel.add(editScoreButton);
         panel.add(printButton);
         panel.add(exportButton);
 
@@ -223,6 +226,47 @@ public class GradeForm extends JFrame {
     private void openBatchScoreEntry() {
         new BatchScoreEntryForm(currentUser).setVisible(true);
         dispose();
+    }
+
+    private void handleEditScore() {
+        Assessment selected = getSelectedAssessment();
+        if (selected == null) {
+            showError("Select an assessment row in a season tab to edit.");
+            return;
+        }
+        new EditAssessmentDialog(this, selected, this::refreshAllTabs);
+    }
+
+    private Assessment getSelectedAssessment() {
+        int tabIndex = seasonTabs.getSelectedIndex();
+        if (tabIndex >= GradingSeason.values().length) {
+            return null;
+        }
+
+        JTable table = getTableForTab(tabIndex);
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            return null;
+        }
+
+        Object idValue = table.getModel().getValueAt(selectedRow, 0);
+        if (idValue == null) {
+            return null;
+        }
+
+        int assessmentId = Integer.parseInt(idValue.toString());
+        return findAssessmentById(assessmentId);
+    }
+
+    private Assessment findAssessmentById(int assessmentId) {
+        for (List<Assessment> list : seasonRecords.values()) {
+            for (Assessment a : list) {
+                if (a.getAssessmentId() == assessmentId) {
+                    return a;
+                }
+            }
+        }
+        return null;
     }
 
     private void refreshWithSearch() {
