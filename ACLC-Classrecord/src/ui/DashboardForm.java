@@ -28,9 +28,12 @@ public class DashboardForm extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        add(createHeaderPanel(), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(createHeaderPanel(), BorderLayout.NORTH);
+        topPanel.add(createNavigationPanel(), BorderLayout.SOUTH);
+
+        add(topPanel, BorderLayout.NORTH);
         add(statsPanel, BorderLayout.CENTER);
-        add(createNavigationPanel(), BorderLayout.SOUTH);
 
         statsPanel.refresh();
     }
