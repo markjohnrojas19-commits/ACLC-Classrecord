@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -100,8 +101,15 @@ public class StudentGradeSummaryForm extends JFrame {
 
     private JPanel createStudentSidebar() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setPreferredSize(new Dimension(220, 0));
-        panel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, StyleConstants.BORDER_COLOR));
+        panel.setPreferredSize(new Dimension(260, 0));
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            "Students", TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(5, 10, 5, 0), titledBorder));
 
         panel.add(createSectionFilter(), BorderLayout.NORTH);
         panel.add(createStudentList(), BorderLayout.CENTER);
@@ -112,7 +120,7 @@ public class StudentGradeSummaryForm extends JFrame {
     private JPanel createSectionFilter() {
         JPanel panel = new JPanel(new BorderLayout(
             StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
-        panel.setBorder(StyleConstants.INPUT_BORDER);
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         panel.setBackground(StyleConstants.WHITE);
 
         JLabel sectionLabel = new JLabel("Course/Section:");
@@ -170,13 +178,25 @@ public class StudentGradeSummaryForm extends JFrame {
         };
     }
 
-    private JScrollPane createTablePanel() {
+    private JPanel createTablePanel() {
         summaryTable = createSummaryTable();
 
         JScrollPane scrollPane = new JScrollPane(summaryTable);
-        scrollPane.setBorder(StyleConstants.TABLE_BORDER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        return scrollPane;
+        JPanel panel = new JPanel(new BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            "Grade Summary", TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(5, 0, 5, 10), titledBorder));
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
     }
 
     private JTable createSummaryTable() {
@@ -202,15 +222,31 @@ public class StudentGradeSummaryForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
-            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         JButton printButton = new JButton("Print");
         printButton.addActionListener(e -> handlePrint());
+        buttons.add(printButton);
 
-        panel.add(printButton);
+        panel.add(createButtonGroup("Export", buttons));
 
+        return panel;
+    }
+
+    private JPanel createButtonGroup(String title, JPanel buttons) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder, BorderFactory.createEmptyBorder(5, 5, 8, 5)));
+
+        panel.add(buttons, BorderLayout.CENTER);
         return panel;
     }
 
