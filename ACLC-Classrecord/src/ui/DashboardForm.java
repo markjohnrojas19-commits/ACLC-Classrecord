@@ -37,7 +37,8 @@ public class DashboardForm extends JFrame {
         panel.setBorder(StyleConstants.HEADER_BORDER);
         panel.setBackground(StyleConstants.WHITE);
 
-        JLabel welcomeLabel = new JLabel("Welcome, " + currentUser.getUsername() + "!");
+        JLabel welcomeLabel = new JLabel(
+            "ACLC Class Record — " + currentUser.getUsername());
         welcomeLabel.setFont(StyleConstants.TITLE_FONT);
         welcomeLabel.setForeground(StyleConstants.PRIMARY);
 

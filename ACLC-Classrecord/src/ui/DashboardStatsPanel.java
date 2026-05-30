@@ -2,9 +2,11 @@ package ui;
 
 import java.awt.GridLayout;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 
 import dao.DashboardDao;
 import util.StyleConstants;
@@ -22,7 +24,7 @@ public class DashboardStatsPanel extends JPanel {
     public DashboardStatsPanel() {
         this.dashboardDao = new DashboardDao();
 
-        setLayout(new GridLayout(3, 2, 20, 20));
+        setLayout(new GridLayout(3, 2, 15, 15));
         setBorder(StyleConstants.STATS_BORDER);
         setBackground(StyleConstants.WHITE);
 
@@ -33,12 +35,12 @@ public class DashboardStatsPanel extends JPanel {
         failedLabel = createStatLabel("Failed", "0");
         attendanceLabel = createStatLabel("Today's Attendance", "0 / 0");
 
-        add(studentsLabel);
-        add(subjectsLabel);
-        add(enrolledLabel);
-        add(passedLabel);
-        add(failedLabel);
-        add(attendanceLabel);
+        add(createStatPanel(studentsLabel));
+        add(createStatPanel(subjectsLabel));
+        add(createStatPanel(enrolledLabel));
+        add(createStatPanel(passedLabel));
+        add(createStatPanel(failedLabel));
+        add(createStatPanel(attendanceLabel));
     }
 
     public void refresh() {
@@ -48,6 +50,18 @@ public class DashboardStatsPanel extends JPanel {
         updatePassedLabel(dashboardDao.countPassed());
         updateFailedLabel(dashboardDao.countFailed());
         updateAttendanceLabel();
+    }
+
+    private JPanel createStatPanel(JLabel label) {
+        JPanel panel = new JPanel(new GridLayout(1, 1));
+        panel.setBackground(StyleConstants.WHITE);
+
+        Border outline = BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1);
+        Border padding = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+        panel.setBorder(BorderFactory.createCompoundBorder(outline, padding));
+
+        panel.add(label);
+        return panel;
     }
 
     private void updateLabel(JLabel label, String title, int count) {
