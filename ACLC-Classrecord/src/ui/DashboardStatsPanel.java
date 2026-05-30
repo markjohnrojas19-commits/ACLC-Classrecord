@@ -7,6 +7,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 
 import dao.DashboardDao;
 import util.StyleConstants;
@@ -25,8 +26,18 @@ public class DashboardStatsPanel extends JPanel {
         this.dashboardDao = new DashboardDao();
 
         setLayout(new GridLayout(3, 2, 15, 15));
-        setBorder(StyleConstants.STATS_BORDER);
         setBackground(StyleConstants.WHITE);
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            "Dashboard Overview", TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        setBorder(BorderFactory.createCompoundBorder(
+            StyleConstants.STATS_BORDER,
+            BorderFactory.createCompoundBorder(
+                titledBorder,
+                BorderFactory.createEmptyBorder(10, 10, 10, 10))));
 
         studentsLabel = createStatLabel("Total Students", "0");
         subjectsLabel = createStatLabel("Total Subjects", "0");

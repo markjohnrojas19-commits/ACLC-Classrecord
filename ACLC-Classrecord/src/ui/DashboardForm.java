@@ -24,7 +24,7 @@ public class DashboardForm extends JFrame {
         this.statsPanel = new DashboardStatsPanel();
 
         setTitle("ACLC Class Record — Dashboard");
-        setSize(800, 600);
+        setSize(850, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -84,7 +84,7 @@ public class DashboardForm extends JFrame {
             + "</center></html>";
 
         JButton button = new JButton(html);
-        button.setPreferredSize(new Dimension(125, 50));
+        button.setPreferredSize(new Dimension(135, 50));
         button.addActionListener(action);
 
         return button;
