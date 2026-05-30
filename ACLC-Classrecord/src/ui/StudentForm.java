@@ -2,12 +2,14 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -102,38 +104,66 @@ public class StudentForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
-            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
+
+        panel.add(createButtonGroup("Record", createRecordButtons()));
+        panel.add(createButtonGroup("Tools", createToolButtons()));
+
+        return panel;
+    }
+
+    private JPanel createRecordButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
         JButton addButton = new JButton("Add");
         JButton editButton = new JButton("Edit");
         JButton deleteButton = new JButton("Delete");
         JButton clearButton = new JButton("Clear");
-        JButton viewGradesButton = new JButton("View Grades");
-        JButton importCsvButton = new JButton("Import CSV");
         JButton addMultipleButton = new JButton("Add Multiple");
+        JButton importCsvButton = new JButton("Import CSV");
 
         addButton.addActionListener(e -> handleAdd());
         editButton.addActionListener(e -> handleEdit());
         deleteButton.addActionListener(e -> handleDelete());
         clearButton.addActionListener(e -> inputPanel.clear());
-        viewGradesButton.addActionListener(e -> handleViewGrades());
-        importCsvButton.addActionListener(e -> handleImportCsv());
         addMultipleButton.addActionListener(e -> handleAddMultiple());
-
-        JButton searchButton = new JButton("Search");
-        searchButton.addActionListener(e -> handleSearch());
+        importCsvButton.addActionListener(e -> handleImportCsv());
 
         panel.add(addButton);
         panel.add(editButton);
         panel.add(deleteButton);
         panel.add(clearButton);
-        panel.add(viewGradesButton);
-        panel.add(searchButton);
-        panel.add(importCsvButton);
         panel.add(addMultipleButton);
+        panel.add(importCsvButton);
 
+        return panel;
+    }
+
+    private JPanel createToolButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+        JButton viewGradesButton = new JButton("View Grades");
+        viewGradesButton.addActionListener(e -> handleViewGrades());
+
+        panel.add(viewGradesButton);
+
+        return panel;
+    }
+
+    private JPanel createButtonGroup(String title, JPanel buttons) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        javax.swing.border.TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, javax.swing.border.TitledBorder.LEFT,
+            javax.swing.border.TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder, BorderFactory.createEmptyBorder(5, 5, 8, 5)));
+
+        panel.add(buttons, BorderLayout.CENTER);
         return panel;
     }
 

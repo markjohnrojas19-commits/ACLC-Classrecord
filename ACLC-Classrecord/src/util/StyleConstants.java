@@ -29,9 +29,9 @@ public final class StyleConstants {
     public static final Color TABLE_ROW_ALT = new Color(248, 249, 250);
     public static final Color SEASON_AVERAGE_BG = new Color(232, 240, 254);
 
-    public static final Border HEADER_BORDER = BorderFactory.createEmptyBorder(15, 20, 5, 20);
-    public static final Border INPUT_BORDER = BorderFactory.createEmptyBorder(15, 20, 10, 20);
-    public static final Border BUTTON_BORDER = BorderFactory.createEmptyBorder(5, 20, 15, 20);
+    public static final Border HEADER_BORDER = BorderFactory.createEmptyBorder(10, 20, 10, 20);
+    public static final Border INPUT_BORDER = BorderFactory.createEmptyBorder(10, 20, 10, 20);
+    public static final Border BUTTON_BORDER = BorderFactory.createEmptyBorder(10, 20, 10, 20);
     public static final Border TABLE_BORDER = BorderFactory.createEmptyBorder(5, 20, 5, 20);
     public static final Border STATS_BORDER = BorderFactory.createEmptyBorder(30, 40, 30, 40);
     public static final Border SECTION_BORDER = BorderFactory.createEmptyBorder(8, 8, 8, 8);
