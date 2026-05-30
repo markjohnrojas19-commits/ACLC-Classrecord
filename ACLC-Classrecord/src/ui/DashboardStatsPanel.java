@@ -3,6 +3,9 @@ package ui;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -15,17 +18,14 @@ import util.StyleConstants;
 public class DashboardStatsPanel extends JPanel {
 
     private DashboardDao dashboardDao;
-    private JLabel studentsLabel;
-    private JLabel subjectsLabel;
-    private JLabel enrolledLabel;
-    private JLabel passedLabel;
-    private JLabel failedLabel;
-    private JLabel attendanceLabel;
+    private JLabel studentsValue;
+    private JLabel subjectsValue;
+    private JLabel attendanceValue;
 
     public DashboardStatsPanel() {
         this.dashboardDao = new DashboardDao();
 
-        setLayout(new GridLayout(3, 2, 15, 15));
+        setLayout(new GridLayout(1, 3, 15, 15));
         setBackground(StyleConstants.WHITE);
 
         TitledBorder titledBorder = BorderFactory.createTitledBorder(
@@ -39,59 +39,71 @@ public class DashboardStatsPanel extends JPanel {
                 titledBorder,
                 BorderFactory.createEmptyBorder(10, 10, 10, 10))));
 
-        studentsLabel = createStatLabel("Total Students", "0");
-        subjectsLabel = createStatLabel("Total Subjects", "0");
-        enrolledLabel = createStatLabel("Enrolled", "0");
-        passedLabel = createStatLabel("Passed", "0");
-        failedLabel = createStatLabel("Failed", "0");
-        attendanceLabel = createStatLabel("Today's Attendance", "0 / 0");
+        studentsValue = new JLabel("0");
+        subjectsValue = new JLabel("0");
+        attendanceValue = new JLabel("0 / 0");
 
-        add(createStatPanel(studentsLabel));
-        add(createStatPanel(subjectsLabel));
-        add(createStatPanel(enrolledLabel));
-        add(createStatPanel(passedLabel));
-        add(createStatPanel(failedLabel));
-        add(createStatPanel(attendanceLabel));
+        add(createStatCard("/icons/students.png", studentsValue, "Total Students"));
+        add(createStatCard("/icons/subjects.png", subjectsValue, "Total Subjects"));
+        add(createStatCard("/icons/attendance.png", attendanceValue, "Today's Attendance"));
+
+        attendanceValue.setFont(StyleConstants.BODY_FONT);
     }
 
     public void refresh() {
-        updateLabel(studentsLabel, "Total Students", dashboardDao.countStudents());
-        updateLabel(subjectsLabel, "Total Subjects", dashboardDao.countSubjects());
-        updateLabel(enrolledLabel, "Enrolled", dashboardDao.countEnrolled());
-        updatePassedLabel(dashboardDao.countPassed());
-        updateFailedLabel(dashboardDao.countFailed());
+        updateCount(studentsValue, dashboardDao.countStudents());
+        updateCount(subjectsValue, dashboardDao.countSubjects());
         updateAttendanceLabel();
     }
 
-    private JPanel createStatPanel(JLabel label) {
-        JPanel panel = new JPanel(new GridLayout(1, 1));
-        panel.setBackground(StyleConstants.WHITE);
+    private JPanel createStatCard(String iconPath, JLabel valueLabel, String title) {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(StyleConstants.WHITE);
 
         Border outline = BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1);
         Border padding = BorderFactory.createEmptyBorder(10, 10, 10, 10);
-        panel.setBorder(BorderFactory.createCompoundBorder(outline, padding));
+        card.setBorder(BorderFactory.createCompoundBorder(outline, padding));
 
-        panel.add(label);
-        return panel;
+        JLabel iconLabel = createIconLabel(iconPath);
+        styleValueLabel(valueLabel);
+        JLabel titleLabel = createTitleLabel(title);
+
+        card.add(Box.createVerticalGlue());
+        card.add(iconLabel);
+        card.add(Box.createVerticalStrut(6));
+        card.add(valueLabel);
+        card.add(Box.createVerticalStrut(2));
+        card.add(titleLabel);
+        card.add(Box.createVerticalGlue());
+
+        return card;
     }
 
-    private void updateLabel(JLabel label, String title, int count) {
-        String display = (count < 0) ? "Error" : String.valueOf(count);
-        label.setText(title + ": " + display);
+    private JLabel createIconLabel(String iconPath) {
+        ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
+        JLabel label = new JLabel(icon);
+        label.setAlignmentX(CENTER_ALIGNMENT);
+        return label;
     }
 
-    private void updatePassedLabel(int count) {
-        updateLabel(passedLabel, "Passed", count);
-        if (count > 0) {
-            passedLabel.setForeground(StyleConstants.SUCCESS);
-        }
+    private void styleValueLabel(JLabel label) {
+        label.setFont(StyleConstants.TITLE_FONT);
+        label.setForeground(StyleConstants.TEXT_PRIMARY);
+        label.setAlignmentX(CENTER_ALIGNMENT);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
     }
 
-    private void updateFailedLabel(int count) {
-        updateLabel(failedLabel, "Failed", count);
-        if (count > 0) {
-            failedLabel.setForeground(StyleConstants.DANGER);
-        }
+    private JLabel createTitleLabel(String title) {
+        JLabel label = new JLabel(title);
+        label.setFont(StyleConstants.SMALL_BOLD_FONT);
+        label.setForeground(StyleConstants.TEXT_SECONDARY);
+        label.setAlignmentX(CENTER_ALIGNMENT);
+        return label;
+    }
+
+    private void updateCount(JLabel label, int count) {
+        label.setText((count < 0) ? "Error" : String.valueOf(count));
     }
 
     private void updateAttendanceLabel() {
@@ -101,25 +113,18 @@ public class DashboardStatsPanel extends JPanel {
         int total = dashboardDao.countTodayTotal();
 
         if (sectionsMarked < 0 || totalSections < 0 || present < 0 || total < 0) {
-            attendanceLabel.setText("Today's Attendance: Error");
+            attendanceValue.setText("Error");
             return;
         }
 
-        String display = String.format("Today: %d/%d sections (%d/%d present)",
+        String display = String.format("<html><center>%d/%d sections<br>(%d/%d present)</center></html>",
             sectionsMarked, totalSections, present, total);
-        attendanceLabel.setText(display);
+        attendanceValue.setText(display);
 
         if (sectionsMarked >= totalSections && totalSections > 0) {
-            attendanceLabel.setForeground(StyleConstants.SUCCESS);
+            attendanceValue.setForeground(StyleConstants.SUCCESS);
         } else if (sectionsMarked > 0) {
-            attendanceLabel.setForeground(StyleConstants.PRIMARY);
+            attendanceValue.setForeground(StyleConstants.PRIMARY);
         }
-    }
-
-    private JLabel createStatLabel(String title, String value) {
-        JLabel label = new JLabel(title + ": " + value, SwingConstants.CENTER);
-        label.setFont(StyleConstants.BODY_FONT);
-        label.setForeground(StyleConstants.TEXT_PRIMARY);
-        return label;
     }
 }
