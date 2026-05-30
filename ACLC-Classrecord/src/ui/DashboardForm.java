@@ -1,7 +1,8 @@
 package ui;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -52,29 +53,29 @@ public class DashboardForm extends JFrame {
     }
 
     private JPanel createNavigationPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 5,
-            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
-        JButton studentsButton = new JButton("Students");
-        JButton subjectsButton = new JButton("Subjects");
-        JButton enrollmentButton = new JButton("Enrollment");
-        JButton gradesButton = new JButton("Grades");
-        JButton attendanceButton = new JButton("Attendance");
-
-        studentsButton.addActionListener(e -> openStudentForm());
-        subjectsButton.addActionListener(e -> openSubjectForm());
-        enrollmentButton.addActionListener(e -> openEnrollmentForm());
-        gradesButton.addActionListener(e -> openGradeForm());
-        attendanceButton.addActionListener(e -> openAttendanceForm());
-
-        panel.add(studentsButton);
-        panel.add(subjectsButton);
-        panel.add(enrollmentButton);
-        panel.add(gradesButton);
-        panel.add(attendanceButton);
+        panel.add(createNavButton("Students", "Manage records", e -> openStudentForm()));
+        panel.add(createNavButton("Subjects", "Manage courses", e -> openSubjectForm()));
+        panel.add(createNavButton("Enrollment", "Enroll students", e -> openEnrollmentForm()));
+        panel.add(createNavButton("Grades", "View grades", e -> openGradeForm()));
+        panel.add(createNavButton("Attendance", "Mark attendance", e -> openAttendanceForm()));
 
         return panel;
+    }
+
+    private JButton createNavButton(String title, String description,
+                                     java.awt.event.ActionListener action) {
+        String html = "<html><center><b>" + title + "</b><br>"
+            + "<span style='font-size:9px;color:#6c757d;'>" + description + "</span>"
+            + "</center></html>";
+
+        JButton button = new JButton(html);
+        button.setPreferredSize(new Dimension(135, 50));
+        button.addActionListener(action);
+
+        return button;
     }
 
     private void openSubjectForm() {
