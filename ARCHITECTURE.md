@@ -156,8 +156,7 @@ In this project, the service layer is thin (mainly `GradeComputer`), because the
 2. Each tab shows a JTable with columns: ID, Student, Subject, Assessment Name, Score, Date.
 3. Below each table, a label shows the season average computed by `GradeComputer.computeAverage()`.
 4. The average label is color-coded: green (PASSED) if >= 75, red (FAILED) if < 75.
-5. Selecting a row in any tab populates the `AssessmentInputPanel` (student, subject, season, assessment name, score).
-6. The season dropdown in the input panel auto-selects to match the active tab's season when loading from a row selection.
+5. Selecting a row in any season tab and clicking "Edit Score" opens `EditAssessmentDialog` — a small modal with pre-filled Score, Total Items, and Date fields. The user edits and saves, which updates via `AssessmentDao.update()` and refreshes all tabs.
 
 **Section and status filtering:** `GradeFilterPanel` sits between the input panel and the season tabs. It provides three controls: a section dropdown ("All Sections" + dynamic list from `StudentDao.getAllSections()`), a status dropdown ("All Results" / "Passed Only" / "Failed Only"), and a search field. When a section is selected, `filterBySection()` builds a student-to-section map and removes assessments whose students don't belong to that section. When a status is selected, `filterByStatus()` groups assessments by student-subject, computes each group's average, and keeps only groups matching the pass/fail filter. On the Final Grade tab, `matchesStatusFilter()` checks the weighted final grade instead. All filters compose — selecting "Section A" + "Failed Only" shows only failing students in Section A across all tabs.
 

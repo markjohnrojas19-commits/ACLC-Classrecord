@@ -2,11 +2,9 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.print.PrinterException;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,11 +12,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -43,7 +44,8 @@ import util.StyleConstants;
 public class StudentGradeSummaryForm extends JFrame {
 
     private JComboBox<String> sectionBox;
-    private JComboBox<Student> studentBox;
+    private JList<Student> studentList;
+    private DefaultListModel<Student> studentListModel;
     private JTable summaryTable;
     private AssessmentDao assessmentDao;
     private GradeComputer gradeComputer;
@@ -53,7 +55,7 @@ public class StudentGradeSummaryForm extends JFrame {
         gradeComputer = new GradeComputer();
 
         setTitle("ACLC Class Record \u2014 Student Grade Summary");
-        setSize(1050, 600);
+        setSize(1200, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -61,7 +63,7 @@ public class StudentGradeSummaryForm extends JFrame {
         add(createCenterPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
 
-        populateStudentDropdown();
+        populateSectionDropdown();
     }
 
     public StudentGradeSummaryForm(User currentUser, Student preselected) {
@@ -90,14 +92,25 @@ public class StudentGradeSummaryForm extends JFrame {
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        panel.add(createStudentSelector(), BorderLayout.NORTH);
+        panel.add(createStudentSidebar(), BorderLayout.WEST);
         panel.add(createTablePanel(), BorderLayout.CENTER);
 
         return panel;
     }
 
-    private JPanel createStudentSelector() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT,
+    private JPanel createStudentSidebar() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setPreferredSize(new Dimension(220, 0));
+        panel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, StyleConstants.BORDER_COLOR));
+
+        panel.add(createSectionFilter(), BorderLayout.NORTH);
+        panel.add(createStudentList(), BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createSectionFilter() {
+        JPanel panel = new JPanel(new BorderLayout(
             StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
         panel.setBorder(StyleConstants.INPUT_BORDER);
         panel.setBackground(StyleConstants.WHITE);
@@ -109,19 +122,52 @@ public class StudentGradeSummaryForm extends JFrame {
         sectionBox.setFont(StyleConstants.BODY_FONT);
         sectionBox.addActionListener(e -> filterStudentsBySection());
 
-        JLabel studentLabel = new JLabel("Student:");
-        studentLabel.setFont(StyleConstants.BODY_FONT);
-
-        studentBox = new JComboBox<>();
-        studentBox.setFont(StyleConstants.BODY_FONT);
-        studentBox.addActionListener(e -> refreshSummary());
-
-        panel.add(sectionLabel);
-        panel.add(sectionBox);
-        panel.add(studentLabel);
-        panel.add(studentBox);
+        panel.add(sectionLabel, BorderLayout.NORTH);
+        panel.add(sectionBox, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JScrollPane createStudentList() {
+        studentListModel = new DefaultListModel<>();
+        studentList = new JList<>(studentListModel);
+        studentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        studentList.setFont(StyleConstants.BODY_FONT);
+        studentList.setFixedCellHeight(30);
+        studentList.setCellRenderer(createStudentListRenderer());
+        studentList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                refreshSummary();
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(studentList);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+        return scrollPane;
+    }
+
+    private DefaultListCellRenderer createStudentListRenderer() {
+        return new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                Component cell = super.getListCellRendererComponent(
+                    list, value, index, isSelected, cellHasFocus);
+
+                if (isSelected) {
+                    cell.setBackground(StyleConstants.PRIMARY);
+                    cell.setForeground(StyleConstants.WHITE);
+                } else {
+                    cell.setBackground(index % 2 == 0
+                        ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+                    cell.setForeground(StyleConstants.TEXT_PRIMARY);
+                }
+
+                setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+                return cell;
+            }
+        };
     }
 
     private JScrollPane createTablePanel() {
@@ -161,18 +207,14 @@ public class StudentGradeSummaryForm extends JFrame {
         panel.setBorder(StyleConstants.BUTTON_BORDER);
 
         JButton printButton = new JButton("Print");
-        JButton exportButton = new JButton("Export CSV");
-
         printButton.addActionListener(e -> handlePrint());
-        exportButton.addActionListener(e -> handleExportCsv());
 
         panel.add(printButton);
-        panel.add(exportButton);
 
         return panel;
     }
 
-    private void populateStudentDropdown() {
+    private void populateSectionDropdown() {
         List<String> sections = new StudentDao().getAllSections();
         sectionBox.addItem("All Sections");
         for (String section : sections) {
@@ -182,31 +224,36 @@ public class StudentGradeSummaryForm extends JFrame {
     }
 
     private void filterStudentsBySection() {
-        studentBox.removeAllItems();
+        studentListModel.clear();
         String selected = (String) sectionBox.getSelectedItem();
         List<Student> students = new StudentDao().getAll();
 
         for (Student student : students) {
             if ("All Sections".equals(selected) || student.getCourseSection().equals(selected)) {
-                studentBox.addItem(student);
+                studentListModel.addElement(student);
             }
+        }
+
+        if (!studentListModel.isEmpty()) {
+            studentList.setSelectedIndex(0);
         }
     }
 
     private void selectStudent(Student preselected) {
         sectionBox.setSelectedItem(preselected.getCourseSection());
 
-        for (int i = 0; i < studentBox.getItemCount(); i++) {
-            Student item = studentBox.getItemAt(i);
+        for (int i = 0; i < studentListModel.size(); i++) {
+            Student item = studentListModel.getElementAt(i);
             if (item.getStudentId().equals(preselected.getStudentId())) {
-                studentBox.setSelectedIndex(i);
+                studentList.setSelectedIndex(i);
+                studentList.ensureIndexIsVisible(i);
                 return;
             }
         }
     }
 
     private void refreshSummary() {
-        Student selected = (Student) studentBox.getSelectedItem();
+        Student selected = studentList.getSelectedValue();
         if (selected == null) {
             clearTable();
             return;
@@ -296,7 +343,7 @@ public class StudentGradeSummaryForm extends JFrame {
             return;
         }
 
-        Student selected = (Student) studentBox.getSelectedItem();
+        Student selected = studentList.getSelectedValue();
         String studentName = (selected != null) ? selected.toString() : "Unknown";
 
         try {
@@ -306,93 +353,6 @@ public class StudentGradeSummaryForm extends JFrame {
         } catch (PrinterException ex) {
             showError("Printing failed: " + ex.getMessage());
         }
-    }
-
-    private void handleExportCsv() {
-        if (summaryTable.getRowCount() == 0) {
-            showError("No data to export.");
-            return;
-        }
-
-        File file = chooseExportFile();
-        if (file == null) {
-            return;
-        }
-
-        writeTableToCsv(file);
-    }
-
-    private File chooseExportFile() {
-        Student selected = (Student) studentBox.getSelectedItem();
-        String studentId = (selected != null) ? selected.getStudentId() : "unknown";
-        String defaultName = "grade_summary_" + studentId + ".csv";
-
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Export Grade Summary to CSV");
-        chooser.setSelectedFile(new File(defaultName));
-
-        int result = chooser.showSaveDialog(this);
-        if (result != JFileChooser.APPROVE_OPTION) {
-            return null;
-        }
-
-        File file = chooser.getSelectedFile();
-        if (!file.getName().endsWith(".csv")) {
-            file = new File(file.getAbsolutePath() + ".csv");
-        }
-        return file;
-    }
-
-    private void writeTableToCsv(File file) {
-        try (FileWriter writer = new FileWriter(file)) {
-            DefaultTableModel model = (DefaultTableModel) summaryTable.getModel();
-
-            writeCsvRow(writer, getColumnHeaders(model));
-
-            for (int row = 0; row < model.getRowCount(); row++) {
-                writeCsvRow(writer, getRowValues(model, row));
-            }
-
-            JOptionPane.showMessageDialog(this,
-                "Exported " + model.getRowCount() + " rows to:\n" + file.getAbsolutePath(),
-                "Export Successful", JOptionPane.INFORMATION_MESSAGE);
-        } catch (IOException ex) {
-            showError("Export failed: " + ex.getMessage());
-        }
-    }
-
-    private String[] getColumnHeaders(DefaultTableModel model) {
-        String[] headers = new String[model.getColumnCount()];
-        for (int col = 0; col < model.getColumnCount(); col++) {
-            headers[col] = model.getColumnName(col);
-        }
-        return headers;
-    }
-
-    private String[] getRowValues(DefaultTableModel model, int row) {
-        String[] values = new String[model.getColumnCount()];
-        for (int col = 0; col < model.getColumnCount(); col++) {
-            Object value = model.getValueAt(row, col);
-            values[col] = (value == null) ? "" : value.toString();
-        }
-        return values;
-    }
-
-    private void writeCsvRow(FileWriter writer, String[] values) throws IOException {
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0) {
-                writer.write(",");
-            }
-            writer.write(escapeCsv(values[i]));
-        }
-        writer.write("\n");
-    }
-
-    private String escapeCsv(String value) {
-        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        }
-        return value;
     }
 
     private void handleBack(User currentUser) {

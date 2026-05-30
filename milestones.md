@@ -124,12 +124,12 @@ ACLC-Classrecord/
       AttendanceFilterPanel.java — subject + section + date filters (extracted atom)
       EnrollmentForm.java    — enrollment management (checkbox table by section)
       EnrollmentFilterPanel.java — subject + section dropdown filters (extracted atom)
-      GradeForm.java        — assessment management (CRUD + JTabbedPane by season)
-      GradeFilterPanel.java    — section filter + search field (extracted atom)
-      AssessmentInputPanel.java — assessment input fields + dropdowns (extracted atom)
+      GradeForm.java        — grade view (JTabbedPane by season + Final Grade, edit score button)
+      GradeFilterPanel.java    — course/section filter + status filter + search field (extracted atom)
+      EditAssessmentDialog.java — modal dialog for editing score, total items, and date
       BatchScoreEntryForm.java  — batch score entry (subject + section + assessment → editable score table)
-      BatchScoreFilterPanel.java — subject + section + season + assessment name filters
-      StudentGradeSummaryForm.java — per-student report card (all subjects x all seasons)
+      BatchScoreFilterPanel.java — subject + course/section + season + assessment name filters
+      StudentGradeSummaryForm.java — per-student report card with section filter + student list sidebar
     util/                 — Shared utilities
       GradeConstants.java   — passing grade threshold + score bounds + default total items
       StyleConstants.java   — shared UI styling (fonts, borders, gaps, colors)
