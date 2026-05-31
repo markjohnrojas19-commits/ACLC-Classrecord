@@ -28,6 +28,7 @@ public final class StyleConstants {
     public static final Color TABLE_HEADER_FG = new Color(255, 255, 255);
     public static final Color TABLE_ROW_ALT = new Color(248, 249, 250);
     public static final Color SEASON_AVERAGE_BG = new Color(232, 240, 254);
+    public static final Color WARNING = new Color(255, 243, 205);
 
     public static final Border HEADER_BORDER = BorderFactory.createEmptyBorder(10, 20, 10, 20);
     public static final Border INPUT_BORDER = BorderFactory.createEmptyBorder(10, 20, 10, 20);

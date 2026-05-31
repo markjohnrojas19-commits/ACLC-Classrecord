@@ -6,7 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import model.SubjectStats;
 import util.ActiveSemester;
 import util.GradeConstants;
 
@@ -112,6 +115,60 @@ public class DashboardDao {
 
     public int countFailed() {
         return executePassFailCount(false);
+    }
+
+    public List<SubjectStats> getPerSubjectStats() {
+        String sql = "SELECT s.subject_code, s.subject_name, "
+                   + "COUNT(DISTINCT e.student_id) AS enrolled, "
+                   + "COUNT(DISTINCT CASE WHEN g.weighted_grade >= ? THEN g.student_id END) AS passed, "
+                   + "COUNT(DISTINCT CASE WHEN g.weighted_grade < ? THEN g.student_id END) AS failed "
+                   + "FROM subjects s "
+                   + "LEFT JOIN enrollments e ON s.subject_id = e.subject_id AND e.semester_id = ? "
+                   + "LEFT JOIN ("
+                   + "  SELECT student_id, subject_id, "
+                   + "  COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * ? + "
+                   + "  COALESCE(AVG(CASE WHEN season = 'Midterm' THEN score END), 0) * ? + "
+                   + "  COALESCE(AVG(CASE WHEN season = 'Pre-Final' THEN score END), 0) * ? + "
+                   + "  COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * ? "
+                   + "  AS weighted_grade "
+                   + "  FROM assessments WHERE semester_id = ? "
+                   + "  GROUP BY student_id, subject_id"
+                   + ") g ON s.subject_id = g.subject_id "
+                   + "GROUP BY s.subject_id, s.subject_code, s.subject_name "
+                   + "HAVING enrolled > 0 "
+                   + "ORDER BY s.subject_code";
+
+        List<SubjectStats> results = new ArrayList<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setDouble(1, GradeConstants.PASSING_GRADE);
+            statement.setDouble(2, GradeConstants.PASSING_GRADE);
+            statement.setInt(3, ActiveSemester.getId());
+            statement.setDouble(4, GradeConstants.PRELIM_WEIGHT);
+            statement.setDouble(5, GradeConstants.MIDTERM_WEIGHT);
+            statement.setDouble(6, GradeConstants.PRE_FINAL_WEIGHT);
+            statement.setDouble(7, GradeConstants.FINAL_WEIGHT);
+            statement.setInt(8, ActiveSemester.getId());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    results.add(new SubjectStats(
+                        resultSet.getString("subject_code"),
+                        resultSet.getString("subject_name"),
+                        resultSet.getInt("enrolled"),
+                        resultSet.getInt("passed"),
+                        resultSet.getInt("failed")
+                    ));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Dashboard per-subject stats error: " + e.getMessage());
+        }
+
+        return results;
     }
 
     private int executePassFailCount(boolean passed) {

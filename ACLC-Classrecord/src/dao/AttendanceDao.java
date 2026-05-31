@@ -233,6 +233,55 @@ public class AttendanceDao {
         return -1;
     }
 
+    public int countByStudentAndSubject(String studentId, int subjectId, AttendanceStatus status) {
+        String sql = "SELECT COUNT(*) FROM attendance "
+                   + "WHERE student_id = ? AND subject_id = ? AND status = ? AND semester_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, studentId);
+            statement.setInt(2, subjectId);
+            statement.setString(3, status.toDbValue());
+            statement.setInt(4, ActiveSemester.getId());
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Count attendance by student and subject error: " + e.getMessage());
+        }
+
+        return 0;
+    }
+
+    public int countTotalByStudentAndSubject(String studentId, int subjectId) {
+        String sql = "SELECT COUNT(*) FROM attendance "
+                   + "WHERE student_id = ? AND subject_id = ? AND semester_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, studentId);
+            statement.setInt(2, subjectId);
+            statement.setInt(3, ActiveSemester.getId());
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Count total attendance by student and subject error: " + e.getMessage());
+        }
+
+        return 0;
+    }
+
     private boolean exists(String studentId, int subjectId, LocalDate date) {
         String sql = "SELECT COUNT(*) FROM attendance "
                    + "WHERE student_id = ? AND subject_id = ? AND date = ? AND semester_id = ?";

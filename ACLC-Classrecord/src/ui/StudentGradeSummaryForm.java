@@ -31,9 +31,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 import dao.AssessmentDao;
+import dao.AttendanceDao;
 import dao.StudentDao;
 import dao.SubjectDao;
 import model.Assessment;
+import model.AttendanceStatus;
 import model.GradingSeason;
 import model.ScoreResult;
 import model.Student;
@@ -49,10 +51,12 @@ public class StudentGradeSummaryForm extends JFrame {
     private DefaultListModel<Student> studentListModel;
     private JTable summaryTable;
     private AssessmentDao assessmentDao;
+    private AttendanceDao attendanceDao;
     private GradeComputer gradeComputer;
 
     public StudentGradeSummaryForm(User currentUser) {
         assessmentDao = new AssessmentDao();
+        attendanceDao = new AttendanceDao();
         gradeComputer = new GradeComputer();
 
         setTitle("ACLC Class Record \u2014 Student Grade Summary");
@@ -201,7 +205,8 @@ public class StudentGradeSummaryForm extends JFrame {
 
     private JTable createSummaryTable() {
         String[] columns = {"Subject Code", "Subject Name", "Prelim", "Midterm",
-                            "Pre-Final", "Final", "Final Grade", "Remarks"};
+                            "Pre-Final", "Final", "Final Grade", "Remarks",
+                            "Present", "Absent", "Att%"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -303,6 +308,11 @@ public class StudentGradeSummaryForm extends JFrame {
         DefaultTableModel model = (DefaultTableModel) summaryTable.getModel();
         model.setRowCount(0);
 
+        Student selected = studentList.getSelectedValue();
+        if (selected == null) {
+            return;
+        }
+
         Map<Integer, String[]> subjectInfo = buildSubjectInfoMap();
         Map<Integer, Map<GradingSeason, List<Assessment>>> grouped =
             groupBySubject(assessments);
@@ -315,6 +325,7 @@ public class StudentGradeSummaryForm extends JFrame {
                 new String[]{String.valueOf(subjectId), "Unknown"});
 
             ScoreResult weightedResult = gradeComputer.computeFinalGrade(seasonMap);
+            String[] attendance = computeAttendance(selected.getStudentId(), subjectId);
 
             model.addRow(new Object[]{
                 info[0],
@@ -324,9 +335,32 @@ public class StudentGradeSummaryForm extends JFrame {
                 formatSeasonAverage(seasonMap, GradingSeason.PRE_FINAL),
                 formatSeasonAverage(seasonMap, GradingSeason.FINAL),
                 String.format("%.2f", weightedResult.getFinalGrade()),
-                weightedResult.getRemarks()
+                weightedResult.getRemarks(),
+                attendance[0],
+                attendance[1],
+                attendance[2]
             });
         }
+    }
+
+    private String[] computeAttendance(String studentId, int subjectId) {
+        int present = attendanceDao.countByStudentAndSubject(
+            studentId, subjectId, AttendanceStatus.PRESENT);
+        int late = attendanceDao.countByStudentAndSubject(
+            studentId, subjectId, AttendanceStatus.LATE);
+        int absent = attendanceDao.countByStudentAndSubject(
+            studentId, subjectId, AttendanceStatus.ABSENT);
+        int total = attendanceDao.countTotalByStudentAndSubject(studentId, subjectId);
+
+        int presentCount = present + late;
+        String percentage = (total > 0)
+            ? String.format("%.0f%%", (presentCount * 100.0) / total) : "-";
+
+        return new String[]{
+            String.valueOf(presentCount),
+            String.valueOf(absent),
+            percentage
+        };
     }
 
     private String formatSeasonAverage(Map<GradingSeason, List<Assessment>> seasonMap,
@@ -418,23 +452,41 @@ public class StudentGradeSummaryForm extends JFrame {
                 if (!isSelected) {
                     cell.setBackground(row % 2 == 0
                         ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+                    cell.setForeground(StyleConstants.TEXT_PRIMARY);
 
-                    int remarksCol = 7;
-                    int finalGradeCol = 6;
-                    String remarks = (String) t.getModel().getValueAt(row, remarksCol);
-
-                    if (column == remarksCol || column == finalGradeCol) {
-                        if ("PASSED".equals(remarks)) {
-                            cell.setForeground(StyleConstants.SUCCESS);
-                        } else {
-                            cell.setForeground(StyleConstants.DANGER);
-                        }
-                    } else {
-                        cell.setForeground(StyleConstants.TEXT_PRIMARY);
-                    }
+                    colorGradeColumns(t, cell, row, column);
+                    colorAttendanceColumn(t, cell, row, column);
                 }
                 return cell;
             }
         };
+    }
+
+    private void colorGradeColumns(JTable t, Component cell, int row, int column) {
+        String remarks = (String) t.getModel().getValueAt(row, 7);
+
+        if (column == 6 || column == 7) {
+            cell.setForeground("PASSED".equals(remarks)
+                ? StyleConstants.SUCCESS : StyleConstants.DANGER);
+        }
+    }
+
+    private void colorAttendanceColumn(JTable t, Component cell, int row, int column) {
+        if (column != 10) {
+            return;
+        }
+
+        String attPercent = String.valueOf(t.getModel().getValueAt(row, 10));
+        if ("-".equals(attPercent)) {
+            return;
+        }
+
+        try {
+            int percent = Integer.parseInt(attPercent.replace("%", ""));
+            cell.setForeground(percent >= 80
+                ? StyleConstants.SUCCESS : StyleConstants.DANGER);
+        } catch (NumberFormatException e) {
+            // leave default color
+        }
     }
 }

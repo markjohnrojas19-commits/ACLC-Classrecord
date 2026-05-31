@@ -32,7 +32,7 @@ public class DashboardForm extends JFrame {
         this.semesterDao = new SemesterDao();
 
         setTitle("ACLC Class Record \u2014 Dashboard");
-        setSize(850, 600);
+        setSize(850, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 

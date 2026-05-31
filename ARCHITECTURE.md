@@ -206,10 +206,10 @@ Batch Score Entry is the fastest way to enter grades for a whole class at once �
 2. `BatchScoreFilterPanel` shows six controls: Subject, Section (populated from enrolled sections), Season, Assessment Name, Total Items (default 100), and Date (default today). A "Load Students" button triggers the table refresh.
 3. User selects subject, section, season, types an assessment name (e.g., "Quiz 1"), and clicks "Load Students."
 4. `BatchScoreEntryForm` loads all enrolled students for that subject+section via `EnrollmentDao.getStudentsBySubjectAndSection()`. If scores already exist for this assessment (same student + subject + season + name), they are pre-populated via `AssessmentDao.getBySeason()`.
-5. The table shows Student ID, Name, and an editable Score column. The instructor types scores for each student. Score validation uses the Total Items value (e.g., 0-10 for a quiz out of 10).
+5. The table shows Student ID, Name, and an editable Score column. The instructor types scores for each student. Score validation uses the Total Items value (e.g., 0-10 for a quiz out of 10). **Rows with missing scores are highlighted yellow** (`StyleConstants.WARNING`). A count label below the table shows "X/Y entered | Z missing" — red when scores are missing, green when all entered.
 6. "Save All" iterates every row. Empty scores are skipped. Each non-empty score is saved via `AssessmentDao.saveOrUpdate()` — which checks if the assessment already exists (by student + subject + season + name) and updates it, otherwise inserts a new record. The Total Items and Date values from the filter panel are saved with each assessment.
 7. "Delete Selected" removes a single student's score for the current assessment via `AssessmentDao.delete()`.
-7. A summary dialog shows how many were saved and how many were skipped.
+8. A summary dialog shows how many were saved and how many were skipped.
 
 **Why this exists:** Entering 40 individual assessments through GradeForm takes 20-30 minutes. Batch entry reduces it to 2-3 minutes — pick the assessment once, fill in scores, save.
 
@@ -232,15 +232,17 @@ Batch Score Entry is the fastest way to enter grades for a whole class at once �
 
 ## How does the dashboard show enrollment and attendance?
 
-The dashboard stats panel (`DashboardStatsPanel`) shows 3 stat cards in a 1x3 grid, each with a Material Design PNG icon (48x48), a bold value, and a gray label:
+The dashboard stats panel (`DashboardStatsPanel`) uses a `BorderLayout` with stat cards at the top and a per-subject stats table below.
 
-1. **Total Students** (👥 people icon) — `DashboardDao.countStudents()`
-2. **Total Subjects** (📚 book icon) — `DashboardDao.countSubjects()`
-3. **Today's Attendance** (📋 clipboard icon) — displayed as "3/5 sections (20/20 present)". Shows how many subject-section combos have attendance marked today vs. how many exist, plus overall present count. Value turns green when all sections are done, blue when partially done.
+**Stat cards** (3 cards in a 1x3 grid, each with a Material Design PNG icon):
 
-Icons are loaded from `src/icons/` as `ImageIcon` resources. Each card uses `BoxLayout` (vertical) with `VerticalGlue` for centering. The attendance card uses a smaller font (`BODY_FONT`) since its text is longer than the numeric values.
+1. **Total Students** — `DashboardDao.countStudents()`
+2. **Total Subjects** — `DashboardDao.countSubjects()`
+3. **Today's Attendance** — displayed as "3/5 sections (20/20 present)". Value turns green when all sections are done, blue when partially done.
 
-All counts refresh when the dashboard opens via `statsPanel.refresh()`.
+**Per-Subject Statistics table** shows a row per subject with columns: Subject, Name, Enrolled, Passed, Failed. Data comes from `DashboardDao.getPerSubjectStats()` — a single SQL query that LEFT JOINs subjects with enrollments and a weighted-grade subquery. Only subjects with enrolled students appear. Passed count is green, failed count is red when > 0.
+
+All counts and the per-subject table refresh when the dashboard opens via `statsPanel.refresh()`.
 
 ---
 

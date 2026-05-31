@@ -71,8 +71,8 @@
 | R1 | Semester / School Year Selector | P1 | **DONE** — semesters table, ActiveSemester, all DAOs scoped |
 | R2 | Filter student dropdown by subject | P1 | **DONE** — already solved by BatchScoreEntryForm refactor |
 | R3 | Attendance export / print | P1 | **DONE** — Print + Export CSV buttons on AttendanceForm |
-| R4 | Missing scores indicator | P2 | Low — UI highlight + count label |
-| R5 | Attendance in grade summary | P2 | Medium — new DAO queries + summary table columns |
-| R6 | Per-subject dashboard stats | P2 | Medium — new DAO query + table component |
+| R4 | Missing scores indicator | P2 | **DONE** — yellow row highlight + "X/Y entered" count label |
+| R5 | Attendance in grade summary | P2 | **DONE** — Present, Absent, Att% columns + AttendanceDao queries |
+| R6 | Per-subject dashboard stats | P2 | **DONE** — per-subject table with Enrolled/Passed/Failed |
 | R7 | Class list print from enrollment | P3 | Low — reuse existing print/export pattern |
 | R8 | Password change | P3 | Low — new form + UserDao.updatePassword |

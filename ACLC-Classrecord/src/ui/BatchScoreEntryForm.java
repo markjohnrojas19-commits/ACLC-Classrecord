@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -41,6 +42,7 @@ public class BatchScoreEntryForm extends JFrame {
     private BatchScoreFilterPanel filterPanel;
     private JTable table;
     private DefaultTableModel tableModel;
+    private JLabel scoreCountLabel;
     private List<Student> currentStudents;
     private EnrollmentDao enrollmentDao;
     private AssessmentDao assessmentDao;
@@ -86,11 +88,20 @@ public class BatchScoreEntryForm extends JFrame {
 
         filterPanel = new BatchScoreFilterPanel();
         createTable();
+        scoreCountLabel = createScoreCountLabel();
 
         panel.add(filterPanel, BorderLayout.NORTH);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(scoreCountLabel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private JLabel createScoreCountLabel() {
+        JLabel label = new JLabel(" ");
+        label.setFont(StyleConstants.SMALL_BOLD_FONT);
+        label.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
+        return label;
     }
 
     private void createTable() {
@@ -160,6 +171,7 @@ public class BatchScoreEntryForm extends JFrame {
         if (subject == null || section == null || assessmentName.isEmpty()) {
             tableModel.setRowCount(0);
             currentStudents.clear();
+            updateScoreCount();
             return;
         }
 
@@ -180,6 +192,35 @@ public class BatchScoreEntryForm extends JFrame {
                 scoreText
             });
         }
+
+        updateScoreCount();
+    }
+
+    private void updateScoreCount() {
+        int total = tableModel.getRowCount();
+        if (total == 0) {
+            scoreCountLabel.setText(" ");
+            return;
+        }
+
+        int entered = countEnteredScores();
+        int missing = total - entered;
+
+        scoreCountLabel.setText(entered + " / " + total + " entered"
+            + (missing > 0 ? "  |  " + missing + " missing" : ""));
+        scoreCountLabel.setForeground(missing > 0
+            ? StyleConstants.DANGER : StyleConstants.SUCCESS);
+    }
+
+    private int countEnteredScores() {
+        int count = 0;
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String score = String.valueOf(tableModel.getValueAt(row, 2)).trim();
+            if (!score.isEmpty()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Map<String, Double> loadExistingScores(int subjectId,
@@ -349,11 +390,20 @@ public class BatchScoreEntryForm extends JFrame {
                     t, value, isSelected, hasFocus, row, column);
 
                 if (!isSelected) {
-                    cell.setBackground(row % 2 == 0
-                        ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+                    if (isMissingScore(t, row)) {
+                        cell.setBackground(StyleConstants.WARNING);
+                    } else {
+                        cell.setBackground(row % 2 == 0
+                            ? StyleConstants.WHITE : StyleConstants.TABLE_ROW_ALT);
+                    }
                 }
                 return cell;
             }
         };
+    }
+
+    private boolean isMissingScore(JTable t, int row) {
+        Object score = t.getModel().getValueAt(row, 2);
+        return score == null || String.valueOf(score).trim().isEmpty();
     }
 }
