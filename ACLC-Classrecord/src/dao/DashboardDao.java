@@ -135,7 +135,6 @@ public class DashboardDao {
                    + "  GROUP BY student_id, subject_id"
                    + ") g ON s.subject_id = g.subject_id "
                    + "GROUP BY s.subject_id, s.subject_code, s.subject_name "
-                   + "HAVING enrolled > 0 "
                    + "ORDER BY s.subject_code";
 
         List<SubjectStats> results = new ArrayList<>();

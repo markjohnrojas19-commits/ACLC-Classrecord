@@ -2,7 +2,6 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.List;
 
@@ -25,38 +24,29 @@ import dao.DashboardDao;
 import model.SubjectStats;
 import util.StyleConstants;
 
-public class DashboardStatsPanel extends JScrollPane {
+public class DashboardStatsPanel extends JPanel {
 
     private DashboardDao dashboardDao;
     private JLabel studentsValue;
     private JLabel subjectsValue;
     private JLabel attendanceValue;
-    private JTable subjectStatsTable;
     private DefaultTableModel subjectStatsModel;
 
     public DashboardStatsPanel() {
         this.dashboardDao = new DashboardDao();
 
+        setLayout(new BorderLayout(0, 15));
+        setBackground(StyleConstants.WHITE);
+        setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
         studentsValue = new JLabel("0");
         subjectsValue = new JLabel("0");
         attendanceValue = new JLabel("0 / 0");
 
-        setViewportView(createContentPanel());
-        setBorder(BorderFactory.createEmptyBorder());
-        getViewport().setBackground(StyleConstants.WHITE);
-    }
+        add(createStatCardsPanel(), BorderLayout.NORTH);
+        add(createSubjectStatsPanel(), BorderLayout.CENTER);
 
-    private JPanel createContentPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(StyleConstants.WHITE);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        panel.add(createStatCardsPanel());
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(createSubjectStatsPanel());
-
-        return panel;
+        attendanceValue.setFont(StyleConstants.BODY_FONT);
     }
 
     private JPanel createStatCardsPanel() {
@@ -78,7 +68,6 @@ public class DashboardStatsPanel extends JScrollPane {
         cards.add(createStatCard("/icons/subjects.png", subjectsValue, "Total Subjects"));
         cards.add(createStatCard("/icons/attendance.png", attendanceValue, "Today's Attendance"));
 
-        attendanceValue.setFont(StyleConstants.BODY_FONT);
         wrapper.add(cards, BorderLayout.CENTER);
 
         return wrapper;
@@ -96,22 +85,22 @@ public class DashboardStatsPanel extends JScrollPane {
             }
         };
 
-        subjectStatsTable = new JTable(subjectStatsModel);
-        subjectStatsTable.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
-        subjectStatsTable.setFont(StyleConstants.BODY_FONT);
-        subjectStatsTable.setGridColor(StyleConstants.BORDER_COLOR);
-        subjectStatsTable.setDefaultRenderer(Object.class, createSubjectStatsRenderer());
-        subjectStatsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-        subjectStatsTable.getColumnModel().getColumn(0).setPreferredWidth(120);
-        subjectStatsTable.getColumnModel().getColumn(0).setMaxWidth(150);
-        subjectStatsTable.getColumnModel().getColumn(1).setPreferredWidth(250);
-        subjectStatsTable.getColumnModel().getColumn(2).setPreferredWidth(80);
-        subjectStatsTable.getColumnModel().getColumn(2).setMaxWidth(100);
-        subjectStatsTable.getColumnModel().getColumn(3).setPreferredWidth(80);
-        subjectStatsTable.getColumnModel().getColumn(3).setMaxWidth(100);
-        subjectStatsTable.getColumnModel().getColumn(4).setPreferredWidth(80);
-        subjectStatsTable.getColumnModel().getColumn(4).setMaxWidth(100);
-        styleTableHeader(subjectStatsTable);
+        JTable table = new JTable(subjectStatsModel);
+        table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
+        table.setFont(StyleConstants.BODY_FONT);
+        table.setGridColor(StyleConstants.BORDER_COLOR);
+        table.setDefaultRenderer(Object.class, createSubjectStatsRenderer());
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+        table.getColumnModel().getColumn(0).setPreferredWidth(120);
+        table.getColumnModel().getColumn(0).setMaxWidth(150);
+        table.getColumnModel().getColumn(1).setPreferredWidth(250);
+        table.getColumnModel().getColumn(2).setPreferredWidth(80);
+        table.getColumnModel().getColumn(2).setMaxWidth(100);
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        table.getColumnModel().getColumn(3).setMaxWidth(100);
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);
+        table.getColumnModel().getColumn(4).setMaxWidth(100);
+        styleTableHeader(table);
 
         TitledBorder border = BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
@@ -121,7 +110,7 @@ public class DashboardStatsPanel extends JScrollPane {
         panel.setBorder(BorderFactory.createCompoundBorder(
             border, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
 
-        JScrollPane tableScroll = new JScrollPane(subjectStatsTable);
+        JScrollPane tableScroll = new JScrollPane(table);
         tableScroll.setBorder(BorderFactory.createEmptyBorder());
         panel.add(tableScroll, BorderLayout.CENTER);
 
@@ -148,22 +137,6 @@ public class DashboardStatsPanel extends JScrollPane {
                 stats.getFailed()
             });
         }
-
-        resizeTableToFitRows();
-    }
-
-    private void resizeTableToFitRows() {
-        int headerHeight = subjectStatsTable.getTableHeader().getPreferredSize().height;
-        int rowsHeight = subjectStatsTable.getRowCount() * subjectStatsTable.getRowHeight();
-        int totalHeight = headerHeight + rowsHeight + 30;
-
-        int maxHeight = 300;
-        int height = Math.min(totalHeight, maxHeight);
-
-        subjectStatsTable.getParent().getParent().setPreferredSize(
-            new Dimension(0, height));
-
-        revalidate();
     }
 
     private JPanel createStatCard(String iconPath, JLabel valueLabel, String title) {
