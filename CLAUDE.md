@@ -39,10 +39,7 @@
 
 ## Decision-Making Priority
 - **Always consider readability.** Every recommendation — data structure, algorithm, pattern, API design — must account for readability and clarity. This is a school project; the instructor will read the code. Prefer explicit naming, simple control flow, and straightforward class design over clever or compact solutions.
-- **When presenting alternatives, the recommended option must be the one that best satisfies both:**
-  1. **Closest to the Universal Principle** — most atomic, least coupling, cleanest separation of data and behavior
-  2. **Best on readability** — clear names, small functions, obvious intent
-- If these two goals conflict, explain the trade-off clearly. But in most cases they align — atomic design *is* the readable choice.
+- **Claude decides.** When multiple approaches exist, Claude picks the one that best satisfies both the Universal Principle (most atomic, least coupling) and readability (clear names, small functions, obvious intent). No need to present alternatives — just implement the best approach directly and explain *why* it was chosen. If the two goals conflict, briefly note the trade-off. But in most cases they align — atomic design *is* the readable choice.
 
 ---
 
@@ -223,14 +220,9 @@ Apply patterns **when the need arises** (never preemptively). Examples relevant 
 - **User Verification:** The user must confirm that each small milestone works before the next is attempted.
 - **No Large Scopes:** If a task feels too big, break it down further.
 - **Explain the Code:** After making code changes or proposing minor steps, always explain *why* those changes are needed — what the new code does, why it is there, and why specific parameters or functions were used.
-- **Present Alternatives:** When proposing a solution, always present multiple options/approaches with their trade-offs. Let the user choose the direction rather than committing to a single approach. Even for small steps, briefly mention alternative ways to accomplish the task.
+- **Claude Decides:** Claude picks the best approach and implements it directly — no need to present multiple options or wait for the user to choose. Explain *why* the chosen approach is best after implementation. Only ask the user when the decision is genuinely ambiguous or has major irreversible consequences.
 
 ### Output Formats
-
-**When proposing the next step (before implementation):**
-- Present options in a table format with columns for key differences (e.g., name, pros, cons, type).
-- Each option gets a short description and trade-off summary below the table.
-- End with a clear **Recommendation** stating which option best satisfies both the Universal Principle and readability, and why.
 
 **When reporting completed work (after implementation):**
 Use this structure:
