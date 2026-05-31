@@ -121,21 +121,18 @@ public class StudentForm extends JFrame {
         JButton deleteButton = new JButton("Delete");
         JButton clearButton = new JButton("Clear");
         JButton addMultipleButton = new JButton("Add Multiple");
-        JButton importCsvButton = new JButton("Import CSV");
 
         addButton.addActionListener(e -> handleAdd());
         editButton.addActionListener(e -> handleEdit());
         deleteButton.addActionListener(e -> handleDelete());
         clearButton.addActionListener(e -> inputPanel.clear());
         addMultipleButton.addActionListener(e -> handleAddMultiple());
-        importCsvButton.addActionListener(e -> handleImportCsv());
 
         panel.add(addButton);
         panel.add(editButton);
         panel.add(deleteButton);
         panel.add(clearButton);
         panel.add(addMultipleButton);
-        panel.add(importCsvButton);
 
         return panel;
     }
@@ -144,9 +141,13 @@ public class StudentForm extends JFrame {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
         JButton viewGradesButton = new JButton("View Grades");
+        JButton importCsvButton = new JButton("Import CSV");
+
         viewGradesButton.addActionListener(e -> handleViewGrades());
+        importCsvButton.addActionListener(e -> handleImportCsv());
 
         panel.add(viewGradesButton);
+        panel.add(importCsvButton);
 
         return panel;
     }
