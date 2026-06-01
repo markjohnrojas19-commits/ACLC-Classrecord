@@ -1,6 +1,8 @@
 package ui;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 
@@ -12,9 +14,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import dao.UserDao;
 import model.User;
+import util.StyleConstants;
 
 public class LoginForm extends JFrame {
 
@@ -24,44 +28,94 @@ public class LoginForm extends JFrame {
 
     public LoginForm() {
         setTitle("ACLC Class Record — Login");
-        setSize(400, 250);
+        setSize(420, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
+        add(createHeaderPanel(), BorderLayout.NORTH);
         add(createFieldsPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
     }
 
+    private JPanel createHeaderPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(StyleConstants.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+
+        JLabel titleLabel = new JLabel("ACLC Class Record", SwingConstants.CENTER);
+        titleLabel.setFont(StyleConstants.TITLE_FONT);
+        titleLabel.setForeground(StyleConstants.PRIMARY);
+
+        JLabel subtitleLabel = new JLabel("Sign in to continue", SwingConstants.CENTER);
+        subtitleLabel.setFont(StyleConstants.BODY_FONT);
+        subtitleLabel.setForeground(StyleConstants.TEXT_SECONDARY);
+
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(subtitleLabel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
     private JPanel createFieldsPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(40, 40, 10, 40));
+        JPanel panel = new JPanel(new GridLayout(2, 2,
+            StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
+        panel.setBackground(StyleConstants.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 40, 10, 40));
 
         usernameField = new JTextField();
         passwordField = new JPasswordField();
+        usernameField.setFont(StyleConstants.BODY_FONT);
+        passwordField.setFont(StyleConstants.BODY_FONT);
 
-        panel.add(new JLabel("Username:"));
+        JLabel usernameLabel = new JLabel("Username:");
+        JLabel passwordLabel = new JLabel("Password:");
+        usernameLabel.setFont(StyleConstants.BODY_FONT);
+        passwordLabel.setFont(StyleConstants.BODY_FONT);
+
+        panel.add(usernameLabel);
         panel.add(usernameField);
-        panel.add(new JLabel("Password:"));
+        panel.add(passwordLabel);
         panel.add(passwordField);
 
         return panel;
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(StyleConstants.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 40, 15, 40));
 
-        loginButton = new JButton("Login");
-        loginButton.addActionListener(e -> handleLogin());
+        loginButton = createStyledLoginButton();
 
         JButton changePasswordButton = new JButton("Change Password");
+        changePasswordButton.setFont(StyleConstants.SMALL_BOLD_FONT);
+        changePasswordButton.setForeground(StyleConstants.PRIMARY);
+        changePasswordButton.setBorderPainted(false);
+        changePasswordButton.setContentAreaFilled(false);
+        changePasswordButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         changePasswordButton.addActionListener(e -> handleChangePassword());
 
-        panel.add(loginButton);
-        panel.add(changePasswordButton);
+        JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 5));
+        linkPanel.setBackground(StyleConstants.WHITE);
+        linkPanel.add(changePasswordButton);
+
+        panel.add(loginButton, BorderLayout.NORTH);
+        panel.add(linkPanel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private JButton createStyledLoginButton() {
+        JButton button = new JButton("Login");
+        button.setFont(StyleConstants.SMALL_BOLD_FONT);
+        button.setBackground(StyleConstants.PRIMARY);
+        button.setForeground(StyleConstants.WHITE);
+        button.setFocusPainted(false);
+        button.setPreferredSize(new Dimension(0, 36));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.addActionListener(e -> handleLogin());
+        return button;
     }
 
     private void handleLogin() {
