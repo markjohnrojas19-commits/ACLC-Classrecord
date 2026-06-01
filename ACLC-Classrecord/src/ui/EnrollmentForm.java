@@ -3,21 +3,30 @@ package ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.print.PrinterException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -147,14 +156,52 @@ public class EnrollmentForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER,
-            StyleConstants.BUTTON_GAP, StyleConstants.BUTTON_GAP));
+        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
         panel.setBorder(StyleConstants.BUTTON_BORDER);
+
+        panel.add(createButtonGroup("Record", createRecordButtons()));
+        panel.add(createButtonGroup("Export", createExportButtons()));
+
+        return panel;
+    }
+
+    private JPanel createRecordButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(e -> handleSave());
         panel.add(saveButton);
 
+        return panel;
+    }
+
+    private JPanel createExportButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+        JButton printButton = new JButton("Print");
+        JButton exportCsvButton = new JButton("Export CSV");
+
+        printButton.addActionListener(e -> handlePrint());
+        exportCsvButton.addActionListener(e -> handleExportCsv());
+
+        panel.add(printButton);
+        panel.add(exportCsvButton);
+
+        return panel;
+    }
+
+    private JPanel createButtonGroup(String title, JPanel buttons) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(StyleConstants.BORDER_COLOR, 1),
+            title, TitledBorder.LEFT, TitledBorder.TOP,
+            StyleConstants.SMALL_BOLD_FONT, StyleConstants.TEXT_SECONDARY);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            titledBorder, BorderFactory.createEmptyBorder(5, 5, 8, 5)));
+
+        panel.add(buttons, BorderLayout.CENTER);
         return panel;
     }
 
@@ -260,6 +307,91 @@ public class EnrollmentForm extends JFrame {
         String message = "Enrolled: " + enrolled + ", Unenrolled: " + unenrolled;
         JOptionPane.showMessageDialog(this, message,
             "Enrollment Updated", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void handlePrint() {
+        if (table.getRowCount() == 0) {
+            showError("No data to print.");
+            return;
+        }
+
+        Subject subject = filterPanel.getSelectedSubject();
+        String section = filterPanel.getSelectedSection();
+        String title = "Class List — " + subject.getSubjectCode() + " — " + section;
+
+        try {
+            MessageFormat header = new MessageFormat(title);
+            MessageFormat footer = new MessageFormat("Page {0}");
+            table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+        } catch (PrinterException ex) {
+            showError("Printing failed: " + ex.getMessage());
+        }
+    }
+
+    private void handleExportCsv() {
+        if (table.getRowCount() == 0) {
+            showError("No data to export.");
+            return;
+        }
+
+        Subject subject = filterPanel.getSelectedSubject();
+        String section = filterPanel.getSelectedSection();
+        String defaultName = "classlist_" + subject.getSubjectCode() + "_"
+            + section.replace(" ", "_") + ".csv";
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export Class List to CSV");
+        chooser.setSelectedFile(new File(defaultName));
+
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = chooser.getSelectedFile();
+        if (!file.getName().endsWith(".csv")) {
+            file = new File(file.getAbsolutePath() + ".csv");
+        }
+
+        writeToCsv(file);
+    }
+
+    private void writeToCsv(File file) {
+        try (FileWriter writer = new FileWriter(file)) {
+            String[] headers = {"Student ID", "Name", "Course", "Year"};
+            writeCsvRow(writer, headers);
+
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                String[] values = new String[4];
+                for (int col = 0; col < 4; col++) {
+                    Object value = tableModel.getValueAt(row, col + 1);
+                    values[col] = (value == null) ? "" : value.toString();
+                }
+                writeCsvRow(writer, values);
+            }
+
+            JOptionPane.showMessageDialog(this,
+                "Exported " + tableModel.getRowCount() + " rows to:\n" + file.getAbsolutePath(),
+                "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            showError("Export failed: " + ex.getMessage());
+        }
+    }
+
+    private void writeCsvRow(FileWriter writer, String[] values) throws IOException {
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                writer.write(",");
+            }
+            writer.write(escapeCsv(values[i]));
+        }
+        writer.write("\n");
+    }
+
+    private String escapeCsv(String value) {
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     private void handleBack(User currentUser) {

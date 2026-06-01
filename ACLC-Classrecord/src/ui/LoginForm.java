@@ -49,13 +49,17 @@ public class LoginForm extends JFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
         loginButton = new JButton("Login");
         loginButton.addActionListener(e -> handleLogin());
 
+        JButton changePasswordButton = new JButton("Change Password");
+        changePasswordButton.addActionListener(e -> handleChangePassword());
+
         panel.add(loginButton);
+        panel.add(changePasswordButton);
 
         return panel;
     }
@@ -82,6 +86,52 @@ public class LoginForm extends JFrame {
     private void onLoginSuccess(User user) {
         new DashboardForm(user).setVisible(true);
         dispose();
+    }
+
+    private void handleChangePassword() {
+        String username = usernameField.getText().trim();
+        String currentPassword = new String(passwordField.getPassword());
+
+        if (username.isEmpty() || currentPassword.isEmpty()) {
+            showError("Please enter your username and current password first.");
+            return;
+        }
+
+        UserDao userDao = new UserDao();
+        User user = userDao.authenticate(username, currentPassword);
+
+        if (user == null) {
+            showError("Invalid username or password.");
+            return;
+        }
+
+        String newPassword = showPasswordInput("Enter new password:");
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return;
+        }
+
+        String confirmPassword = showPasswordInput("Confirm new password:");
+        if (confirmPassword == null) {
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            showError("Passwords do not match.");
+            return;
+        }
+
+        if (userDao.updatePassword(user.getUserId(), newPassword)) {
+            JOptionPane.showMessageDialog(this, "Password changed successfully.",
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+            passwordField.setText("");
+        } else {
+            showError("Failed to change password.");
+        }
+    }
+
+    private String showPasswordInput(String message) {
+        return JOptionPane.showInputDialog(this, message,
+            "Change Password", JOptionPane.PLAIN_MESSAGE);
     }
 
     private void showError(String message) {

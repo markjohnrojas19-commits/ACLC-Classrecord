@@ -60,8 +60,12 @@ public class DashboardForm extends JFrame {
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> handleLogout());
 
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        rightPanel.setBackground(StyleConstants.WHITE);
+        rightPanel.add(logoutButton);
+
         panel.add(welcomeLabel, BorderLayout.WEST);
-        panel.add(logoutButton, BorderLayout.EAST);
+        panel.add(rightPanel, BorderLayout.EAST);
 
         return panel;
     }

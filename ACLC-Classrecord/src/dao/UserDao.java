@@ -32,6 +32,22 @@ public class UserDao {
         return null;
     }
 
+    public boolean updatePassword(int userId, String newPassword) {
+        String sql = "UPDATE users SET password = ? WHERE user_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, newPassword);
+            statement.setInt(2, userId);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Update password error: " + e.getMessage());
+            return false;
+        }
+    }
+
     private User extractUser(ResultSet result) throws SQLException {
         int userId = result.getInt("user_id");
         String username = result.getString("username");
