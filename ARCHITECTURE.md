@@ -67,14 +67,12 @@
 
 This is the core workflow of the system.
 
-1. User navigates to `GradeForm`.
-2. `GradeForm` shows a JTabbedPane with 4 season tabs: **Prelim**, **Midterm**, **Pre-Final**, **Final**. Each tab contains a styled JTable of assessments for that season, plus a season average label at the bottom.
-3. User selects a student (dropdown populated by `StudentDao.getAll()`) and a subject (dropdown populated by `SubjectDao.getAll()`).
-4. User selects a grading season (e.g., "Midterm"), types an assessment name (e.g., "Quiz 1"), and enters a score (0-100).
-5. User clicks "Add." `GradeForm` creates an `Assessment` object and calls `AssessmentDao.add(assessment)`.
-6. The assessment persists to the database. All four season tabs refresh — the new assessment appears in the correct season tab.
-7. The season average label updates automatically. `GradeComputer.computeAverage(assessments)` calculates the simple average of all assessment scores in that season and determines "PASSED" (>= 75) or "FAILED" (< 75).
-8. The average label is color-coded: green for PASSED, red for FAILED.
+1. User navigates to `GradeForm` from the dashboard.
+2. `GradeForm` is a **view-only grade dashboard**. It shows a JTabbedPane with 4 season tabs (**Prelim**, **Midterm**, **Pre-Final**, **Final**) plus a **Final Grade** tab. Each season tab contains a styled JTable of assessments for that season, plus a season average label at the bottom.
+3. To enter new scores, the user clicks **"Enter Scores"** which opens `BatchScoreEntryForm` — a separate form for entering scores for an entire class at once (see "What happens when scores are entered in batch?" below).
+4. To edit an existing score, the user selects a row in a season tab and clicks **"Edit Score"** which opens `EditAssessmentDialog` — a small modal with pre-filled Score, Total Items, and Date fields.
+5. After any score change, all season tabs and the Final Grade tab refresh automatically. Season averages are recomputed by `GradeComputer.computeAverage()`.
+6. The season average label is color-coded: green for PASSED (>= 75), red for FAILED (< 75).
 
 **Assessment examples:**
 - Student STU001, Subject CS101, Midterm season: "Quiz 1" = 8/10 (80.0%), "Unit Test A" = 45/50 (90.0%), "Project" = 92/100 (92.0%)
@@ -95,13 +93,11 @@ This is the core workflow of the system.
 ## What happens when the dashboard loads?
 
 1. `DashboardForm` opens (after login or when navigating back).
-2. It queries the database for summary counts via `DashboardDao`:
-   - `DashboardDao.countStudents()` — total students
-   - `DashboardDao.countSubjects()` — total subjects
-   - `DashboardDao.countPassed()` — student-subject pairs where `AVG(score) >= 75.0`
-   - `DashboardDao.countFailed()` — student-subject pairs where `AVG(score) < 75.0`
-3. These counts are displayed in labels on the dashboard (Passed in green, Failed in red).
-4. Navigation buttons allow the user to open `StudentForm`, `SubjectForm`, or `GradeForm`.
+2. The header shows "ACLC Class Record — [username]" with a Logout button. Below it, a semester selector dropdown and navigation buttons (Students, Subjects, Enrollment, Grades, Attendance).
+3. `DashboardStatsPanel` queries the database for summary data via `DashboardDao`:
+   - **Stat cards** (3 cards with Material Design icons): Total Students, Total Subjects, Today's Attendance (shown as "3/5 sections (20/20 present)" — green when all sections marked, blue when partial).
+   - **Per-Subject Statistics table**: one row per subject showing Subject Code, Name, Enrolled, Passed, Failed. Data from `DashboardDao.getPerSubjectStats()`. Passed count green, failed count red.
+4. All stats refresh on load via `statsPanel.refresh()`.
 
 **How passed/failed counts work with weighted grades:** The dashboard uses SQL conditional aggregation to compute the same weighted formula as `GradeComputer.computeFinalGrade()`. For each student-subject pair: `COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * 0.20 + ... + COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * 0.40`. The `HAVING` clause checks if this weighted grade is >= 75 (passed) or < 75 (failed). Season weights are passed as PreparedStatement parameters from `GradeConstants`, keeping the SQL and Java computations in sync.
 

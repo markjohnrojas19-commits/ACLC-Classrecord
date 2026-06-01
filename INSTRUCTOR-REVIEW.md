@@ -59,7 +59,7 @@
 
 ### R8. Password Change
 **Problem:** Users are stuck with the password set at account creation. No way to change it from within the app.
-**What it needs:** A "Change Password" option accessible from the dashboard (or a small settings/profile area). Asks for current password, new password, confirm new password.
+**What it needs:** A "Change Password" option accessible from the login screen. User enters their current credentials, then sets a new password with confirmation.
 **Why it matters:** Basic account management. Low priority since this is single-user for now, but expected in any login-based system.
 
 ---
@@ -75,4 +75,4 @@
 | R5 | Attendance in grade summary | P2 | **DONE** — Present, Absent, Att% columns + AttendanceDao queries |
 | R6 | Per-subject dashboard stats | P2 | **DONE** — per-subject table with Enrolled/Passed/Failed |
 | R7 | Class list print from enrollment | P3 | **DONE** — Print + Export CSV buttons on EnrollmentForm |
-| R8 | Password change | P3 | **DONE** — Change Password button on dashboard + UserDao.updatePassword |
+| R8 | Password change | P3 | **DONE** — Change Password button on LoginForm + UserDao.updatePassword |
