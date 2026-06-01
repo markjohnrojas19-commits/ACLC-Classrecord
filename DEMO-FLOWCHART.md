@@ -1,367 +1,249 @@
-# ACLC Class Record System — Demo Presentation Flow
+# ACLC Class Record System — Demo Presentation Guide
 
 > **Audience:** Instructor + Panelists
-> **Estimated Time:** 15-20 minutes
-> **Tip:** Before the demo, make sure XAMPP MySQL is running and the database has sample data (students, subjects, enrollments, some scores, some attendance).
+> **Time:** 15-20 minutes (aim to finish in 15 — actual runs always take longer than planned)
+> **Golden rule:** Tell a story, not a feature list. Walk the panel through a real instructor's day.
 
 ---
 
-## Pre-Demo Checklist
+## Before You Start
 
-Before you start, verify these are ready:
+### Pre-Demo Checklist
 
 - [ ] XAMPP MySQL is running
-- [ ] Database has at least 5-10 students across 2+ sections (e.g., BSIT 1-A, BSCS 2-B)
-- [ ] At least 2-3 subjects exist (e.g., CS101 Programming, MATH201 Calculus)
-- [ ] Some students are enrolled in subjects
-- [ ] Some attendance records exist for today
-- [ ] Some assessment scores exist (at least in Prelim and Midterm seasons)
-- [ ] The active semester is "2025-2026 / 1st Semester"
+- [ ] App is already open on the Login screen (don't fumble with startup during the demo)
+- [ ] Database has realistic sample data:
+  - 8-10 students across 2+ sections (e.g., BSIT 1-A, BSCS 2-B)
+  - 2-3 subjects (e.g., CS101 Programming, MATH201 Calculus)
+  - Students enrolled in subjects
+  - Assessment scores in at least Prelim and Midterm seasons
+  - Some attendance records for today
+  - Active semester: "2025-2026 / 1st Semester"
+- [ ] Mouse cursor is large and visible (for projector)
+- [ ] All unrelated windows are closed
+- [ ] Have a backup plan if the live demo fails (screenshots or screen recording)
+
+### Mindset
+
+- **You are not showing every feature.** You are showing how an instructor uses this system in a realistic workflow.
+- **Move the mouse slowly.** Projectors make fast mouse movements invisible.
+- **Explain why you made decisions**, not just what the app does. The panel tests your understanding, not just your output.
+- **If something breaks**, stay calm. Say "Let me try that again" or move on. Don't panic.
 
 ---
 
-## PHASE 1 — System Entry (Login)
+## The Demo
 
-### What to show
-1. Launch the application — the **Login Form** appears
-2. Type username: `admin`, password: `admin123`
-3. Click **Login**
+### Opening — Set the Scene (1 minute)
 
-### What to explain
-- "The system starts with a login screen. It supports two roles — Admin and Instructor — for future role-based access control."
-- "Credentials are verified against the MySQL database using prepared statements to prevent SQL injection."
-- "On successful login, the user is taken to the Dashboard."
+**Don't touch the app yet.** Face the panel and say:
 
-### If panelist asks
-- **"What happens with wrong credentials?"** — Show it: type a wrong password, click Login. An error dialog appears.
-- **"How is the password stored?"** — Currently plain text for the school project. Production would use hashing (SHA-256 or bcrypt). This is documented as a future milestone (Milestone 17).
+> "Right now, ACLC instructors track grades and attendance using paper record books or Excel spreadsheets. These are error-prone — manual grade computation is slow, and there's no easy way to filter by section, look up one student's complete record, or carry data across semesters."
+>
+> "Our system replaces that. An instructor logs in and can manage students, enrollment, attendance, and grades — all in one application. Grades auto-compute. Attendance is tracked per subject. And when a new semester starts, the instructor gets a clean slate without losing old records."
+>
+> "Let me walk you through what a typical day looks like."
+
+**Why this works:** The panel now knows the problem, the audience, and the solution before seeing a single screen. Everything that follows has context.
 
 ---
 
-## PHASE 2 — Dashboard Overview
+### Act 1 — Start the Day (2-3 minutes)
 
-### What to show
-1. Point out the **header** — shows "ACLC Class Record — admin"
-2. Point out the **Semester selector** — currently "2025-2026 / 1st Semester"
-3. Point out the **Navigation buttons** — Students, Subjects, Enrollment, Grades, Attendance
-4. Point out the **Dashboard Overview stats** — Total Students, Total Subjects, Today's Attendance
+**Story:** *"The instructor arrives Monday morning and opens the system."*
 
-### What to explain
-- "The Dashboard is the central hub. Every form is accessible from here."
-- "The stats panel shows live counts from the database. Students and Subjects are global counts. Today's Attendance shows how many subject-section combinations have been marked today versus total, and the overall present count."
-- "The attendance indicator turns green when all sections are marked for today."
+**Login**
+1. App is already on the Login screen — point out the branded header matching the rest of the app
+2. Log in with `admin` / `admin123`
 
-### Key talking point
-- "The Semester selector at the top is a key feature. All enrollment, grades, and attendance data is scoped to the selected semester. When a new semester starts, the instructor creates a new semester here and gets a clean slate — without losing any old data. Students and subjects remain the same, but enrollments, scores, and attendance start fresh."
+> "Credentials are verified against MySQL using prepared statements — no SQL injection risk."
 
----
+**Dashboard**
+3. Land on the Dashboard — pause and let the panel see it
+4. Point out three things only:
+   - **Stats cards** — live counts from the database (students, subjects, today's attendance)
+   - **Semester selector** — currently "2025-2026 / 1st Semester"
+   - **Navigation** — five buttons, one for each major function
 
-## PHASE 3 — Student Management
+> "This is the hub. The instructor sees their key numbers at a glance and navigates to any feature from here."
 
-### What to show
-1. Click **Students** from the Dashboard
-2. Show the **section tabs** — "All" tab plus one tab per course/section (e.g., "BSIT 1-A", "BSCS 2-B")
-3. **Add a student live:**
-   - Fill in Student ID, First Name, Last Name, Course, Year Level, Section (dropdown A-E), Gender
-   - Click **Add** — student appears in the table and in the correct section tab
-4. **Click on a student row** — fields auto-populate for editing
-5. Show the **Subject filter** dropdown — select a subject to see only enrolled students
-6. Show the **Search field** — type a name and press Enter
+**Per-Subject Stats Table**
+5. Scroll down to the per-subject statistics table
 
-### What to explain
-- "Students are organized into tabs by their course and section. These tabs are dynamic — if I add a student to a new section, a new tab appears automatically."
-- "The subject filter lets you see only students enrolled in a specific subject. This is useful when you need to check who's in your class."
-- "The system also supports bulk operations..."
-
-### Optional: Show advanced features (if time allows)
-7. Click **Add Multiple** — show the BatchStudentEntryForm dialog
-   - "You can set defaults (Course, Year, Section) and apply them to all rows, then just type IDs and names."
-8. Click **Import CSV** — show the file chooser (don't need to actually import)
-   - "For large classes, you can import from a CSV file. The system validates every row and shows a preview with errors highlighted in red before importing."
-
-### If panelist asks
-- **"What happens when you delete a student?"** — "The system cascades the delete — it removes all their enrollment records, assessment scores, and attendance records first, then deletes the student. A confirmation dialog prevents accidental deletion."
-- **"Can you delete an entire section?"** — "Yes. When you're on a section tab and click Delete with no row selected, it asks if you want to delete all students in that section."
+> "The instructor can immediately see which subjects have the most failing students and need attention."
 
 ---
 
-## PHASE 4 — Subject Management
+### Act 2 — Enter Today's Scores (3-4 minutes)
 
-### What to show
-1. Click **Back to Dashboard**, then click **Subjects**
-2. Show the subject table — Subject ID, Subject Code, Subject Name
-3. **Add a subject live:** e.g., Subject Code: "ENG101", Subject Name: "English Communication"
-4. Click **Add** — new subject appears in the table
-5. Show the **Search** feature — type a keyword to filter
+**Story:** *"The instructor just finished a Prelim quiz and needs to record scores for the whole class."*
 
-### What to explain
-- "Subjects represent the courses the instructor teaches. Each subject has a unique code."
-- "This is straightforward CRUD — Add, Edit, Delete, Search."
+This is your most impressive workflow — show it early.
 
-### Keep it brief
-- This is the simplest form. Spend 1-2 minutes max here.
+**Batch Score Entry**
+1. Click **Grades** from Dashboard
+2. Click **Enter Scores** — BatchScoreEntryForm opens
+3. Select Subject: CS101, Section: BSIT 1-A, Season: Prelim
+4. Type Assessment Name: "Quiz 3", set Total Items: **10**
+5. Click **Load Students** — all enrolled students appear
 
----
+> "Notice the total items is 10, not 100. A quiz can be out of 10, an exam out of 50, a project out of 100. The system normalizes everything to percentages automatically."
 
-## PHASE 5 — Enrollment (Connecting Students to Subjects)
+6. Enter scores quickly (8, 7, 9, 6, 10...) — point out the yellow highlighting for missing scores and the count label at the bottom
+7. Click **Save All**
 
-### What to show
-1. Click **Back to Dashboard**, then click **Enrollment**
-2. Select a **Subject** from the dropdown (e.g., CS101)
-3. Select a **Course/Section** (e.g., BSIT 1-A)
-4. Show the **checkbox table** — each student has a checkbox
-5. **Check the "Select All" checkbox** in the header — all students get checked
-6. Click **Save** — shows "Enrolled 10, Unenrolled 0" summary
+> "One screen, one assessment, the whole class done. This saves 20-30 minutes compared to entering scores one at a time."
 
-### What to explain
-- "Enrollment is the bridge between students and subjects. Before a student can have grades entered or attendance marked, they must be enrolled."
-- "The Select All checkbox in the header makes it easy to enroll an entire section at once."
-- "The save logic is smart — it compares the current checkbox state to the database. Only changes are applied. If a student was already enrolled and the box is still checked, nothing happens."
+**Grade View**
+8. Click back to **Grades** — show the Prelim tab with the quiz you just entered
+   - Point out the score format: "8/10 (80.0%)"
+9. Click the **Final Grade** tab — show the weighted final grade
 
-### Key talking point
-- "Enrollment is semester-scoped. When you start a new semester, you need to re-enroll students. This is realistic — class lists change every semester."
+> "The system computes final grades using ACLC's standard formula: Prelim 20%, Midterm 20%, Pre-Final 20%, Final 40%. Green means passed, red means failed. The formula is configurable — just one file to change."
+
+10. Show the **Status filter** — select "Failed Only"
+
+> "The instructor can instantly find at-risk students who need attention."
 
 ---
 
-## PHASE 6 — Attendance Marking
+### Act 3 — Mark Attendance (2-3 minutes)
 
-### What to show
-1. Click **Back to Dashboard**, then click **Attendance**
-2. Select a **Subject** (e.g., CS101)
-3. Select a **Course/Section** (e.g., BSIT 1-A)
-4. The **From date** defaults to today — show that only enrolled students appear
-5. Each student has a **Status dropdown**: Present, Absent, Late, Excused
-6. Click **Mark All Present** — all dropdowns switch to "Present"
-7. Change one student to "Absent" manually
-8. Click **Save** — shows "Attendance saved for 10 of 10 students"
+**Story:** *"Class is about to start. The instructor marks attendance."*
 
-### What to explain
-- "Only enrolled students appear in the attendance table. If a student isn't enrolled in this subject, they won't show up."
-- "The Mark All Present button is a timesaver for days when everyone is present — just click it and change the exceptions."
-- "The date dropdown shows dates that already have attendance records. You can also type a new date manually."
+1. Go back to Dashboard, click **Attendance**
+2. Select Subject: CS101, Section: BSIT 1-A — today's date is auto-selected
+3. Click **Mark All Present** — all dropdowns switch to Present
+4. Change one student to **Absent**
+5. Click **Save**
 
-### Show date range mode
-9. Type a different date in the **To** field (e.g., a date from last week)
-10. The table switches to **read-only mode** showing all attendance records in the range
+> "Only enrolled students appear. The 'Mark All Present' button handles the common case — the instructor just corrects the exceptions."
 
-### What to explain
-- "When you enter a date range, the view switches to read-only mode showing the attendance history. This is for reviewing past records, not editing."
+6. Show the **date range** feature — type a past date in the "To" field
+   - Table switches to read-only history view
 
-### Show Export (R3 feature)
-11. Click **Print** — show the print dialog
-12. Click **Export CSV** — show the file chooser, save a CSV file
+> "Instructors can review past attendance across any date range. This can also be printed or exported for ACLC's attendance reporting requirements."
 
-### What to explain
-- "Attendance can be printed or exported to CSV for submission. ACLC requires attendance reports alongside grade reports — this feature handles that."
+7. Go back to Dashboard — point out the attendance stat updated
 
 ---
 
-## PHASE 7 — Grade Entry (Batch Score Entry)
+### Act 4 — Look Up a Student (2-3 minutes)
 
-### What to show
-1. Click **Back to Dashboard**, then click **Grades**
-2. Show the **GradeForm** — 5 tabs: Prelim, Midterm, Pre-Final, Final, Final Grade
-3. Click **Enter Scores** — opens BatchScoreEntryForm
-4. Select **Subject** (CS101), **Section** (BSIT 1-A), **Season** (Prelim)
-5. Type **Assessment Name**: "Quiz 1"
-6. Set **Total Items**: 10 (to show that scores can be out of any value, not just 100)
-7. Click **Load Students** — enrolled students appear
-8. **Enter scores** for each student (e.g., 8, 7, 9, 6, 10...)
-9. Click **Save All** — shows "Saved 10, Skipped 0"
+**Story:** *"A student comes to the office asking about their grades."*
 
-### What to explain
-- "Batch Score Entry is the fastest way to enter grades for a whole class. Instead of adding one score at a time, the instructor picks one assessment and fills in scores for everyone."
-- "The Total Items field means assessments can be out of any value — a quiz out of 10, an exam out of 50, a project out of 100. The system normalizes everything to percentages automatically."
-- "If you come back later and load the same assessment, existing scores are pre-populated. You can edit them."
+1. Click **Students** from Dashboard
+2. Show the **section tabs** — click through a couple
+3. Click on a student, then click **View Grades**
+4. The **Student Grade Summary** opens with that student pre-selected
 
-### Key talking point
-- "This feature alone saves 20-30 minutes per grading session compared to individual entry."
+> "This is the report card view. One click from the student list and the instructor sees everything — every subject, every season average, the weighted final grade, and even attendance percentage."
+
+5. Click through a few students in the sidebar to show it updating
+6. Click **Print**
+
+> "This can be printed directly for the student or their parents."
 
 ---
 
-## PHASE 8 — Grade Viewing & Analysis
+### Act 5 — Semester Transition (2-3 minutes)
 
-### What to show
-1. Click **Back to Grades** — you're back on GradeForm
-2. Show the **Prelim tab** — the Quiz 1 scores you just entered appear
-   - Point out the score format: "8/10 (80.0%)" — shows raw score, total items, and percentage
-   - Point out the **Season Average** at the bottom of the tab
-3. Click the **Final Grade tab** — shows weighted final grade per student
-   - Columns: Student, Subject, Prelim, Midterm, Pre-Final, Final, Final Grade, Remarks
-   - Green for PASSED, Red for FAILED
-4. Show the **Section filter** — select a specific section
-5. Show the **Status filter** — select "Failed Only" to see at-risk students
+**Story:** *"The semester ends. The instructor needs to start fresh for the next one."*
 
-### What to explain
-- "Each season tab shows all assessments for that grading period with a computed average."
-- "The Final Grade tab combines all four seasons using a weighted formula: Prelim 20%, Midterm 20%, Pre-Final 20%, Final 40%. This matches ACLC's standard grading system."
-- "The section and status filters let you quickly find at-risk students — for example, 'show me all failing students in BSIT 1-A.'"
+This is your strongest architectural feature — end on a high note.
 
-### Show Edit Score
-6. Go back to a **season tab**, click on a row, then click **Edit Score**
-7. The **EditAssessmentDialog** opens — change the score, click Save
+1. On the Dashboard, click **New Semester**
+2. Enter "2025-2026", select "2nd Semester"
+3. Switch to the new semester in the dropdown
+4. Point out: Students and Subjects counts are unchanged, but attendance shows 0/0
 
-### What to explain
-- "If a score needs correction, the instructor can edit individual assessments without going back to batch entry."
+> "Students and subjects carry over — they're global. But enrollment, grades, and attendance start fresh. The instructor re-enrolls students for the new semester and begins from zero."
 
-### Show Export
-8. Click **Print** — show the print dialog
-9. Click **Export CSV** — save a CSV file
+5. Switch back to "2025-2026 / 1st Semester" — all old data reappears instantly
 
-### What to explain
-- "Grades can be printed or exported to CSV for official submission."
+> "Nothing is lost. The old semester's data is always there. The instructor can switch back and review past records anytime."
+
+6. Delete the test semester (show the warning dialog, confirm)
+
+> "Deleting a semester permanently removes all its enrollment, grades, and attendance. The confirmation dialog makes sure this can't happen by accident."
 
 ---
 
-## PHASE 9 — Student Grade Summary (Report Card View)
+### Closing — Architecture & Reflection (2 minutes)
 
-### What to show
-1. Go back to **Students** from Dashboard
-2. **Click on a student** in the table
-3. Click **View Grades** — opens StudentGradeSummaryForm with that student pre-selected
-4. Show the **left sidebar** — all students listed, filterable by section
-5. Show the **summary table** — one row per subject showing: Subject Code, Subject Name, Prelim avg, Midterm avg, Pre-Final avg, Final avg, Final Grade, Remarks
-6. Click on **different students** in the sidebar to see their grades update
+**Face the panel again.** Don't demo anymore.
 
-### What to explain
-- "This is the report card view. An instructor can pull up any student and see their complete grade picture across all subjects."
-- "The section filter in the sidebar lets you browse students by class."
-- "This is useful during parent-teacher meetings or when students ask about their standing."
-
-### Show Print
-7. Click **Print** — show the print dialog
-
-### What to explain
-- "The report card can be printed directly for the student or their parents."
-
----
-
-## PHASE 10 — Semester Management (The Big Feature)
-
-### What to show
-1. Go back to the **Dashboard**
-2. Click **New Semester** — enter "2025-2026", select "2nd Semester"
-3. The new semester appears in the dropdown
-4. **Switch to "2025-2026 / 2nd Semester"** — notice:
-   - Total Students: same (students are global)
-   - Total Subjects: same (subjects are global)
-   - Today's Attendance: 0/0 sections (0/0 present) — clean slate
-5. Go to **Enrollment** — no one is enrolled yet in the new semester
-6. Go to **Grades** — all tabs are empty
-7. **Switch back to "2025-2026 / 1st Semester"** — all the old data reappears
-8. **Delete the 2nd semester** — click Delete Semester, confirm the warning
-   - "This will permanently delete ALL enrollments, grades, and attendance records for this semester."
-
-### What to explain
-- "This is the most important feature for real-world use. After one semester, the instructor creates a new semester and gets a clean slate — without losing any historical data."
-- "Students and subjects carry over. Only enrollments, scores, and attendance reset."
-- "The instructor can switch between semesters at any time to review old records."
-- "Deleting a semester removes all its data permanently — enrollment records, all assessment scores, all attendance records."
-
-### Key talking point
-- "Without this feature, the system is a one-semester tool. With it, it can be used year after year."
-
----
-
-## PHASE 11 — Architecture & Code Quality (If Asked)
-
-### Be ready to explain these if the panelist asks about the code:
-
-**Layered Architecture (4 layers):**
-```
-UI Layer (Swing Forms)
-   |
-Service Layer (GradeComputer)
-   |
-DAO Layer (StudentDao, SubjectDao, etc.)
-   |
-Model Layer (Student, Subject, Assessment, etc.)
-```
-- "Lower layers never reference upper layers. The UI depends on DAOs, DAOs depend on Models, but Models know nothing about DAOs or UI."
-
-**Key Design Decisions:**
-- "We use the DAO pattern to separate database logic from UI logic. SQL lives only in DAO classes."
-- "All database operations use PreparedStatement with parameterized queries to prevent SQL injection."
-- "Database connections are managed with try-with-resources — connections are always properly closed."
-- "Grade computation is in a separate GradeComputer service class — if the formula changes, only one class changes."
-- "UI styling is centralized in StyleConstants — changing the app's look means editing one file."
-
-**File Count:**
-- 11 Model classes (data objects)
-- 9 DAO classes (database access)
-- 1 Service class (grade computation)
-- 4 Utility classes (constants, CSV parser, semester tracker)
-- 21 UI classes (forms, panels, dialogs)
-- **Total: 46 Java files**
-
-**Database:**
-- 7 tables: users, students, subjects, semesters, enrollments, assessments, attendance
-- Foreign key relationships enforce data integrity
-- Semester scoping via semester_id on enrollments, assessments, attendance
-
----
-
-## Demo Flow Summary (Quick Reference)
+> "Under the hood, the system follows a 4-layer architecture:"
 
 ```
-LOGIN
-  |
-  v
-DASHBOARD -----> Show stats, semester selector
-  |
-  |---> STUDENTS -----> Add/Edit/Delete, section tabs, search, bulk add, CSV import
-  |
-  |---> SUBJECTS -----> Add/Edit/Delete, search
-  |
-  |---> ENROLLMENT ---> Check students per subject+section, select all, save
-  |
-  |---> ATTENDANCE ---> Mark status per student, mark all present, save
-  |         |              date range view, print, export CSV
-  |         v
-  |---> GRADES -------> Season tabs (Prelim/Midterm/Pre-Final/Final)
-  |         |              Final Grade tab (weighted average)
-  |         |              Section + Status filters, search
-  |         |              Enter Scores --> Batch Score Entry
-  |         |              Edit Score --> Edit Assessment Dialog
-  |         |              Print, Export CSV
-  |         v
-  |---> STUDENT SUMMARY -> Report card per student
-  |                           Section filter + student list
-  |                           Print
-  |
-  v
-SEMESTER MANAGEMENT
-  |---> Create new semester (clean slate)
-  |---> Switch between semesters
-  |---> Delete semester (cascade delete)
-  |
-  v
-LOGOUT
+UI (Swing Forms)  -->  Service (Grade Computation)  -->  DAO (Database Access)  -->  Model (Data Objects)
 ```
 
----
+> "Lower layers never reference upper layers. SQL lives only in DAO classes. Grade computation is isolated in one service class. UI styling is centralized in one constants file. If the grade formula changes, one file changes. If we switch from MySQL to another database, only the DAO layer changes."
 
-## Anticipated Panelist Questions
+**Honest limitations:**
 
-| Question | Answer |
-|----------|--------|
-| "Why Java Swing?" | Instructor-mandated tech stack for this course. Swing is bundled with Java — no extra dependencies needed. |
-| "Why not a web app?" | Scope is bounded by the semester. Desktop app meets all requirements. Web migration is documented as a future milestone. |
-| "How do you handle concurrent users?" | This is a single-user desktop app. Multi-user support would require Milestone 18 (Instructor-Section-Subject Linking). |
-| "What about security?" | Documented as Milestone 17. Would add password hashing, externalized credentials, session timeout, and audit logging. |
-| "What design patterns did you use?" | DAO pattern (database access), MVC-adjacent (Model-DAO-Service-UI layers), Strategy pattern potential (grade computation), Observer (UI refresh on data change). |
-| "How is the grade formula configurable?" | Season weights are constants in GradeConstants.java: Prelim 20%, Midterm 20%, Pre-Final 20%, Final 40%. Changing the weights requires editing one file. |
-| "What if MySQL is down?" | DAOs catch SQLExceptions and show user-friendly error messages. Dashboard stats show "Error" instead of crashing. |
-| "Can scores be out of different totals?" | Yes. Each assessment has a totalItems field. A quiz can be /10, an exam /100. The system normalizes to percentages for averaging. |
-| "What happens to old data when switching semesters?" | Nothing — it stays. Semester scoping is a filter, not a delete. Switch back to see it again. |
-| "How do you prevent duplicate students?" | The student_id is the primary key. The system checks existsById() before inserting and shows an error if the ID already exists. |
+> "Passwords are stored in plain text — for a production system, we'd hash them. The app is single-user — supporting multiple instructors would require linking each instructor to their subjects and sections. These are documented as future milestones."
+
+**Closing line:**
+
+> "The ACLC Class Record System replaces manual record-keeping with a complete digital solution. An instructor can manage students, enrollment, attendance, and grades — all in one app, across multiple semesters, with automatic grade computation and export for official submission."
 
 ---
 
-## Closing Statement
+## Handling Q&A
 
-> "The ACLC Class Record System replaces manual pen-and-paper record keeping with a complete digital solution. An instructor can manage students, subjects, enrollment, attendance, and grades — all in one application. The semester system ensures it can be used year after year. Grades auto-compute with a configurable weighted formula, and everything can be printed or exported for official submission."
+### Prepare for these questions
+
+| Question | How to answer |
+|----------|---------------|
+| "Why Java Swing and not a web app?" | "Swing is the mandated tech stack for this course. It's bundled with Java — zero external dependencies. We documented web migration as a future milestone." |
+| "How is the grade formula configurable?" | "Season weights are constants in one file: GradeConstants.java. Changing the formula means editing four numbers. The rest of the system adapts automatically." |
+| "What about security?" | "We use PreparedStatement for all SQL to prevent injection. Passwords are plain text for the school project — production would add hashing. This is documented as Milestone 17." |
+| "Can scores be out of different totals?" | "Yes. Each assessment has a total items field. A quiz can be /10, an exam /100. The system normalizes to percentages for averaging." |
+| "What happens to old data when switching semesters?" | "Nothing — it stays. Semester is a filter, not a delete. Switch back anytime to see old records." |
+| "What design patterns did you use?" | "DAO pattern for database access, layered architecture (Model-DAO-Service-UI), and centralized constants for grade formulas and UI styling." |
+| "What would you change if you rebuilt this?" | "I'd add password hashing from day one, and consider a web framework for multi-user access. The layered architecture would stay the same — it kept the codebase organized as it grew to 46 Java files." |
+
+### Q&A tips
+
+- **If you don't know the answer**, say so honestly: "I'm not sure, but I'd look into..." The panel respects honesty over bluffing.
+- **If asked about a feature you didn't demo**, offer to show it live: "Would you like me to pull that up?"
+- **If asked "why not X?"**, don't be defensive. Frame it as a trade-off: "We chose Y because [reason]. X would work too, but [trade-off]."
 
 ---
 
-**Good luck with the presentation!**
+## Quick Reference — Demo Flow
+
+```
+OPENING (1 min)
+  "Instructors use paper/Excel. This replaces that."
+      |
+      v
+ACT 1 — Start the Day (2-3 min)
+  Login --> Dashboard (stats, semester, navigation)
+      |
+      v
+ACT 2 — Enter Today's Scores (3-4 min)    <-- most impressive, show early
+  Grades --> Batch Score Entry (quiz /10, whole class)
+  --> Grade View (season tabs, Final Grade, failed filter)
+      |
+      v
+ACT 3 — Mark Attendance (2-3 min)
+  Attendance --> Mark All Present --> save --> date range view
+      |
+      v
+ACT 4 — Look Up a Student (2-3 min)
+  Students --> click student --> View Grades (report card)
+      |
+      v
+ACT 5 — Semester Transition (2-3 min)    <-- strongest architecture, end high
+  New Semester --> clean slate --> switch back --> old data intact
+      |
+      v
+CLOSING (2 min)
+  Architecture (4 layers) --> honest limitations --> one-line summary
+      |
+      v
+Q&A
+```
