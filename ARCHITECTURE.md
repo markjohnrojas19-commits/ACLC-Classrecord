@@ -277,3 +277,13 @@ All enrollment, assessment, and attendance data is scoped to a semester. This al
 - **Export CSV:** Opens a `JFileChooser` save dialog with default filename `attendance_YYYY-MM-DD.csv`. Exports all columns and rows from the current table view. CSV values are properly escaped (commas, quotes, newlines). Works in both single-date and date-range modes — whatever the table currently shows gets exported.
 
 Both buttons work regardless of the current table mode (single date entry or date range read-only view).
+
+---
+
+## How do table tooltips work?
+
+Every `JTable` in the system is created as a `TooltipTable` (extends `JTable`, lives in `util/`). When the user hovers over any cell, a tooltip appears showing the cell's full text content. This solves the problem of long names or values being truncated by narrow columns.
+
+**How it works:** `TooltipTable` overrides `getToolTipText(MouseEvent)`. On hover, it resolves the row and column under the mouse, reads the cell value via `getValueAt()`, and returns the text as the tooltip. Null, empty, or whitespace-only values return `null` (no tooltip shown).
+
+**The test:** *"If I remove TooltipTable, does any form's logic change?"* No. Forms declare their table variables as `JTable` — only the constructor call uses `TooltipTable`. Tooltips are a presentation concern handled entirely by the subclass. The forms are unaware of tooltip behavior.

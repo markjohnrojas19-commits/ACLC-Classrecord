@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
+
+import util.TooltipTable;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -67,7 +69,7 @@ public class StudentImportPreviewForm extends JDialog {
         addValidRows(model);
         addErrorRows(model);
 
-        previewTable = new JTable(model);
+        previewTable = new TooltipTable(model);
         previewTable.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         previewTable.setFont(StyleConstants.BODY_FONT);
         previewTable.setGridColor(StyleConstants.BORDER_COLOR);

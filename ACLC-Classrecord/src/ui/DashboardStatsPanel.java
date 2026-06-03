@@ -23,6 +23,7 @@ import javax.swing.table.JTableHeader;
 import dao.DashboardDao;
 import model.SubjectStats;
 import util.StyleConstants;
+import util.TooltipTable;
 
 public class DashboardStatsPanel extends JPanel {
 
@@ -85,7 +86,7 @@ public class DashboardStatsPanel extends JPanel {
             }
         };
 
-        JTable table = new JTable(subjectStatsModel);
+        JTable table = new TooltipTable(subjectStatsModel);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);

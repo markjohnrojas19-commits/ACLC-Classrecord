@@ -19,6 +19,8 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+
+import util.TooltipTable;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -113,7 +115,7 @@ public class EnrollmentForm extends JFrame {
             }
         };
 
-        table = new JTable(tableModel);
+        table = new TooltipTable(tableModel);
         table.setAutoCreateRowSorter(true);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);

@@ -18,6 +18,8 @@ import java.text.MessageFormat;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+
+import util.TooltipTable;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -169,7 +171,7 @@ public class GradeForm extends JFrame {
             }
         };
 
-        JTable table = new JTable(model);
+        JTable table = new TooltipTable(model);
         table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
@@ -190,7 +192,7 @@ public class GradeForm extends JFrame {
             }
         };
 
-        JTable table = new JTable(model);
+        JTable table = new TooltipTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);

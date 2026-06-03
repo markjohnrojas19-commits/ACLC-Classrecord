@@ -12,6 +12,8 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+
+import util.TooltipTable;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -123,7 +125,7 @@ public class BatchStudentEntryForm extends JDialog {
             "Course", "Year Level", "Section", "Gender"};
 
         tableModel = new DefaultTableModel(columns, INITIAL_ROWS);
-        table = new JTable(tableModel);
+        table = new TooltipTable(tableModel);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);

@@ -16,6 +16,8 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+
+import util.TooltipTable;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -214,7 +216,7 @@ public class StudentGradeSummaryForm extends JFrame {
             }
         };
 
-        JTable table = new JTable(model);
+        JTable table = new TooltipTable(model);
         table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);

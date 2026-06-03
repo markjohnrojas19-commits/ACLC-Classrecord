@@ -24,6 +24,7 @@ import dao.SubjectDao;
 import model.Subject;
 import model.User;
 import util.StyleConstants;
+import util.TooltipTable;
 
 public class SubjectForm extends JFrame {
 
@@ -112,7 +113,7 @@ public class SubjectForm extends JFrame {
             }
         };
 
-        JTable table = new JTable(model);
+        JTable table = new TooltipTable(model);
         table.setAutoCreateRowSorter(true);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);

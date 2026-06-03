@@ -18,6 +18,8 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+
+import util.TooltipTable;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -108,7 +110,7 @@ public class AttendanceForm extends JFrame {
             }
         };
 
-        table = new JTable(tableModel);
+        table = new TooltipTable(tableModel);
         table.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
         table.setFont(StyleConstants.BODY_FONT);
         table.setGridColor(StyleConstants.BORDER_COLOR);

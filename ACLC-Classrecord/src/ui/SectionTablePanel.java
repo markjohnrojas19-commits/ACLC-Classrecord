@@ -16,6 +16,7 @@ import javax.swing.table.JTableHeader;
 
 import model.Student;
 import util.StyleConstants;
+import util.TooltipTable;
 
 public class SectionTablePanel extends JPanel {
 
@@ -69,7 +70,7 @@ public class SectionTablePanel extends JPanel {
             }
         };
 
-        JTable newTable = new JTable(model);
+        JTable newTable = new TooltipTable(model);
         newTable.setAutoCreateRowSorter(true);
         newTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         newTable.setRowHeight(StyleConstants.TABLE_ROW_HEIGHT);
