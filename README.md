@@ -1,6 +1,6 @@
 # ACLC Class Record System
 
-A Java Swing desktop application for ACLC instructors to manage students, subjects, enrollment, attendance, and grades — replacing manual pen-and-paper record keeping. Built with MySQL (XAMPP) for data persistence.
+A Java Swing desktop application for ACLC instructors to manage students, subjects, enrollment, attendance, and grades — replacing scattered tools like Excel, paper forms, and generic apps with a purpose-built solution. Built with MySQL (XAMPP) for data persistence.
 
 ## Features
 

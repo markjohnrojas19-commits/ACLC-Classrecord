@@ -42,7 +42,7 @@
 2. **Introduce each member** — name and role (e.g., "I'm [Name], the lead developer")
 3. **State the project title:**
 
-> "Our project is the **ACLC Class Record System** — a desktop application built in Java Swing with MySQL that replaces manual pen-and-paper record keeping for ACLC instructors."
+> "Our project is the **ACLC Class Record System** — a desktop application built in Java Swing with MySQL that replaces manual record keeping — whether that's Excel spreadsheets, paper forms, or other general-purpose tools — with a purpose-built solution for ACLC instructors."
 
 ---
 
@@ -52,13 +52,13 @@
 
 ### Goal
 
-> "The goal is to give ACLC instructors a complete digital replacement for their paper class records — one application where they can manage students, enrollment, attendance, and grades across multiple semesters."
+> "The goal is to give ACLC instructors a dedicated class record application — replacing scattered tools like Excel files, paper forms, or generic apps with one system where they can manage students, enrollment, attendance, and grades across multiple semesters."
 
 ### Objectives
 
 > "Our objectives are:"
 > 1. "Eliminate manual grade computation — the system auto-computes weighted final grades using ACLC's standard formula."
-> 2. "Centralize student data — enrollment, grades, and attendance in one place instead of scattered spreadsheets."
+> 2. "Centralize student data — enrollment, grades, and attendance in one place instead of scattered Excel files, paper records, or multiple apps."
 > 3. "Support semester transitions — instructors can start fresh each semester without losing past records."
 > 4. "Enable reporting — print or export grade summaries and attendance for official submission."
 
@@ -177,7 +177,7 @@ UI (Swing Forms)  -->  Service (Grade Computation)  -->  DAO (Database Access)  
 
 ### Closing Statement
 
-> "The ACLC Class Record System replaces manual record-keeping with a complete digital solution. An instructor can manage students, enrollment, attendance, and grades — all in one app, across multiple semesters, with automatic grade computation and export for official submission."
+> "The ACLC Class Record System replaces scattered tools like Excel, paper forms, and generic apps with a single, purpose-built solution. An instructor can manage students, enrollment, attendance, and grades — all in one app, across multiple semesters, with automatic grade computation and export for official submission."
 
 > "Thank you. We're now open for questions."
 
