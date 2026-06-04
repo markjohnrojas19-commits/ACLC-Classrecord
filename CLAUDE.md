@@ -10,7 +10,7 @@
 ---
 
 ## Long-Term Vision
-- **Project Aspiration:** A polished, fully functional Class Record System that an ACLC instructor could realistically use to manage students, subjects, grades, and attendance — replacing manual pen-and-paper record keeping.
+- **Project Aspiration:** A polished, fully functional Class Record System that an ACLC instructor could realistically use to manage students, subjects, grades, and attendance — replacing manual methods like pen-and-paper, Excel spreadsheets, or other general-purpose apps with a purpose-built solution.
 - **Why This Path:** This is a school project built in NetBeans. The goal is to learn Java Swing, database integration, and clean software design while producing something the instructor can evaluate as complete and professional.
 - **Incremental Path:** We reach that vision one tiny step at a time — never by over-engineering up front.
 
