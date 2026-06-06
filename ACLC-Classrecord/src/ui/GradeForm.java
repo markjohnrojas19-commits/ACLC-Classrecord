@@ -73,7 +73,7 @@ public class GradeForm extends JFrame {
         add(createCenterPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
 
-        populateSectionFilter();
+        populateFilters();
         refreshAllTabs();
     }
 
@@ -109,6 +109,7 @@ public class GradeForm extends JFrame {
 
     private GradeFilterPanel createFilterPanel() {
         GradeFilterPanel panel = new GradeFilterPanel();
+        panel.addSubjectListener(e -> refreshAllTabs());
         panel.addSectionListener(e -> refreshAllTabs());
         panel.addStatusListener(e -> refreshAllTabs());
         panel.addSearchListener(e -> refreshWithSearch());
@@ -418,9 +419,9 @@ public class GradeForm extends JFrame {
         return value;
     }
 
-    private void populateSectionFilter() {
-        List<String> sections = new StudentDao().getAllSections();
-        filterPanel.populateSections(sections);
+    private void populateFilters() {
+        filterPanel.populateSubjects(new SubjectDao().getAll());
+        filterPanel.populateSections(new StudentDao().getAllSections());
     }
 
     private void refreshAllTabs() {
@@ -431,6 +432,7 @@ public class GradeForm extends JFrame {
     private void populateAllTabs(List<Assessment> assessments) {
         Map<String, String> studentNames = buildStudentNameMap();
         Map<Integer, String> subjectNames = buildSubjectNameMap();
+        assessments = filterBySubject(assessments, subjectNames);
         assessments = filterBySection(assessments);
 
         for (int i = 0; i < GradingSeason.values().length; i++) {
@@ -671,12 +673,28 @@ public class GradeForm extends JFrame {
         return groups;
     }
 
-    private List<Assessment> filterBySection(List<Assessment> assessments) {
-        if (filterPanel.isAllSections()) {
+    private List<Assessment> filterBySubject(List<Assessment> assessments,
+                                               Map<Integer, String> subjectNames) {
+        String selected = filterPanel.getSelectedSubject();
+        if (selected == null || filterPanel.isAllSubjects()) {
             return assessments;
         }
 
+        List<Assessment> filtered = new ArrayList<>();
+        for (Assessment assessment : assessments) {
+            String subjectDisplay = subjectNames.get(assessment.getSubjectId());
+            if (selected.equals(subjectDisplay)) {
+                filtered.add(assessment);
+            }
+        }
+        return filtered;
+    }
+
+    private List<Assessment> filterBySection(List<Assessment> assessments) {
         String section = filterPanel.getSelectedSection();
+        if (section == null || filterPanel.isAllSections()) {
+            return assessments;
+        }
         Map<String, String> sectionMap = buildStudentSectionMap();
 
         List<Assessment> filtered = new ArrayList<>();
