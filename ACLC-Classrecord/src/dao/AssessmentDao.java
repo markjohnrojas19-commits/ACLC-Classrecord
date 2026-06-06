@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.Assessment;
+import model.ComponentCategory;
 import model.GradingSeason;
 import util.ActiveSemester;
 import util.GradeConstants;
@@ -17,14 +18,15 @@ import util.GradeConstants;
 public class AssessmentDao {
 
     public boolean add(Assessment assessment) {
-        String sql = "INSERT INTO assessments (student_id, subject_id, season, assessment_name, score, total_items, date, semester_id) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO assessments (student_id, subject_id, season, component, "
+                   + "assessment_name, score, total_items, date, semester_id) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             setParameters(statement, assessment);
-            statement.setInt(8, ActiveSemester.getId());
+            statement.setInt(9, ActiveSemester.getId());
             statement.executeUpdate();
             return true;
 
@@ -107,8 +109,8 @@ public class AssessmentDao {
 
     public boolean saveOrUpdate(Assessment assessment) {
         String checkSql = "SELECT assessment_id FROM assessments "
-                        + "WHERE student_id = ? AND subject_id = ? AND season = ? AND assessment_name = ? "
-                        + "AND semester_id = ?";
+                        + "WHERE student_id = ? AND subject_id = ? AND season = ? AND component = ? "
+                        + "AND assessment_name = ? AND semester_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement check = connection.prepareStatement(checkSql)) {
@@ -116,8 +118,9 @@ public class AssessmentDao {
             check.setString(1, assessment.getStudentId());
             check.setInt(2, assessment.getSubjectId());
             check.setString(3, assessment.getSeason().toDbValue());
-            check.setString(4, assessment.getAssessmentName());
-            check.setInt(5, ActiveSemester.getId());
+            check.setString(4, assessment.getComponent().toDbValue());
+            check.setString(5, assessment.getAssessmentName());
+            check.setInt(6, ActiveSemester.getId());
 
             try (ResultSet result = check.executeQuery()) {
                 if (result.next()) {
@@ -135,13 +138,14 @@ public class AssessmentDao {
 
     public boolean update(Assessment assessment) {
         String sql = "UPDATE assessments SET student_id = ?, subject_id = ?, season = ?, "
-                   + "assessment_name = ?, score = ?, total_items = ?, date = ? WHERE assessment_id = ?";
+                   + "component = ?, assessment_name = ?, score = ?, total_items = ?, date = ? "
+                   + "WHERE assessment_id = ?";
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             setParameters(statement, assessment);
-            statement.setInt(8, assessment.getAssessmentId());
+            statement.setInt(9, assessment.getAssessmentId());
             statement.executeUpdate();
             return true;
 
@@ -198,13 +202,14 @@ public class AssessmentDao {
         statement.setString(1, assessment.getStudentId());
         statement.setInt(2, assessment.getSubjectId());
         statement.setString(3, assessment.getSeason().toDbValue());
-        statement.setString(4, assessment.getAssessmentName());
-        statement.setDouble(5, assessment.getScore());
-        statement.setDouble(6, assessment.getTotalItems());
+        statement.setString(4, assessment.getComponent().toDbValue());
+        statement.setString(5, assessment.getAssessmentName());
+        statement.setDouble(6, assessment.getScore());
+        statement.setDouble(7, assessment.getTotalItems());
         if (assessment.getDate() != null) {
-            statement.setDate(7, Date.valueOf(assessment.getDate()));
+            statement.setDate(8, Date.valueOf(assessment.getDate()));
         } else {
-            statement.setNull(7, java.sql.Types.DATE);
+            statement.setNull(8, java.sql.Types.DATE);
         }
     }
 
@@ -221,6 +226,7 @@ public class AssessmentDao {
             result.getString("student_id"),
             result.getInt("subject_id"),
             GradingSeason.fromDbValue(result.getString("season")),
+            ComponentCategory.fromDbValue(result.getString("component")),
             result.getString("assessment_name"),
             result.getDouble("score"),
             totalItems,

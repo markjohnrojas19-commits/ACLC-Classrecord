@@ -12,6 +12,11 @@ public final class GradeConstants {
     public static final double PRE_FINAL_WEIGHT = 0.20;
     public static final double FINAL_WEIGHT = 0.40;
 
+    public static final double QUIZ_WEIGHT = 0.35;
+    public static final double ACTIVITY_WEIGHT = 0.15;
+    public static final double RECITATION_WEIGHT = 0.10;
+    public static final double MAJOR_EXAM_WEIGHT = 0.40;
+
     private GradeConstants() {
     }
 }

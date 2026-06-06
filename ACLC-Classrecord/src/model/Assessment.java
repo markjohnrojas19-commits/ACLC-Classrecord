@@ -10,6 +10,7 @@ public class Assessment {
     private String studentId;
     private int subjectId;
     private GradingSeason season;
+    private ComponentCategory component;
     private String assessmentName;
     private double score;
     private double totalItems;
@@ -17,17 +18,19 @@ public class Assessment {
 
     public Assessment(int assessmentId, String studentId, int subjectId,
                       GradingSeason season, String assessmentName, double score) {
-        this(assessmentId, studentId, subjectId, season, assessmentName, score,
-             GradeConstants.DEFAULT_TOTAL_ITEMS, null);
+        this(assessmentId, studentId, subjectId, season, ComponentCategory.QUIZ,
+             assessmentName, score, GradeConstants.DEFAULT_TOTAL_ITEMS, null);
     }
 
     public Assessment(int assessmentId, String studentId, int subjectId,
-                      GradingSeason season, String assessmentName, double score,
+                      GradingSeason season, ComponentCategory component,
+                      String assessmentName, double score,
                       double totalItems, LocalDate date) {
         this.assessmentId = assessmentId;
         this.studentId = studentId;
         this.subjectId = subjectId;
         this.season = season;
+        this.component = component;
         this.assessmentName = assessmentName;
         this.score = score;
         this.totalItems = totalItems;
@@ -71,6 +74,14 @@ public class Assessment {
 
     public void setSeason(GradingSeason season) {
         this.season = season;
+    }
+
+    public ComponentCategory getComponent() {
+        return component;
+    }
+
+    public void setComponent(ComponentCategory component) {
+        this.component = component;
     }
 
     public String getAssessmentName() {

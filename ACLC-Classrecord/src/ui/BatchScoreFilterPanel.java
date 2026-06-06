@@ -12,6 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import model.ComponentCategory;
 import model.GradingSeason;
 import model.Subject;
 import util.GradeConstants;
@@ -22,6 +23,7 @@ public class BatchScoreFilterPanel extends JPanel {
     private JComboBox<Subject> subjectBox;
     private JComboBox<String> sectionBox;
     private JComboBox<String> seasonBox;
+    private JComboBox<String> componentBox;
     private JTextField assessmentNameField;
     private JTextField totalItemsField;
     private JTextField dateField;
@@ -34,6 +36,7 @@ public class BatchScoreFilterPanel extends JPanel {
         subjectBox = new JComboBox<>();
         sectionBox = new JComboBox<>();
         seasonBox = createSeasonBox();
+        componentBox = createComponentBox();
         assessmentNameField = new JTextField();
         totalItemsField = new JTextField("100");
         dateField = new JTextField(LocalDate.now().toString());
@@ -48,10 +51,10 @@ public class BatchScoreFilterPanel extends JPanel {
 
         add(new JLabel("Season:"));
         add(seasonBox);
+        add(new JLabel("Component:"));
+        add(componentBox);
         add(new JLabel("Assessment:"));
         add(assessmentNameField);
-        add(new JLabel(""));
-        add(new JLabel(""));
 
         add(new JLabel("Total Items:"));
         add(totalItemsField);
@@ -72,6 +75,11 @@ public class BatchScoreFilterPanel extends JPanel {
     public GradingSeason getSelectedSeason() {
         String selected = (String) seasonBox.getSelectedItem();
         return GradingSeason.fromDbValue(selected);
+    }
+
+    public ComponentCategory getSelectedComponent() {
+        String selected = (String) componentBox.getSelectedItem();
+        return ComponentCategory.fromDbValue(selected);
     }
 
     public String getAssessmentName() {
@@ -133,6 +141,14 @@ public class BatchScoreFilterPanel extends JPanel {
         JComboBox<String> box = new JComboBox<>();
         for (GradingSeason season : GradingSeason.values()) {
             box.addItem(season.toDisplayName());
+        }
+        return box;
+    }
+
+    private JComboBox<String> createComponentBox() {
+        JComboBox<String> box = new JComboBox<>();
+        for (ComponentCategory component : ComponentCategory.values()) {
+            box.addItem(component.toDisplayName());
         }
         return box;
     }

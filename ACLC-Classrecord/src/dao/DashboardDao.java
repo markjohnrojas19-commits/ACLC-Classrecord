@@ -7,13 +7,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import model.Assessment;
+import model.GradingSeason;
+import model.ScoreResult;
 import model.SubjectStats;
+import service.GradeComputer;
 import util.ActiveSemester;
 import util.GradeConstants;
 
 public class DashboardDao {
+
+    private GradeComputer gradeComputer = new GradeComputer();
 
     public int countStudents() {
         return executeSimpleCount("SELECT COUNT(*) FROM students");
@@ -110,102 +118,130 @@ public class DashboardDao {
     }
 
     public int countPassed() {
-        return executePassFailCount(true);
+        return countByResult(true);
     }
 
     public int countFailed() {
-        return executePassFailCount(false);
+        return countByResult(false);
     }
 
     public List<SubjectStats> getPerSubjectStats() {
-        String sql = "SELECT s.subject_code, s.subject_name, "
-                   + "COUNT(DISTINCT e.student_id) AS enrolled, "
-                   + "COUNT(DISTINCT CASE WHEN g.weighted_grade >= ? THEN g.student_id END) AS passed, "
-                   + "COUNT(DISTINCT CASE WHEN g.weighted_grade < ? THEN g.student_id END) AS failed "
-                   + "FROM subjects s "
-                   + "LEFT JOIN enrollments e ON s.subject_id = e.subject_id AND e.semester_id = ? "
-                   + "LEFT JOIN ("
-                   + "  SELECT student_id, subject_id, "
-                   + "  COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * ? + "
-                   + "  COALESCE(AVG(CASE WHEN season = 'Midterm' THEN score END), 0) * ? + "
-                   + "  COALESCE(AVG(CASE WHEN season = 'Pre-Final' THEN score END), 0) * ? + "
-                   + "  COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * ? "
-                   + "  AS weighted_grade "
-                   + "  FROM assessments WHERE semester_id = ? "
-                   + "  GROUP BY student_id, subject_id"
-                   + ") g ON s.subject_id = g.subject_id "
-                   + "GROUP BY s.subject_id, s.subject_code, s.subject_name "
-                   + "ORDER BY s.subject_code";
+        List<Assessment> allAssessments = new AssessmentDao().getAll();
+        Map<Integer, String[]> subjectInfo = loadSubjectInfo();
+        Map<Integer, Integer> enrolledCounts = loadEnrolledCounts();
+
+        Map<Integer, Map<String, Map<GradingSeason, List<Assessment>>>> bySubject = groupBySubjectStudentSeason(allAssessments);
 
         List<SubjectStats> results = new ArrayList<>();
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        for (Map.Entry<Integer, String[]> entry : subjectInfo.entrySet()) {
+            int subjectId = entry.getKey();
+            String subjectCode = entry.getValue()[0];
+            String subjectName = entry.getValue()[1];
+            int enrolled = enrolledCounts.getOrDefault(subjectId, 0);
 
-            statement.setDouble(1, GradeConstants.PASSING_GRADE);
-            statement.setDouble(2, GradeConstants.PASSING_GRADE);
-            statement.setInt(3, ActiveSemester.getId());
-            statement.setDouble(4, GradeConstants.PRELIM_WEIGHT);
-            statement.setDouble(5, GradeConstants.MIDTERM_WEIGHT);
-            statement.setDouble(6, GradeConstants.PRE_FINAL_WEIGHT);
-            statement.setDouble(7, GradeConstants.FINAL_WEIGHT);
-            statement.setInt(8, ActiveSemester.getId());
+            int passed = 0;
+            int failed = 0;
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    results.add(new SubjectStats(
-                        resultSet.getString("subject_code"),
-                        resultSet.getString("subject_name"),
-                        resultSet.getInt("enrolled"),
-                        resultSet.getInt("passed"),
-                        resultSet.getInt("failed")
-                    ));
+            Map<String, Map<GradingSeason, List<Assessment>>> students = bySubject.get(subjectId);
+            if (students != null) {
+                for (Map<GradingSeason, List<Assessment>> seasonMap : students.values()) {
+                    ScoreResult result = gradeComputer.computeFinalGrade(seasonMap);
+                    if ("PASSED".equals(result.getRemarks())) {
+                        passed++;
+                    } else if ("FAILED".equals(result.getRemarks())) {
+                        failed++;
+                    }
                 }
             }
 
-        } catch (SQLException e) {
-            System.out.println("Dashboard per-subject stats error: " + e.getMessage());
+            results.add(new SubjectStats(subjectCode, subjectName, enrolled, passed, failed));
         }
 
         return results;
     }
 
-    private int executePassFailCount(boolean passed) {
-        String comparison = passed ? ">=" : "<";
-        String sql = "SELECT COUNT(*) FROM ("
-                   + "SELECT student_id, subject_id, "
-                   + "COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * ? + "
-                   + "COALESCE(AVG(CASE WHEN season = 'Midterm' THEN score END), 0) * ? + "
-                   + "COALESCE(AVG(CASE WHEN season = 'Pre-Final' THEN score END), 0) * ? + "
-                   + "COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * ? "
-                   + "AS weighted_grade "
-                   + "FROM assessments "
-                   + "WHERE semester_id = ? "
-                   + "GROUP BY student_id, subject_id "
-                   + "HAVING weighted_grade " + comparison + " ?"
-                   + ") AS result";
+    private int countByResult(boolean countPassed) {
+        List<Assessment> allAssessments = new AssessmentDao().getAll();
+        Map<String, Map<GradingSeason, List<Assessment>>> grouped = groupByStudentSubjectSeason(allAssessments);
+
+        int count = 0;
+        for (Map<GradingSeason, List<Assessment>> seasonMap : grouped.values()) {
+            ScoreResult result = gradeComputer.computeFinalGrade(seasonMap);
+            boolean passed = "PASSED".equals(result.getRemarks());
+            if (passed == countPassed) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private Map<String, Map<GradingSeason, List<Assessment>>> groupByStudentSubjectSeason(
+            List<Assessment> assessments) {
+        Map<String, Map<GradingSeason, List<Assessment>>> grouped = new HashMap<>();
+        for (Assessment a : assessments) {
+            String key = a.getStudentId() + "|" + a.getSubjectId();
+            grouped.computeIfAbsent(key, k -> new HashMap<>())
+                   .computeIfAbsent(a.getSeason(), k -> new ArrayList<>())
+                   .add(a);
+        }
+        return grouped;
+    }
+
+    private Map<Integer, Map<String, Map<GradingSeason, List<Assessment>>>> groupBySubjectStudentSeason(
+            List<Assessment> assessments) {
+        Map<Integer, Map<String, Map<GradingSeason, List<Assessment>>>> grouped = new HashMap<>();
+        for (Assessment a : assessments) {
+            grouped.computeIfAbsent(a.getSubjectId(), k -> new HashMap<>())
+                   .computeIfAbsent(a.getStudentId(), k -> new HashMap<>())
+                   .computeIfAbsent(a.getSeason(), k -> new ArrayList<>())
+                   .add(a);
+        }
+        return grouped;
+    }
+
+    private Map<Integer, String[]> loadSubjectInfo() {
+        String sql = "SELECT subject_id, subject_code, subject_name FROM subjects ORDER BY subject_code";
+        Map<Integer, String[]> map = new HashMap<>();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                map.put(resultSet.getInt("subject_id"),
+                    new String[]{resultSet.getString("subject_code"),
+                                 resultSet.getString("subject_name")});
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Dashboard subject info error: " + e.getMessage());
+        }
+
+        return map;
+    }
+
+    private Map<Integer, Integer> loadEnrolledCounts() {
+        String sql = "SELECT subject_id, COUNT(DISTINCT student_id) AS enrolled "
+                   + "FROM enrollments WHERE semester_id = ? GROUP BY subject_id";
+        Map<Integer, Integer> map = new HashMap<>();
 
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setDouble(1, GradeConstants.PRELIM_WEIGHT);
-            statement.setDouble(2, GradeConstants.MIDTERM_WEIGHT);
-            statement.setDouble(3, GradeConstants.PRE_FINAL_WEIGHT);
-            statement.setDouble(4, GradeConstants.FINAL_WEIGHT);
-            statement.setInt(5, ActiveSemester.getId());
-            statement.setDouble(6, GradeConstants.PASSING_GRADE);
+            statement.setInt(1, ActiveSemester.getId());
 
             try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt(1);
+                while (resultSet.next()) {
+                    map.put(resultSet.getInt("subject_id"), resultSet.getInt("enrolled"));
                 }
-                return 0;
             }
 
         } catch (SQLException e) {
-            System.out.println("Dashboard pass/fail count error: " + e.getMessage());
-            return -1;
+            System.out.println("Dashboard enrolled counts error: " + e.getMessage());
         }
+
+        return map;
     }
 
     private int executeCountWithSemester(String sql) {

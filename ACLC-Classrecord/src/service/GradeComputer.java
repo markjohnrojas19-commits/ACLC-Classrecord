@@ -10,23 +10,36 @@ import util.GradeConstants;
 
 public class GradeComputer {
 
+    public static final String NO_GRADES = "NO GRADES";
+
+    private SeasonGradeComputer seasonComputer = new SeasonGradeComputer();
+
     public ScoreResult computeAverage(List<Assessment> assessments) {
-        double average = calculateAverage(assessments);
-        String remarks = determineRemarks(average);
-        return new ScoreResult(average, remarks);
+        return seasonComputer.computeSeasonGrade(assessments);
     }
 
     public ScoreResult computeFinalGrade(Map<GradingSeason, List<Assessment>> seasonAssessments) {
         double weightedTotal = 0.0;
+        double activeWeight = 0.0;
 
         for (GradingSeason season : GradingSeason.values()) {
             List<Assessment> assessments = seasonAssessments.get(season);
-            double seasonAverage = calculateAverage(assessments);
-            weightedTotal += seasonAverage * getSeasonWeight(season);
+            if (hasNoAssessments(assessments)) {
+                continue;
+            }
+            double seasonGrade = seasonComputer.computeSeasonGrade(assessments).getFinalGrade();
+            double weight = getSeasonWeight(season);
+            weightedTotal += seasonGrade * weight;
+            activeWeight += weight;
         }
 
-        String remarks = determineRemarks(weightedTotal);
-        return new ScoreResult(weightedTotal, remarks);
+        if (activeWeight == 0.0) {
+            return new ScoreResult(0.0, NO_GRADES);
+        }
+
+        double normalizedGrade = weightedTotal / activeWeight;
+        String remarks = determineRemarks(normalizedGrade);
+        return new ScoreResult(normalizedGrade, remarks);
     }
 
     private double getSeasonWeight(GradingSeason season) {
@@ -39,16 +52,8 @@ public class GradeComputer {
         }
     }
 
-    private double calculateAverage(List<Assessment> assessments) {
-        if (assessments == null || assessments.isEmpty()) {
-            return 0.0;
-        }
-
-        double total = 0.0;
-        for (Assessment assessment : assessments) {
-            total += assessment.getPercentage();
-        }
-        return total / assessments.size();
+    private boolean hasNoAssessments(List<Assessment> assessments) {
+        return assessments == null || assessments.isEmpty();
     }
 
     private String determineRemarks(double average) {

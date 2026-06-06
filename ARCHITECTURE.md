@@ -72,7 +72,7 @@ This is the core workflow of the system.
 3. To enter new scores, the user clicks **"Enter Scores"** which opens `BatchScoreEntryForm` — a separate form for entering scores for an entire class at once (see "What happens when scores are entered in batch?" below).
 4. To edit an existing score, the user selects a row in a season tab and clicks **"Edit Score"** which opens `EditAssessmentDialog` — a small modal with pre-filled Score, Total Items, and Date fields.
 5. After any score change, all season tabs and the Final Grade tab refresh automatically. Season averages are recomputed by `GradeComputer.computeAverage()`.
-6. The season average label is color-coded: green for PASSED (>= 75), red for FAILED (< 75).
+6. The season average label is color-coded: green for PASSED (>= 75), red for FAILED (< 75), or shows "NO GRADES" when no assessments exist for that season.
 
 **Assessment examples:**
 - Student STU001, Subject CS101, Midterm season: "Quiz 1" = 8/10 (80.0%), "Unit Test A" = 45/50 (90.0%), "Project" = 92/100 (92.0%)
@@ -80,13 +80,19 @@ This is the core workflow of the system.
 - The Midterm tab shows all three with a season average of 87.33 — PASSED
 - Scores are always displayed as "8/10 (80.0%)" — showing score/totalItems and percentage for every assessment, so the user can always see how many items each assessment has
 
-**Score normalization:** Each assessment has a `totalItems` field (default 100). `Assessment.getPercentage()` returns `(score / totalItems) * 100`. `GradeComputer.calculateAverage()` averages percentages, not raw scores. This means a quiz out of 10 and an exam out of 100 are weighted equally by their percentage scores.
+**Score normalization:** Each assessment has a `totalItems` field (default 100). `Assessment.getPercentage()` returns `(score / totalItems) * 100`. All computation uses percentages, not raw scores. This means a quiz out of 10 and an exam out of 100 are weighted equally by their percentage scores.
+
+**Component categories:** Each assessment belongs to a `ComponentCategory` (Quiz, Activity, Recitation, Major Exam). Within a season, the grade is computed as a weighted average of component averages, not a flat average of all scores. Component weights: Quiz 35%, Activity 15%, Recitation 10%, Major Exam 40%. If a component has no assessments, its weight is redistributed across components that have data. `SeasonGradeComputer` handles this computation.
+
+**Two-level weighted computation:**
+1. **Within a season:** `SeasonGradeComputer` groups by component → averages within each → weighted sum across components → normalizes by active weight.
+2. **Across seasons:** `GradeComputer.computeFinalGrade()` weights season grades (Prelim 20%, Midterm 20%, Pre-Final 20%, Final 40%) → normalizes by active weight.
 
 **Assessment date:** Each assessment has an optional `date` field (when the assessment happened). Displayed in the GradeForm season tabs. Defaults to null for backward compatibility with existing data.
 
-**Why Assessment replaces Grade:** The old model had fixed columns (quiz, assignment, exam) — rigid and couldn't represent arbitrary assessment types. The new model stores one row per assessment with a name and score, allowing unlimited assessment types per season.
+**Why Assessment replaces Grade:** The old model had fixed columns (quiz, assignment, exam) — rigid and couldn't represent arbitrary assessment types. The new model stores one row per assessment with a name, component category, and score, allowing unlimited assessment types per season.
 
-**Why GradeComputer is separate from AssessmentDao:** Computation is business logic. Database access is infrastructure. They are different atoms with different reasons to change. If the averaging formula changes, only `GradeComputer` changes. If the database schema changes, only `AssessmentDao` changes.
+**Why GradeComputer is separate from AssessmentDao:** Computation is business logic. Database access is infrastructure. They are different atoms with different reasons to change. If the averaging formula changes, only `GradeComputer`/`SeasonGradeComputer` change. If the database schema changes, only `AssessmentDao` changes.
 
 ---
 
@@ -96,7 +102,7 @@ This is the core workflow of the system.
 2. The header shows "ACLC Class Record — [username]" with a Logout button. Below it, a semester selector dropdown and navigation buttons (Students, Subjects, Enrollment, Grades, Attendance).
 3. `DashboardStatsPanel` queries the database for summary data via `DashboardDao`:
    - **Stat cards** (3 cards with Material Design icons): Total Students, Total Subjects, Today's Attendance (shown as "3/5 sections (20/20 present)" — green when all sections marked, blue when partial).
-   - **Per-Subject Statistics table**: one row per subject showing Subject Code, Name, Enrolled, Passed, Failed. Data from `DashboardDao.getPerSubjectStats()`. Passed count green, failed count red.
+   - **Per-Subject Statistics table**: one row per subject showing Subject Code, Name, Enrolled, Passed, Failed. Data from `DashboardDao.getPerSubjectStats()` which loads all assessments and computes grades in Java via `GradeComputer` (same computation as GradeForm — single source of truth). Passed count green, failed count red.
 4. All stats refresh on load via `statsPanel.refresh()`.
 
 **How passed/failed counts work with weighted grades:** The dashboard uses SQL conditional aggregation to compute the same weighted formula as `GradeComputer.computeFinalGrade()`. For each student-subject pair: `COALESCE(AVG(CASE WHEN season = 'Prelim' THEN score END), 0) * 0.20 + ... + COALESCE(AVG(CASE WHEN season = 'Final' THEN score END), 0) * 0.40`. The `HAVING` clause checks if this weighted grade is >= 75 (passed) or < 75 (failed). Season weights are passed as PreparedStatement parameters from `GradeConstants`, keeping the SQL and Java computations in sync.
@@ -165,13 +171,13 @@ The 5th tab in `GradeForm` — "Final Grade" — shows a summary of weighted gra
 1. When the tab populates, `populateFinalGradeTab()` groups all assessments by student-subject pair using a composite key (`studentId|subjectId`).
 2. For each pair, it further groups assessments by `GradingSeason`.
 3. Each season's simple average is computed via `GradeComputer.computeAverage()`.
-4. The weighted final grade is computed via `GradeComputer.computeFinalGrade()` — Prelim × 0.20 + Midterm × 0.20 + Pre-Final × 0.20 + Final × 0.40.
+4. The weighted final grade is computed via `GradeComputer.computeFinalGrade()` — weight is redistributed across only seasons that have assessments. Empty seasons are skipped, not treated as zero.
 5. One row per student-subject pair: Student, Subject, Prelim avg, Midterm avg, Pre-Final avg, Final avg, Weighted Final Grade, Remarks.
-6. The Final Grade and Remarks columns are color-coded: green for PASSED (>= 75), red for FAILED (< 75).
+6. The Final Grade and Remarks columns are color-coded: green for PASSED (>= 75), red for FAILED (< 75). Students with no assessments in any season show "NO GRADES" instead.
 
 **Read-only tab.** The Final Grade tab is a summary view. Clicking a row does not populate the input panel (the `getSelectedAssessment()` guard returns null for tab index >= 4). To edit individual assessments, use the season tabs.
 
-**Missing seasons show 0.00.** If a student has no assessments in a season, that season's average is 0.00 and contributes 0 to the weighted total.
+**Empty seasons are excluded, not zeroed.** If a student has no assessments in a season, that season's average shows 0.00 but it does not contribute to the weighted final grade. The weight is redistributed across seasons that have data. For example, if only Prelim has assessments, the final grade equals the Prelim average. If no season has assessments, remarks show "NO GRADES" and the student is excluded from passed/failed filters and counts.
 
 ---
 

@@ -29,7 +29,7 @@ public class EditAssessmentDialog extends JDialog {
         this.assessment = assessment;
         this.onSaveComplete = onSaveComplete;
 
-        setSize(350, 200);
+        setSize(350, 240);
         setLocationRelativeTo(parent);
         setResizable(false);
 
@@ -40,7 +40,7 @@ public class EditAssessmentDialog extends JDialog {
     }
 
     private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridLayout(4, 2,
+        JPanel panel = new JPanel(new GridLayout(5, 2,
             StyleConstants.GRID_H_GAP, StyleConstants.GRID_V_GAP));
         panel.setBorder(StyleConstants.INPUT_BORDER);
 
@@ -51,6 +51,8 @@ public class EditAssessmentDialog extends JDialog {
         javax.swing.JButton saveButton = new javax.swing.JButton("Save");
         saveButton.addActionListener(e -> handleSave());
 
+        panel.add(new JLabel("Component:"));
+        panel.add(new JLabel(assessment.getComponent().toDisplayName()));
         panel.add(new JLabel("Score:"));
         panel.add(scoreField);
         panel.add(new JLabel("Total Items:"));

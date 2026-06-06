@@ -1,6 +1,7 @@
 package ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.print.PrinterException;
@@ -184,7 +185,7 @@ public class GradeForm extends JFrame {
     }
 
     private JTable createAssessmentTable() {
-        String[] columns = {"ID", "Student", "Subject", "Assessment", "Score", "Date"};
+        String[] columns = {"ID", "Student", "Subject", "Component", "Assessment", "Score", "Date"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -478,6 +479,7 @@ public class GradeForm extends JFrame {
                 assessment.getAssessmentId(),
                 studentDisplay,
                 subjectDisplay,
+                assessment.getComponent().toDisplayName(),
                 assessment.getAssessmentName(),
                 formatScoreDisplay(assessment),
                 assessment.getDate() != null ? assessment.getDate().toString() : ""
@@ -499,11 +501,7 @@ public class GradeForm extends JFrame {
             result.getFinalGrade(), result.getRemarks());
         averageLabel.setText(display);
 
-        if ("PASSED".equals(result.getRemarks())) {
-            averageLabel.setForeground(StyleConstants.SUCCESS);
-        } else {
-            averageLabel.setForeground(StyleConstants.DANGER);
-        }
+        averageLabel.setForeground(remarksColor(result.getRemarks()));
     }
 
     private void populateFinalGradeTab(List<Assessment> assessments,
@@ -607,8 +605,34 @@ public class GradeForm extends JFrame {
         if (filterPanel.isAllResults()) {
             return true;
         }
+        if (GradeComputer.NO_GRADES.equals(result.getRemarks())) {
+            return false;
+        }
         boolean passed = "PASSED".equals(result.getRemarks());
         return passed == filterPanel.isPassedOnly();
+    }
+
+    private Color remarksColor(String remarks) {
+        if ("PASSED".equals(remarks)) {
+            return StyleConstants.SUCCESS;
+        }
+        if (GradeComputer.NO_GRADES.equals(remarks)) {
+            return StyleConstants.TEXT_SECONDARY;
+        }
+        return StyleConstants.DANGER;
+    }
+
+    private Color seasonGradeColor(JTable table, int row, int column) {
+        try {
+            double grade = Double.parseDouble(
+                table.getModel().getValueAt(row, column).toString());
+            if (grade >= GradeConstants.PASSING_GRADE) {
+                return StyleConstants.SUCCESS;
+            }
+            return StyleConstants.DANGER;
+        } catch (NumberFormatException e) {
+            return StyleConstants.TEXT_SECONDARY;
+        }
     }
 
     private List<Assessment> filterByStatus(List<Assessment> assessments) {
@@ -719,14 +743,14 @@ public class GradeForm extends JFrame {
 
                     int remarksCol = 7;
                     int finalGradeCol = 6;
+                    int firstSeasonCol = 2;
+                    int lastSeasonCol = 5;
                     String remarks = (String) t.getModel().getValueAt(row, remarksCol);
 
                     if (column == remarksCol || column == finalGradeCol) {
-                        if ("PASSED".equals(remarks)) {
-                            cell.setForeground(StyleConstants.SUCCESS);
-                        } else {
-                            cell.setForeground(StyleConstants.DANGER);
-                        }
+                        cell.setForeground(remarksColor(remarks));
+                    } else if (column >= firstSeasonCol && column <= lastSeasonCol) {
+                        cell.setForeground(seasonGradeColor(t, row, column));
                     } else {
                         cell.setForeground(StyleConstants.TEXT_PRIMARY);
                     }

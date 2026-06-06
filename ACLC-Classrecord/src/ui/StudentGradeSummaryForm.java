@@ -468,9 +468,33 @@ public class StudentGradeSummaryForm extends JFrame {
         String remarks = (String) t.getModel().getValueAt(row, 7);
 
         if (column == 6 || column == 7) {
-            cell.setForeground("PASSED".equals(remarks)
-                ? StyleConstants.SUCCESS : StyleConstants.DANGER);
+            cell.setForeground(remarksColor(remarks));
+        } else if (column >= 2 && column <= 5) {
+            cell.setForeground(seasonGradeColor(t, row, column));
         }
+    }
+
+    private java.awt.Color seasonGradeColor(JTable table, int row, int column) {
+        try {
+            double grade = Double.parseDouble(
+                table.getModel().getValueAt(row, column).toString());
+            if (grade >= util.GradeConstants.PASSING_GRADE) {
+                return StyleConstants.SUCCESS;
+            }
+            return StyleConstants.DANGER;
+        } catch (NumberFormatException e) {
+            return StyleConstants.TEXT_SECONDARY;
+        }
+    }
+
+    private java.awt.Color remarksColor(String remarks) {
+        if ("PASSED".equals(remarks)) {
+            return StyleConstants.SUCCESS;
+        }
+        if (GradeComputer.NO_GRADES.equals(remarks)) {
+            return StyleConstants.TEXT_SECONDARY;
+        }
+        return StyleConstants.DANGER;
     }
 
     private void colorAttendanceColumn(JTable t, Component cell, int row, int column) {

@@ -32,6 +32,7 @@ import dao.AssessmentDao;
 import dao.EnrollmentDao;
 import dao.SubjectDao;
 import model.Assessment;
+import model.ComponentCategory;
 import model.GradingSeason;
 import model.Student;
 import model.Subject;
@@ -180,7 +181,8 @@ public class BatchScoreEntryForm extends JFrame {
         currentStudents = enrollmentDao.getStudentsBySubjectAndSection(
             subject.getSubjectId(), section);
         Map<String, Double> existingScores = loadExistingScores(
-            subject.getSubjectId(), filterPanel.getSelectedSeason(), assessmentName);
+            subject.getSubjectId(), filterPanel.getSelectedSeason(),
+            filterPanel.getSelectedComponent(), assessmentName);
 
         tableModel.setRowCount(0);
 
@@ -226,12 +228,13 @@ public class BatchScoreEntryForm extends JFrame {
     }
 
     private Map<String, Double> loadExistingScores(int subjectId,
-            GradingSeason season, String assessmentName) {
+            GradingSeason season, ComponentCategory component, String assessmentName) {
         Map<String, Double> map = new HashMap<>();
         List<Assessment> existing = assessmentDao.getBySeason(season);
 
         for (Assessment a : existing) {
             if (a.getSubjectId() == subjectId
+                    && a.getComponent() == component
                     && a.getAssessmentName().equals(assessmentName)) {
                 map.put(a.getStudentId(), a.getScore());
             }
@@ -244,6 +247,7 @@ public class BatchScoreEntryForm extends JFrame {
         Subject subject = filterPanel.getSelectedSubject();
         String assessmentName = filterPanel.getAssessmentName();
         GradingSeason season = filterPanel.getSelectedSeason();
+        ComponentCategory component = filterPanel.getSelectedComponent();
         double totalItems = filterPanel.getTotalItems();
         LocalDate date = filterPanel.getDate();
 
@@ -283,8 +287,8 @@ public class BatchScoreEntryForm extends JFrame {
             String studentId = currentStudents.get(row).getStudentId();
 
             Assessment assessment = new Assessment(
-                0, studentId, subject.getSubjectId(), season, assessmentName, score,
-                totalItems, date);
+                0, studentId, subject.getSubjectId(), season, component,
+                assessmentName, score, totalItems, date);
 
             if (assessmentDao.saveOrUpdate(assessment)) {
                 saved++;
@@ -305,6 +309,7 @@ public class BatchScoreEntryForm extends JFrame {
         Subject subject = filterPanel.getSelectedSubject();
         String assessmentName = filterPanel.getAssessmentName();
         GradingSeason season = filterPanel.getSelectedSeason();
+        ComponentCategory component = filterPanel.getSelectedComponent();
 
         if (subject == null || assessmentName.isEmpty()) {
             showError("Please select a subject and enter an assessment name.");
@@ -313,7 +318,7 @@ public class BatchScoreEntryForm extends JFrame {
 
         String studentId = currentStudents.get(selectedRow).getStudentId();
         int assessmentId = findAssessmentId(studentId, subject.getSubjectId(),
-            season, assessmentName);
+            season, component, assessmentName);
 
         if (assessmentId == -1) {
             showError("No saved score to delete for this student.");
@@ -330,12 +335,13 @@ public class BatchScoreEntryForm extends JFrame {
     }
 
     private int findAssessmentId(String studentId, int subjectId,
-            GradingSeason season, String assessmentName) {
+            GradingSeason season, ComponentCategory component, String assessmentName) {
         List<Assessment> existing = assessmentDao.getBySeason(season);
 
         for (Assessment a : existing) {
             if (a.getStudentId().equals(studentId)
                     && a.getSubjectId() == subjectId
+                    && a.getComponent() == component
                     && a.getAssessmentName().equals(assessmentName)) {
                 return a.getAssessmentId();
             }
